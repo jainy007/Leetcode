@@ -16,5 +16,5 @@ jobs:
       - run: bazel build //...
       - run: bazel test //...
       - run: pwd
-      - run: echo ${{runner.workspace}}
+      - run: echo $bazel_workspace_root
       
