@@ -16,9 +16,5 @@ jobs:
       - run: bazel build //...
       - run: bazel test //...
       - run: pwd
-      - name: Publish Unit Test Results
-        uses: EnricoMi/publish-unit-test-result-action@v1
-        if: always()
-        with:
-          files: "/home/runner/.cache/**/bazel-out/**/testlogs/**/test.xml"
+      - run: echo {$runner.workspace}
       
