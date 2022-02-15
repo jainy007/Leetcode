@@ -16,5 +16,9 @@ jobs:
       - run: bazel build //...
       - run: bazel test //...
       - run: pwd
-      - run: echo ${{runner.workspace}}
+      - name: Mount bazel cache  # Optional
+        uses: actions/cache@v2
+        with:
+          path: "/home/runner/.cache/bazel"
+          key: bazel
       
