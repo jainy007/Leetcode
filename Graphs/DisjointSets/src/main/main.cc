@@ -1,11 +1,10 @@
 #include <iostream>
 #include <vector>
 
-#include "DataStructures/src/lib/hello/hello.h"
+#include "Graphs/DisjointSets/src/lib/hello/hello.h"
 
 #include "glog/logging.h"
 #include "glog/stl_logging.h"
-
 
 
 int main(int argc, char* argv[]) {

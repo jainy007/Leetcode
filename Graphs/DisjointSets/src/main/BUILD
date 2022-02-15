@@ -4,7 +4,7 @@ cc_binary(
     name = "main",
     srcs = ["main.cc"],
     deps = [
-        "//DataStructures/src/lib/hello:hello",
+        "//Graphs/DisjointSets/src/lib:hello",
         "@glog",
     ],
 )
