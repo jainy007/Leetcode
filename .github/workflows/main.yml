@@ -20,5 +20,5 @@ jobs:
         uses: EnricoMi/publish-unit-test-result-action@v1
         if: always()
         with:
-          files: "**/bazel-out/**/testlogs/**/test.xml"
+          files: "/home/runner/.cache/**/bazel-out/**/testlogs/**/test.xml"
       
