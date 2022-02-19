@@ -1,4 +1,4 @@
-#include "Graphs/DisjointSets/src/lib/QuickUnionRank/unionFind.h"
+#include "Graphs/DisjointSets/src/lib/UnionFind/QuickUnionRank/unionFind.h"
 
 #include "gtest/gtest.h"
 

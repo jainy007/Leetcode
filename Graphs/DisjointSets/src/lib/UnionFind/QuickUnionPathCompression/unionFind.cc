@@ -18,7 +18,7 @@ UnionFind::UnionFind(int sz) : root(sz) {
 }
 
 int UnionFind::find(int x) {
-    while (x == root[x]) {
+    if (x == root[x]) {
         return x;
     }
     std::cout <<"Find Operation"<<std::endl;

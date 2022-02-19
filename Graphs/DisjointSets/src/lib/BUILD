@@ -8,28 +8,42 @@ cc_library(
 
 cc_library(
     name = "QuickFind",
-    srcs = ["QuickFind/unionFind.cc"],
-    hdrs = ["QuickFind/unionFind.h"],
+    srcs = ["UnionFind/QuickFind/unionFind.cc"],
+    hdrs = ["UnionFind/QuickFind/unionFind.h"],
     visibility = ["//visibility:public"],
 )
 
 cc_library(
     name = "QuickUnion",
-    srcs = ["QuickUnion/unionFind.cc"],
-    hdrs = ["QuickUnion/unionFind.h"],
+    srcs = ["UnionFind/QuickUnion/unionFind.cc"],
+    hdrs = ["UnionFind/QuickUnion/unionFind.h"],
     visibility = ["//visibility:public"],
 )
 
 cc_library(
     name = "QuickUnionRank",
-    srcs = ["QuickUnionRank/unionFind.cc"],
-    hdrs = ["QuickUnionRank/unionFind.h"],
+    srcs = ["UnionFind/QuickUnionRank/unionFind.cc"],
+    hdrs = ["UnionFind/QuickUnionRank/unionFind.h"],
     visibility = ["//visibility:public"],
 )
 
 cc_library(
     name = "QuickUnionPathCompression",
-    srcs = ["QuickUnionPathCompression/unionFind.cc"],
-    hdrs = ["QuickUnionPathCompression/unionFind.h"],
+    srcs = ["UnionFind/QuickUnionPathCompression/unionFind.cc"],
+    hdrs = ["UnionFind/QuickUnionPathCompression/unionFind.h"],
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "QuickUnionRankPathCompression",
+    srcs = ["UnionFind/OptimizedUnionbyRankPathCompression/unionRankPathCompression.cc"],
+    hdrs = ["UnionFind/OptimizedUnionbyRankPathCompression/unionRankPathCompression.h"],
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "DFS",
+    srcs = ["DFS/dfs.cc"],
+    hdrs = ["DFS/dfs.h"],
     visibility = ["//visibility:public"],
 )

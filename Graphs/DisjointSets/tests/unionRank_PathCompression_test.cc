@@ -1,9 +1,9 @@
-#include "Graphs/DisjointSets/src/lib/UnionFind/QuickUnion/unionFind.h"
+#include "Graphs/DisjointSets/src/lib/UnionFind/OptimizedUnionbyRankPathCompression/unionRankPathCompression.h"
 
 #include "gtest/gtest.h"
 
 
-TEST(unionFindQuickUnionTest, ReturnTrueFalse) {
+TEST(unionRankPathCompressionTest, ReturnTrueFalse) {
     UnionFind uf(10);
     // build a tree <1-2-5-6-7 3-8-9 4>
     uf.unionSet(1, 2);
