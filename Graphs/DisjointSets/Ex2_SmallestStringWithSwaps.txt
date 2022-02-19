@@ -1,0 +1,145 @@
+You are given a string s, and an array of pairs of indices in the string pairs where pairs[i] = [a, b] indicates 2 indices(0-indexed) of the string.
+
+You can swap the characters at any pair of indices in the given pairs any number of times.
+
+Return the lexicographically smallest string that s can be changed to after using the swaps.
+
+ 
+
+Example 1:
+
+Input: s = "dcab", pairs = [[0,3],[1,2]]
+Output: "bacd"
+Explaination: 
+Swap s[0] and s[3], s = "bcad"
+Swap s[1] and s[2], s = "bacd"
+
+Example 2:
+
+Input: s = "dcab", pairs = [[0,3],[1,2],[0,2]]
+Output: "abcd"
+Explaination: 
+Swap s[0] and s[3], s = "bcad"
+Swap s[0] and s[2], s = "acbd"
+Swap s[1] and s[2], s = "abcd"
+
+Example 3:
+
+Input: s = "cba", pairs = [[0,1],[1,2]]
+Output: "abc"
+Explaination: 
+Swap s[0] and s[1], s = "bca"
+Swap s[1] and s[2], s = "bac"
+Swap s[0] and s[1], s = "abc"
+
+Solution:
+---------
+
+class UnionFind{
+public:
+    UnionFind(int sz) : root(sz), rank(sz){
+        for (int i = 0; i < sz; i++) {
+            root[i] = i;
+            rank[i] = 1;
+        }
+    }
+    
+    int find(int x) {
+        if (x == root[x]) {
+            return x;
+        }
+        return root[x] = find(root[x]);
+    }
+   
+    void unionSet(int x, int y) {
+        int rootX = find(x);
+        int rootY = find(y);
+        if (rootX != rootY) {
+            if (rank[rootX] > rank[rootY]) {
+                root[rootY] = rootX;
+            } else if (rank[rootX] < rank[rootY]) {
+                root[rootX] = rootY;
+            } else {
+                root[rootY] = rootX;
+                rank[rootX] += 1;
+            }
+        }
+        std::cout <<"unionSet Operation"<<std::endl;
+    
+        for (std::size_t i =0; i < root.size(); i++) {
+            std::cout<<i<<" ";
+            std::cout<<root[i]<<" "<<std::endl;
+        }
+    }
+    
+    vector<int> getRoot(){
+        return root;
+    }
+    
+private:
+    vector <int> root;
+    vector <int> rank;
+};
+
+
+class Solution {
+public:
+    
+    string smallestStringWithSwaps(string s, vector<vector<int>>& pairs) {
+      
+        int n = s.size();
+        UnionFind uf(n);
+        vector<int> root = uf.getRoot();
+        set<int> st(root.begin(), root.end());
+       
+        //create a dummy string
+        string ret(n, '*');
+
+        //connect the graphs using pairs as input
+        for (int i = 0; i < pairs.size(); i++){
+            int u = pairs[i][0];
+            int v = pairs[i][1];
+            uf.unionSet(u, v);
+        }
+
+
+
+        
+        vector<char> arr1[st.size()];
+        
+        // arranging by roots
+        for(int i = 0; i < n; i++){
+            cout<<"N="<<n<<" "<<"find("<<i<<")="<<uf.find(i)<<" S["<<i<<"]="<<s[i]<<endl;
+            arr1[uf.find(i)].push_back(s[i]);
+            
+        }
+        //print array of vectors
+        for (auto i: arr1){
+            int j =0;
+            for_each(i.begin(), i.end(), [](char v) {cout << v << " ";});
+            cout<<"---"<<j<<endl;
+            j++;
+        }
+        
+        // sort all vectors in descending order
+        for(int i = 0; i < n; i++){
+            sort(arr1[i].rbegin(), arr1[i].rend());
+        }
+        cout<<endl;
+        
+        //print array of vectors
+        for (auto i: arr1){
+            int j =0;
+            for_each(i.begin(), i.end(), [](char v) {cout << v << " ";});
+            cout<<"---"<<j<<endl;
+            j++;
+        }
+        
+        
+        for(int i = 0; i < n; i++){
+            ret[i] = arr1[uf.find(i)].back();
+            arr1[uf.find(i)].pop_back();
+        }
+        return ret;
+    }
+};

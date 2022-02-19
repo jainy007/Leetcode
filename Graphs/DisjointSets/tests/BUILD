@@ -44,3 +44,21 @@ cc_test(
         "@com_google_googletest//:gtest_main",
     ],
 )
+
+cc_test(
+    name = "unionRank_PathCompression_test",
+    srcs = ["unionRank_PathCompression_test.cc"],
+    deps = [
+        "//Graphs/DisjointSets/src/lib:QuickUnionRankPathCompression",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "dfs_pathExists_test",
+    srcs = ["dfs_pathExists_test.cc"],
+    deps = [
+        "//Graphs/DisjointSets/src/lib:DFS",
+        "@com_google_googletest//:gtest_main",
+    ],
+)

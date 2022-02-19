@@ -1,4 +1,4 @@
-#include "Graphs/DisjointSets/src/lib/QuickUnionPathCompression/unionFind.h"
+#include "Graphs/DisjointSets/src/lib/UnionFind/QuickUnionPathCompression/unionFind.h"
 
 #include "gtest/gtest.h"
 
