@@ -1,9 +1,9 @@
-#include "dfs.h"
+#include "dfsValidPath.h"
 
 #include <stack>
 #include <vector>
 
-Dfs::Dfs(){}
+Dfs::Dfs() {}
 
 bool Dfs::ValidPath(int n, std::vector<std::vector<int>> edges, int start, int end) {
     std::vector<std::vector<int>> adjacency_list(n);
@@ -36,5 +36,5 @@ bool Dfs::ValidPath(int n, std::vector<std::vector<int>> edges, int start, int e
             st.push(neighbor);
         }
     }
-        return false;
+    return false;
 }

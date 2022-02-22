@@ -6,8 +6,8 @@
 #include "gtest/gtest.h"
 
 TEST(HelloTest, ReturnHelloWorld) {
-  Hello hello;
-  std::string actual = hello.PrintHelloWorld();
-  std::string expected = "**** Hello World ****";
-  EXPECT_EQ(expected, actual);
+    Hello hello;
+    std::string actual = hello.PrintHelloWorld();
+    std::string expected = "**** Hello World ****";
+    EXPECT_EQ(expected, actual);
 }

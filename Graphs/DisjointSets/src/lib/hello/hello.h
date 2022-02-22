@@ -4,8 +4,8 @@
 #include <string>
 
 class Hello {
- public:
-  std::string PrintHelloWorld();
+public:
+    std::string PrintHelloWorld();
 };
 
 #endif

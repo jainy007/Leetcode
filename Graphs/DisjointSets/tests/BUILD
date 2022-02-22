@@ -58,7 +58,44 @@ cc_test(
     name = "dfs_pathExists_test",
     srcs = ["dfs_pathExists_test.cc"],
     deps = [
-        "//Graphs/DisjointSets/src/lib:DFS",
+        "//Graphs/DisjointSets/src/lib:DFSvalidPath",
+        "//Graphs/DisjointSets/src/lib:QuickUnionPathCompression",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "dfs_allPaths_test",
+    srcs = ["dfs_allPaths_test.cc"],
+    deps = [
+        "//Graphs/DisjointSets/src/lib:DFSallPaths",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "bfs_pathExists_test",
+    srcs = ["bfs_pathExists_test.cc"],
+    deps = [
+        "//Graphs/DisjointSets/src/lib:BFSvalidPath",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "bfs_allPaths_test",
+    srcs = ["bfs_allPaths_test.cc"],
+    deps = [
+        "//Graphs/DisjointSets/src/lib:BFSallPaths",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "bfs_allLevel_test",
+    srcs = ["bfs_allLevel_test.cc"],
+    deps = [
+        "//Graphs/DisjointSets/src/lib:BFSfindLevel",
         "@com_google_googletest//:gtest_main",
     ],
 )
