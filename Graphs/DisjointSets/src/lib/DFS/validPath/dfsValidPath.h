@@ -3,12 +3,11 @@
 
 #include <vector>
 
-class Dfs{
+class Dfs {
 public:
     Dfs();
     bool ValidPath(int n, std::vector<std::vector<int>> edges, int start, int end);
     void addSeen(bool x, int node);
-
 };
 
 #endif

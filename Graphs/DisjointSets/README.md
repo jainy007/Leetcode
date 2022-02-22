@@ -15,11 +15,16 @@ Disjoint set has following functions:
 
 Depth First Search
 
-1) Traverse all NODES of the graph using "recursive stack traversal RST" 
-    (Store nodes int/char/str in stack; like A, B ...X)
+1) Traverse all NODES of the graph using "recursive STACK traversal RST" 
+    (Store nodes in stack; like A, B ...X)
 2) Traverse all PATHS between 2 vertices of the graph using RST
-    (Store paths (pair) in stack; like [(A), (A, B), (A, B, D) ...(X, Y, ... Z)])
-3) 
+    (Store paths in stack; like [(A), (A, B), (A, B, D) ...(X, Y, ... Z)])
+
+Breadth First Search
+
+1) Traverse all NODES of the graph using "recursive QUEUE traversal" RQT
+    (Store nodes in queue; like A, B ...X)
+2) Find Shortest Path between 2 vertices of the graph
 
 
 

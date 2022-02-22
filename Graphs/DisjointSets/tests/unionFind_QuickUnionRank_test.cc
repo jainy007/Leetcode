@@ -2,7 +2,6 @@
 
 #include "gtest/gtest.h"
 
-
 TEST(unionFindQuickUnionRankTest, ReturnTrueFalse) {
     UnionFind uf(10);
     // build a tree <1-2-5-6-7 3-8-9 4>
