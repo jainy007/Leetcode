@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+    <testsuite errors="0" failures="0" hostname="ubuntuvdi003" name="pytest" skipped="0" tests="12" time="30.499" timestamp="2022-04-20T11:35:23.466902">
+        <testcase classname="test.test_diagnostics.test_diagnostics" name="test_ping" time="0.009" />
+        <testcase classname="test.test_diagnostics.test_diagnostics" name="test_diagnostics_read_1" time="0.014" />
+        <testcase classname="test.test_diagnostics.test_diagnostics" name="test_diagnostics_read_2" time="0.023" />
+        <testcase classname="test.test_diagnostics.test_diagnostics" name="test_diagnostics_read_3" time="0.021" />
+        <testcase classname="test.test_diagnostics.test_diagnostics" name="test_diagnostics_read_4" time="0.011" />
+        <testcase classname="test.test_diagnostics.test_diagnostics" name="test_diagnostics_read_5" time="0.014" />
+        <testcase classname="test.test_diagnostics.test_diagnostics" name="test_rc_cpu_load_start" time="2.029" />
+        <testcase classname="test.test_diagnostics.test_diagnostics" name="test_rc_cpu_load_end" time="12.304" />
+        <testcase classname="test.test_diagnostics.test_diagnostics" name="test_rc_ram_load_start" time="2.013" />
+        <testcase classname="test.test_diagnostics.test_diagnostics" name="test_rc_ram_load_end" time="12.358" />
+        <testcase classname="test.test_ssh.test_ssh" name="test_EM_running" time="0.813" />
+        <testcase classname="test.test_ssh.test_ssh" name="test_SM_running" time="0.838" />
+    </testsuite>
+</testsuites>

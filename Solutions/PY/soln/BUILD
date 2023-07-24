@@ -1,6 +1,6 @@
 py_library(
-    name = "14",
-    srcs = ["sol14.py",],
+    name = "sol",
+    srcs = glob(["*.py"]),
     deps = [],
     visibility = ["//visibility:public"],
 )

@@ -1,6 +1,13 @@
 #include <vector>
 #include <string>
 
+std::vector<std::pair<std::vector<int>,int>> input1 = {
+    {{2,7,11,15},9},
+    {{3,2,4}, 6},
+    {{3,3},6}
+};
+
+
 std::vector<std::vector<std::string>> input14 = {
         {"reflower","flow","flight"},
         {"dog","racecar","car"},
