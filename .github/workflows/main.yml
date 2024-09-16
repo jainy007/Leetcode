@@ -15,7 +15,7 @@ jobs:
       - uses: bazelbuild/setup-bazelisk@v1
       - run: bazel build //...
       - run: bazel test //... --test_output=all 
-      - run: pwd
+
   
   publish-test-results:
     name: "Publish Unit Tests Results"
