@@ -1,0 +1,10 @@
+# Qualified tool chain (ISO 26262-8 clause 11): humans only, two approvals required by branch protection.
+/tools/gen/      @jainy007
+/templates/      @jainy007
+/schemas/        @jainy007
+/sil/steps/      @jainy007
+/generated/      @jainy007
+/runtime/        @jainy007
+/docs/safety/    @jainy007
+# Inputs (requirements, Gherkin, models) may be AI-proposed but need owner approval.
+/examples/       @jainy007
