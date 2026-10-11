@@ -48,4 +48,10 @@ RULES: dict[str, str] = {
     "GEN-055": "Plausibility checks must reference output tensors and carry their parameters",
     "GEN-056": "Graph memory must fit the static arena limit",
     "GEN-057": "Monitor timeout must not be shorter than the stage deadline",
+    # acc_controller
+    "GEN-060": "Every interface signal must be bound to a DBC signal of a message in the right direction",
+    "GEN-061": "A bound signal must cover the physical range the pattern needs (discrete: factor 1, offset 0)",
+    "GEN-062": "E2E protection needs a CRC byte and a counter nibble that no interface signal uses",
+    "GEN-063": "Calibration must be complete, consistent and representable in the command resolution",
+    "GEN-064": "Receive timing must be consistent: multiples of the cycle, timeout >= 2 periods, E2E max delta >= timeout/period",
 }

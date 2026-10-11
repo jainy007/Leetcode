@@ -1,0 +1,79 @@
+# Model for the ACC controller (pattern: acc_controller).
+# The pattern fixes the architecture (modes, control law, E2E, timeouts); this model supplies the
+# CAN interface (from the DBC), the signal bindings and the calibration.
+schema_version: 1
+pattern: acc_controller
+
+component:
+  name: AccController
+  namespace: adas::acc
+  asil: B
+  profile: asil
+
+inputs:
+  requirements: requirements.yaml
+  features: [features/modes.feature, features/control.feature, features/faults.feature]
+  dbc: [interfaces/acc.dbc]
+
+cycle_ms: 20
+
+rx:
+  - {message: RadarObject, period_ms: 40, timeout_ms: 120, satisfies: [REQ-ACC-021],
+     e2e: {data_id: 0x0200, crc: Crc, counter: Counter, max_delta_counter: 3}}
+  - {message: EgoState, period_ms: 20, timeout_ms: 60, satisfies: [REQ-ACC-021],
+     e2e: {data_id: 0x0210, crc: Crc, counter: Counter, max_delta_counter: 3}}
+  - {message: DriverInput, period_ms: 20, timeout_ms: 60, satisfies: [REQ-ACC-021],
+     e2e: {data_id: 0x0220, crc: Crc, counter: Counter, max_delta_counter: 3}}
+
+tx:
+  message: AccCommand
+  e2e: {data_id: 0x0300, crc: Crc, counter: Counter, max_delta_counter: 2}
+  satisfies: [REQ-ACC-020]
+
+# Pattern interface -> DBC signal (Message.Signal).
+bindings:
+  target_valid: RadarObject.ObjValid
+  target_range: RadarObject.ObjRange
+  target_range_rate: RadarObject.ObjRangeRate
+  target_lateral: RadarObject.ObjLateralPos
+  ego_speed: EgoState.VehicleSpeed
+  main_switch: DriverInput.MainSwitch
+  set_button: DriverInput.SetButton
+  resume_button: DriverInput.ResumeButton
+  cancel_button: DriverInput.CancelButton
+  speed_up_button: DriverInput.SpeedUpButton
+  speed_down_button: DriverInput.SpeedDownButton
+  gap_setting: DriverInput.GapSetting
+  brake_pedal: DriverInput.BrakePedal
+  accel_pedal: DriverInput.AccelPedalPos
+  status: AccCommand.AccStatus
+  accel_request: AccCommand.AccelRequest
+  brake_request: AccCommand.BrakeRequest
+  steering_request: AccCommand.SteeringAngleRequest
+  set_speed: AccCommand.SetSpeed
+  time_gap_setting: AccCommand.TimeGapSetting
+
+modes:
+  satisfies: [REQ-ACC-001, REQ-ACC-002, REQ-ACC-003, REQ-ACC-004, REQ-ACC-005, REQ-ACC-006,
+              REQ-ACC-007, REQ-ACC-008, REQ-ACC-009, REQ-ACC-019, REQ-ACC-022]
+
+control:
+  satisfies: [REQ-ACC-010, REQ-ACC-011, REQ-ACC-016, REQ-ACC-017, REQ-ACC-018]
+
+calibration:
+  min_activation_speed_kph: {value: 30, satisfies: [REQ-ACC-002, REQ-ACC-003]}
+  disengage_speed_kph: {value: 25, satisfies: [REQ-ACC-009]}
+  max_set_speed_kph: {value: 180, satisfies: [REQ-ACC-005]}
+  set_speed_step_kph: {value: 5, satisfies: [REQ-ACC-005]}
+  time_gaps_s: {value: [1.0, 1.5, 2.0], satisfies: [REQ-ACC-012]}
+  standstill_distance_m: {value: 5.0, satisfies: [REQ-ACC-011]}
+  max_target_range_m: {value: 200, satisfies: [REQ-ACC-013]}
+  lane_half_width_m: {value: 1.8, satisfies: [REQ-ACC-013]}
+  accel_max_mps2: {value: 2.0, satisfies: [REQ-ACC-014]}
+  decel_max_mps2: {value: 3.5, satisfies: [REQ-ACC-014]}
+  jerk_increase_max_mps3: {value: 2.5, satisfies: [REQ-ACC-015]}
+  jerk_decrease_max_mps3: {value: 5.0, satisfies: [REQ-ACC-015]}
+  override_pedal_pct: {value: 5.0, satisfies: [REQ-ACC-007]}
+  speed_gain_per_s: {value: 0.3}
+  gap_gain_per_s2: {value: 0.2}
+  range_rate_gain_per_s: {value: 0.6}

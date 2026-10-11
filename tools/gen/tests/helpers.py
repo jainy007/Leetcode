@@ -12,6 +12,7 @@ from tools.gen.render import REPO_ROOT
 EXAMPLES = {
     "gate": REPO_ROOT / "examples" / "adas_input_gate",
     "gpu": REPO_ROOT / "examples" / "gpu_inference_stage",
+    "acc": REPO_ROOT / "examples" / "acc",
 }
 
 

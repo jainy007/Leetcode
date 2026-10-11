@@ -159,7 +159,8 @@ def generate(name: str, model_rel: str, output_rel: str, diags: Diagnostics) -> 
     files: dict[str, str] = {}
     for template, out in ctx.outputs:
         path = f"{output_rel}/{out}"
-        files[path] = render.render(env, f"{inputs.pattern}/{template}", path, variables, header)
+        source = template if template.startswith("common/") else f"{inputs.pattern}/{template}"
+        files[path] = render.render(env, source, path, variables, header)
 
     satisfied_by: dict[str, list[str]] = {}
     for element, rid in ctx.satisfies:

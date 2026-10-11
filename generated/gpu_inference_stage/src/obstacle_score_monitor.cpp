@@ -1,7 +1,7 @@
 // GENERATED FILE - DO NOT EDIT. Changes are overwritten and rejected by CI.
 // Generator: ea-gen 0.1.0 (rule-based, deterministic; no AI in this path)
 // Project:   gpu_inference_stage (pattern: gpu_stage)
-// Inputs:    sha256:dba8099d3d048e00e6065ef9d014a96b61ec230c8a485f40da046c2b8e79e124
+// Inputs:    sha256:7c6e31adbf2ccb7de4b9815cf4bbcfea3cc85b12d6095fab5d2d18ae8a06a647
 // Regenerate: python3 -m tools.gen
 
 #include "gpu_inference_stage/obstacle_score_monitor.hpp"

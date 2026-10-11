@@ -6,6 +6,7 @@ add_library(ea_runtime STATIC
     src/codec/bits.cpp
     src/codec/someip.cpp
     src/e2e/p4.cpp
+    src/e2e/p11.cpp
     src/osal/posix/clock.cpp
     src/osal/posix/realtime.cpp
     src/osal/posix/periodic_task.cpp

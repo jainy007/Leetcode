@@ -80,6 +80,16 @@ and the file it applies to.
 | GEN-056 | Graph memory must fit the static arena limit |
 | GEN-057 | Monitor timeout must not be shorter than the stage deadline |
 
+## Pattern acc_controller
+
+| ID | Rule |
+|---|---|
+| GEN-060 | Every interface signal must be bound to a DBC signal of a message in the right direction |
+| GEN-061 | A bound signal must cover the physical range the pattern needs (discrete: factor 1, offset 0) |
+| GEN-062 | E2E protection needs a CRC byte and a counter nibble that no interface signal uses |
+| GEN-063 | Calibration must be complete, consistent and representable in the command resolution |
+| GEN-064 | Receive timing must be consistent: multiples of the cycle, timeout >= 2 periods, E2E max delta >= timeout/period |
+
 ## Notes on selected rules
 
 - **GEN-001** uses YAML 1.2 boolean semantics: only `true`/`false` are booleans. Under YAML 1.1,
@@ -91,5 +101,9 @@ and the file it applies to.
   250.00 m with factor 0.01 is exact and never lost to floating-point rounding.
 - **GEN-044** requires every state without exits to be declared `latched`, so a dead end is
   always intentional.
+- **GEN-064** was added after closed-loop SIL found it: with `max_delta_counter: 2` and a timeout of
+  3 periods, the first frame after 2 lost frames failed the E2E sequence check. That made the real
+  timeout longer than the requirement, so a configuration contradicting the requirement now fails
+  before any code is generated.
 - **GEN-055** requires the `finite` check to come first, because NaN compares false and would
   pass any range check.

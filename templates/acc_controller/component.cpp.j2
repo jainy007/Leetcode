@@ -1,0 +1,211 @@
+#include "{{ inc }}/{{ snake }}.hpp"
+
+#include <cmath>
+#include <cstring>
+
+#include "ea/core/assert.hpp"
+#include "ea/core/rounding.hpp"
+#include "ea/core/saturating.hpp"
+
+namespace {{ ns }} {
+
+namespace {
+{% for r in rx %}
+constexpr ea::e2e::P11Config k{{ r.cname }}E2e{ {{- r.e2e.data_id | cpp_hex(4) }}, {{ r.e2e.crc_byte }}U, {{ r.e2e.counter_bit }}U, {{ r.msg.payload_length }}U, {{ r.e2e.max_delta }}U};
+constexpr std::uint16_t k{{ r.cname }}TimeoutCycles = {{ r.timeout_cycles }}U;
+{% endfor %}
+constexpr ea::e2e::P11Config k{{ tx.msg.name }}E2e{ {{- tx.e2e.data_id | cpp_hex(4) }}, {{ tx.e2e.crc_byte }}U, {{ tx.e2e.counter_bit }}U, {{ tx.msg.payload_length }}U, {{ tx.e2e.max_delta }}U};
+
+double clamp(double v, double lo, double hi) noexcept {
+    return (v < lo) ? lo : ((v > hi) ? hi : v);
+}
+
+bool on(double signal) noexcept {
+    return signal > 0.5;
+}
+
+}  // namespace
+
+const char* to_string(Mode m) noexcept {
+    switch (m) {
+{% for m in modes %}
+        case Mode::k{{ m | camel }}:
+            return "{{ m }}";
+{% endfor %}
+    }
+    return "UNKNOWN";
+}
+
+{{ component.name }}::{{ component.name }}() noexcept
+    : {% for r in rx %}e2e_{{ r.snake }}_(k{{ r.cname }}E2e), age_{{ r.snake }}_(k{{ r.cname }}TimeoutCycles), {% endfor %}e2e_tx_(k{{ tx.msg.name }}E2e) {
+    send();  // a valid OFF frame is available before the first cycle
+}
+
+void {{ component.name }}::on_frame(std::uint32_t can_id, ea::ConstByteSpan payload) noexcept {
+    Mailbox* mb = nullptr;
+    switch (can_id) {
+{% for r in rx %}
+        case k{{ r.cname }}CanId:
+            mb = &mb_{{ r.snake }}_;
+            break;
+{% endfor %}
+        default:
+            return;
+    }
+    if (payload.size() > mb->data.size()) {
+        return;
+    }
+    std::memcpy(mb->data.data(), payload.data(), payload.size());
+    mb->length = payload.size();
+    mb->fresh = true;
+}
+
+void {{ component.name }}::receive() noexcept {
+{% for r in rx %}
+    {
+        // {{ r.cname }}: frames failing E2E or decoding count as not received (REQ: timeout supervision).
+        bool received = false;
+        if (mb_{{ r.snake }}_.fresh) {
+            mb_{{ r.snake }}_.fresh = false;
+            const ea::ConstByteSpan frame(mb_{{ r.snake }}_.data.data(), mb_{{ r.snake }}_.length);
+            if (ea::e2e::is_usable(e2e_{{ r.snake }}_.check(frame))) {
+                const ea::Result<{{ r.cname }}> d = decode_{{ r.snake }}(frame);
+                if (d.ok()) {
+                    {{ r.var }} = *d;
+                    received = true;
+                }
+            }
+        }
+        age_{{ r.snake }}_ = received ? static_cast<std::uint16_t>(0U) : ea::sat_inc(age_{{ r.snake }}_);
+    }
+{% endfor %}
+}
+
+bool {{ component.name }}::inputs_healthy() const noexcept {
+    return {% for r in rx %}(age_{{ r.snake }}_ < k{{ r.cname }}TimeoutCycles){% if not loop.last %} && {% endif %}{% endfor %};
+}
+
+void {{ component.name }}::update_mode() noexcept {
+{% set drv = b.main_switch.msg.snake %}
+    if (age_{{ drv }}_ >= k{{ b.main_switch.msg.name }}TimeoutCycles) {
+        if (mode_ != Mode::kOff) {
+            mode_ = Mode::kFault;  // no valid driver input: FAULT (latched)
+        }
+        return;
+    }
+    // Driver inputs (newest valid values) and rising edges of the buttons.
+    const bool set_now = on({{ b.set_button.expr }});
+    const bool resume_now = on({{ b.resume_button.expr }});
+    const bool cancel_now = on({{ b.cancel_button.expr }});
+    const bool up_now = on({{ b.speed_up_button.expr }});
+    const bool down_now = on({{ b.speed_down_button.expr }});
+    const bool set_edge = set_now && !prev_set_;
+    const bool resume_edge = resume_now && !prev_resume_;
+    const bool cancel_edge = cancel_now && !prev_cancel_;
+    const bool up_edge = up_now && !prev_up_;
+    const bool down_edge = down_now && !prev_down_;
+    prev_set_ = set_now;
+    prev_resume_ = resume_now;
+    prev_cancel_ = cancel_now;
+    prev_up_ = up_now;
+    prev_down_ = down_now;
+    gap_setting_ = static_cast<std::uint32_t>(ea::round_half_away({{ b.gap_setting.expr }}));  // [1, {{ cal.time_gaps_s | length }}] by decode
+
+    if (!on({{ b.main_switch.expr }})) {
+        mode_ = Mode::kOff;
+        set_speed_kph_ = 0.0;
+        return;
+    }
+    if (mode_ == Mode::kOff) {
+        mode_ = Mode::kStandby;
+        return;
+    }
+    if (mode_ == Mode::kFault) {
+        return;  // latched until the main switch is turned off
+    }
+    if (!inputs_healthy()) {
+        mode_ = Mode::kFault;
+        return;
+    }
+    const double v_kph = {{ b.ego_speed.expr }};
+    const bool brake = on({{ b.brake_pedal.expr }});
+    const bool can_engage = !brake && v_kph >= kMinActivationSpeedKph;
+    switch (mode_) {
+        case Mode::kStandby:
+            if (set_edge && can_engage) {
+                set_speed_kph_ = clamp(static_cast<double>(ea::round_half_away(v_kph)), kMinActivationSpeedKph, kMaxSetSpeedKph);
+                mode_ = Mode::kActive;
+            } else if (resume_edge && can_engage && set_speed_kph_ > 0.0) {
+                mode_ = Mode::kActive;
+            } else {
+                // stay
+            }
+            break;
+        case Mode::kActive:
+        case Mode::kOverride:
+            if (brake || cancel_edge) {
+                mode_ = Mode::kStandby;  // set speed stays stored
+                break;
+            }
+            if (mode_ == Mode::kActive && v_kph < kDisengageSpeedKph) {
+                mode_ = Mode::kStandby;
+                break;
+            }
+            if (up_edge) {
+                set_speed_kph_ = clamp(set_speed_kph_ + kSetSpeedStepKph, kMinActivationSpeedKph, kMaxSetSpeedKph);
+            }
+            if (down_edge) {
+                set_speed_kph_ = clamp(set_speed_kph_ - kSetSpeedStepKph, kMinActivationSpeedKph, kMaxSetSpeedKph);
+            }
+            mode_ = ({{ b.accel_pedal.expr }} > kOverridePedalPct) ? Mode::kOverride : Mode::kActive;
+            break;
+        case Mode::kOff:
+        case Mode::kFault:
+            break;
+    }
+}
+
+void {{ component.name }}::control() noexcept {
+    if (mode_ != Mode::kActive) {
+        accel_raw_ = 0;  // no request outside ACTIVE; jerk limiting restarts from 0
+        return;
+    }
+    const double v = {{ b.ego_speed.expr }} / 3.6;
+    double a = kSpeedGainPerS * (set_speed_kph_ / 3.6 - v);
+    const bool in_path = on({{ b.target_valid.expr }}) && {{ b.target_range.expr }} <= kMaxTargetRangeM &&
+                         std::fabs({{ b.target_lateral.expr }}) <= kLaneHalfWidthM;
+    if (in_path) {
+        const double desired = kStandstillDistanceM + kTimeGapsS[gap_setting_ - 1U] * v;
+        const double a_gap = kGapGainPerS2 * ({{ b.target_range.expr }} - desired) + kRangeRateGainPerS * {{ b.target_range_rate.expr }};
+        a = (a_gap < a) ? a_gap : a;
+    }
+    a = clamp(a, -kDecelMaxMps2, kAccelMaxMps2);
+    const std::int32_t target = static_cast<std::int32_t>(ea::round_half_away(a / kAccelResolution));
+    const std::int32_t delta = target - accel_raw_;
+    accel_raw_ += (delta > kJerkUpStep) ? kJerkUpStep : ((delta < -kJerkDownStep) ? -kJerkDownStep : delta);
+}
+
+void {{ component.name }}::send() noexcept {
+    {{ tx.msg.name }} cmd{};
+    {{ b.status.expr }} = static_cast<double>(static_cast<std::uint8_t>(mode_));
+    {{ b.accel_request.expr }} = (accel_raw_ > 0) ? static_cast<double>(accel_raw_) * kAccelResolution : 0.0;
+    {{ b.brake_request.expr }} = (accel_raw_ < 0) ? static_cast<double>(-accel_raw_) * kAccelResolution : 0.0;
+    {{ b.steering_request.expr }} = 0.0;  // longitudinal function only
+    {{ b.set_speed.expr }} = set_speed_kph_;
+    {{ b.time_gap_setting.expr }} = static_cast<double>(gap_setting_);
+    tx_frame_.fill(0U);
+    // Values are within the ranges proven by GEN-061; a failure is a contract violation.
+    const ea::Result<void> enc = encode_{{ tx.msg.snake }}(cmd, ea::ByteSpan(tx_frame_.data(), tx_frame_.size()));
+    EA_ASSERT(enc.ok());
+    const ea::Result<void> prot = e2e_tx_.protect(ea::ByteSpan(tx_frame_.data(), tx_frame_.size()));
+    EA_ASSERT(prot.ok());
+}
+
+void {{ component.name }}::step() noexcept {
+    receive();
+    update_mode();
+    control();
+    send();
+}
+
+}  // namespace {{ ns }}

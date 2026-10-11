@@ -15,6 +15,7 @@ M = "model.yaml"
 F_GATE = "features/gate.feature"
 F_GPU = "features/stage.feature"
 DBC = "interfaces/gate_status.dbc"
+ACC_DBC = "interfaces/acc.dbc"
 
 # rule -> (example, list of mutations (kind, file, args...))
 CASES: dict[str, list[tuple]] = {
@@ -81,6 +82,22 @@ CASES: dict[str, list[tuple]] = {
                 ("gpu", [("replace", M, "{check: sum, tensor: scores, value: 1.0,", "{check: sum, tensor: logits, value: 1.0,")])],
     "GEN-056": [("gpu", [("patch_limit",)])],
     "GEN-057": [("gpu", [("replace", M, "timeout_ms: 66", "timeout_ms: 10")])],
+    "GEN-060": [("acc", [("replace", M, "brake_request: AccCommand.BrakeRequest", "brake_request: AccCommand.Brake")]),
+                ("acc", [("replace", M, "  cancel_button: DriverInput.CancelButton\n", "")]),
+                ("acc", [("replace", M, "  status: AccCommand.AccStatus", "  status: RadarObject.ObjValid")]),
+                ("acc", [("replace", M, "  status: AccCommand.AccStatus", "  status: AccCommand.AccStatus\n  horn: AccCommand.AccStatus")])],
+    "GEN-061": [("acc", [("replace", ACC_DBC, "AccelRequest : 16|10@1+ (0.01,0) [0|5]", "AccelRequest : 16|10@1+ (0.01,0) [0|1]")]),
+                ("acc", [("replace", ACC_DBC, "GapSetting : 18|2@1+ (1,0) [1|3]", "GapSetting : 18|2@1+ (2,0) [0|6]")])],
+    "GEN-062": [("acc", [("replace", M, "data_id: 0x0200, crc: Crc,", "data_id: 0x0200, crc: ObjValid,")]),
+                ("acc", [("replace", M, "  target_valid: RadarObject.ObjValid", "  target_valid: RadarObject.Counter")])],
+    "GEN-063": [("acc", [("replace", M, "jerk_increase_max_mps3: {value: 2.5", "jerk_increase_max_mps3: {value: 2.6")]),
+                ("acc", [("replace", M, "  speed_gain_per_s: {value: 0.3}\n", "")]),
+                ("acc", [("replace", M, "[1.0, 1.5, 2.0]", "[1.0, 2.0, 1.5]")]),
+                ("acc", [("replace", M, "disengage_speed_kph: {value: 25", "disengage_speed_kph: {value: 35")])],
+    "GEN-064": [("acc", [("replace", M, "period_ms: 40, timeout_ms: 120", "period_ms: 40, timeout_ms: 130")]),
+                ("acc", [("replace", M, "period_ms: 40, timeout_ms: 120", "period_ms: 40, timeout_ms: 60")]),
+                ("acc", [("replace", M, "data_id: 0x0210, crc: Crc, counter: Counter, max_delta_counter: 3",
+                          "data_id: 0x0210, crc: Crc, counter: Counter, max_delta_counter: 2")])],
 }
 
 
@@ -109,7 +126,7 @@ def run_case(example: str, mutations: list[tuple]):
 
 class RuleTests(unittest.TestCase):
     def test_unmodified_examples_pass(self):
-        for example in ("gate", "gpu"):
+        for example in ("gate", "gpu", "acc"):
             with self.subTest(example=example):
                 diags = run_case(example, [])
                 self.assertTrue(diags.ok(), "\n".join(f.format() for f in diags.sorted()))

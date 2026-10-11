@@ -1,0 +1,2737 @@
+{
+  "component": {
+    "asil": "B",
+    "name": "AccController",
+    "namespace": "adas::acc",
+    "profile": "asil"
+  },
+  "generated_files": [
+    "generated/acc/CMakeLists.txt",
+    "generated/acc/include/acc/acc_controller.hpp",
+    "generated/acc/include/acc/acc_controller_codec.hpp",
+    "generated/acc/include/acc/acc_controller_types.hpp",
+    "generated/acc/sil/acc_controller_sil.hpp",
+    "generated/acc/sil/acc_controller_sil_test.cpp",
+    "generated/acc/src/acc_controller.cpp",
+    "generated/acc/src/acc_controller_codec.cpp"
+  ],
+  "generator": "ea-gen 0.1.0",
+  "inputs_sha256": "cce2b25a21d5b0053b9588be55a9c9be1a00be09e870c4dedb9dbbf5638be09e",
+  "pattern": "acc_controller",
+  "project": "acc",
+  "requirements": [
+    {
+      "asil": "QM",
+      "ears": "event",
+      "id": "REQ-ACC-001",
+      "satisfied_by": [
+        "modes"
+      ],
+      "tests": [
+        "S01_MainSwitchOnEntersSTANDBYWithoutRequestingAccelerationOrBrak"
+      ],
+      "text": "When the driver switches the ACC main switch on, the AccController shall enter STANDBY.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "B",
+      "ears": "event",
+      "id": "REQ-ACC-002",
+      "satisfied_by": [
+        "calibration:min_activation_speed_kph",
+        "modes"
+      ],
+      "tests": [
+        "S02_SetEngagesAtTheCurrentSpeedRoundedToTheNearestKmH",
+        "S03_SetIsIgnoredWhileTheBrakePedalIsPressed",
+        "S04_ReleasingTheBrakeWhileSetIsStillHeldDoesNotEngage"
+      ],
+      "text": "When the driver presses Set in STANDBY with the brake pedal released and an ego speed of at least 30 km/h, the AccController shall enter ACTIVE with the set speed equal to the current ego speed rounded to the nearest km/h.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "B",
+      "ears": "unwanted",
+      "id": "REQ-ACC-003",
+      "satisfied_by": [
+        "calibration:min_activation_speed_kph",
+        "modes"
+      ],
+      "tests": [
+        "S05_EngagementIsRefusedBelow30KmH_Ex1",
+        "S06_EngagementIsRefusedBelow30KmH_Ex2"
+      ],
+      "text": "If the driver presses Set or Resume at an ego speed below 30 km/h, then the AccController shall remain in STANDBY.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "QM",
+      "ears": "event",
+      "id": "REQ-ACC-004",
+      "satisfied_by": [
+        "modes"
+      ],
+      "tests": [
+        "S07_CancelKeepsTheSetSpeedAndResumeRestoresIt"
+      ],
+      "text": "When the driver presses Resume in STANDBY with a stored set speed, the brake pedal released and an ego speed of at least 30 km/h, the AccController shall enter ACTIVE with the stored set speed.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "QM",
+      "ears": "event",
+      "id": "REQ-ACC-005",
+      "satisfied_by": [
+        "calibration:max_set_speed_kph",
+        "calibration:set_speed_step_kph",
+        "modes"
+      ],
+      "tests": [
+        "S08_SpeedUpAndSpeedDownChangeTheSetSpeedIn5KmHSteps",
+        "S09_TheSetSpeedStaysWithin30KmHTo180KmH_Ex1",
+        "S10_TheSetSpeedStaysWithin30KmHTo180KmH_Ex2"
+      ],
+      "text": "When the driver presses Speed Up or Speed Down in ACTIVE or OVERRIDE, the AccController shall change the set speed by 5 km/h, limited to the range 30 km/h to 180 km/h.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "B",
+      "ears": "event",
+      "id": "REQ-ACC-006",
+      "satisfied_by": [
+        "modes"
+      ],
+      "tests": [
+        "S07_CancelKeepsTheSetSpeedAndResumeRestoresIt",
+        "S11_TheBrakePedalDisengagesWithinOneCycle",
+        "S13_TheBrakePedalAlsoEndsOVERRIDE"
+      ],
+      "text": "When the driver presses the brake pedal or Cancel in ACTIVE or OVERRIDE, the AccController shall enter STANDBY within one cycle and keep the set speed stored.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "B",
+      "ears": "event",
+      "id": "REQ-ACC-007",
+      "satisfied_by": [
+        "calibration:override_pedal_pct",
+        "modes"
+      ],
+      "tests": [
+        "S12_AcceleratorPedalOverrideSuspendsControl",
+        "S14_ALightTouchOfTheAcceleratorPedalDoesNotOverride"
+      ],
+      "text": "When the driver presses the accelerator pedal beyond 5 % in ACTIVE, the AccController shall enter OVERRIDE and request neither acceleration nor braking until the pedal is released.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "QM",
+      "ears": "event",
+      "id": "REQ-ACC-008",
+      "satisfied_by": [
+        "modes"
+      ],
+      "tests": [
+        "S15_MainSwitchOffClearsTheSetSpeed"
+      ],
+      "text": "When the driver switches the ACC main switch off, the AccController shall enter OFF and clear the set speed.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "B",
+      "ears": "unwanted",
+      "id": "REQ-ACC-009",
+      "satisfied_by": [
+        "calibration:disengage_speed_kph",
+        "modes"
+      ],
+      "tests": [
+        "S16_ACCHandsOverBelow25KmHAndOnlyThen_Ex1",
+        "S17_ACCHandsOverBelow25KmHAndOnlyThen_Ex2"
+      ],
+      "text": "If the ego speed falls below 25 km/h in ACTIVE, then the AccController shall enter STANDBY.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "QM",
+      "ears": "state",
+      "id": "REQ-ACC-010",
+      "satisfied_by": [
+        "control"
+      ],
+      "tests": [
+        "S18_AccelerateToAHigherSetSpeedWithinTheComfortLimits",
+        "S22_AFasterLeadVehicleDoesNotPullTheEgoVehicleAboveTheSetSpeed"
+      ],
+      "text": "While ACTIVE without a relevant target, the AccController shall control the ego speed to the set speed with a steady-state error of at most 1 km/h.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "B",
+      "ears": "state",
+      "id": "REQ-ACC-011",
+      "satisfied_by": [
+        "calibration:standstill_distance_m",
+        "control"
+      ],
+      "tests": [
+        "S19_FollowASlowerVehicleAtTheSelectedTimeGap_Ex1",
+        "S20_FollowASlowerVehicleAtTheSelectedTimeGap_Ex2",
+        "S21_FollowASlowerVehicleAtTheSelectedTimeGap_Ex3",
+        "S22_AFasterLeadVehicleDoesNotPullTheEgoVehicleAboveTheSetSpeed",
+        "S30_TheLeadVehicleLeavesAndTheEgoVehicleResumesTheSetSpeed"
+      ],
+      "text": "While ACTIVE with a relevant target, the AccController shall control the distance to the target to 5 m plus the selected time gap multiplied by the ego speed, with a steady-state error of at most 2 m, and shall not exceed the set speed.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "QM",
+      "ears": "ubiquitous",
+      "id": "REQ-ACC-012",
+      "satisfied_by": [
+        "calibration:time_gaps_s"
+      ],
+      "tests": [
+        "S19_FollowASlowerVehicleAtTheSelectedTimeGap_Ex1",
+        "S20_FollowASlowerVehicleAtTheSelectedTimeGap_Ex2",
+        "S21_FollowASlowerVehicleAtTheSelectedTimeGap_Ex3"
+      ],
+      "text": "The AccController shall offer the time gap settings 1, 2 and 3 corresponding to 1.0 s, 1.5 s and 2.0 s.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "B",
+      "ears": "ubiquitous",
+      "id": "REQ-ACC-013",
+      "satisfied_by": [
+        "calibration:lane_half_width_m",
+        "calibration:max_target_range_m"
+      ],
+      "tests": [
+        "S23_AVehicleInTheAdjacentLaneIsIgnored",
+        "S24_AVehicleJustInsideTheLaneBoundaryIsFollowed",
+        "S25_AVehicleBeyond200MIsNotATargetEvenWhenClosingFast"
+      ],
+      "text": "The AccController shall treat a radar object as the relevant target only if it is valid, at most 200 m ahead and at most 1.8 m from the ego lane centre.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "B",
+      "ears": "ubiquitous",
+      "id": "REQ-ACC-014",
+      "satisfied_by": [
+        "calibration:accel_max_mps2",
+        "calibration:decel_max_mps2"
+      ],
+      "tests": [
+        "S18_AccelerateToAHigherSetSpeedWithinTheComfortLimits",
+        "S26_TheLeadVehicleBrakesWhileBeingFollowed_Ex1",
+        "S27_TheLeadVehicleBrakesWhileBeingFollowed_Ex2",
+        "S28_TheLeadVehicleBrakesWhileBeingFollowed_Ex3",
+        "S29_ASlowerVehicleCutsIn25MAhead"
+      ],
+      "text": "The AccController shall limit the requested acceleration to 2.0 m/s2 and the requested deceleration to 3.5 m/s2.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "QM",
+      "ears": "state",
+      "id": "REQ-ACC-015",
+      "satisfied_by": [
+        "calibration:jerk_decrease_max_mps3",
+        "calibration:jerk_increase_max_mps3"
+      ],
+      "tests": [
+        "S18_AccelerateToAHigherSetSpeedWithinTheComfortLimits",
+        "S29_ASlowerVehicleCutsIn25MAhead"
+      ],
+      "text": "While ACTIVE, the AccController shall limit the change of the requested longitudinal acceleration to 2.5 m/s3 when it increases and 5.0 m/s3 when it decreases.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "B",
+      "ears": "unwanted",
+      "id": "REQ-ACC-016",
+      "satisfied_by": [
+        "control"
+      ],
+      "tests": [
+        "S26_TheLeadVehicleBrakesWhileBeingFollowed_Ex1",
+        "S27_TheLeadVehicleBrakesWhileBeingFollowed_Ex2",
+        "S28_TheLeadVehicleBrakesWhileBeingFollowed_Ex3",
+        "S29_ASlowerVehicleCutsIn25MAhead"
+      ],
+      "text": "If a relevant target that is followed at the selected time gap decelerates at up to 3 m/s2, or a slower vehicle cuts in at 25 m or more, then the AccController shall keep the distance above 5 m.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "B",
+      "ears": "ubiquitous",
+      "id": "REQ-ACC-017",
+      "satisfied_by": [
+        "control"
+      ],
+      "tests": [
+        "S18_AccelerateToAHigherSetSpeedWithinTheComfortLimits",
+        "S26_TheLeadVehicleBrakesWhileBeingFollowed_Ex1",
+        "S27_TheLeadVehicleBrakesWhileBeingFollowed_Ex2",
+        "S28_TheLeadVehicleBrakesWhileBeingFollowed_Ex3"
+      ],
+      "text": "The AccController shall never request acceleration and braking at the same time.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "B",
+      "ears": "ubiquitous",
+      "id": "REQ-ACC-018",
+      "satisfied_by": [
+        "control"
+      ],
+      "tests": [
+        "S18_AccelerateToAHigherSetSpeedWithinTheComfortLimits",
+        "S31_EveryCommandFrameIsE2EProtectedAndSentEveryCycle"
+      ],
+      "text": "The AccController shall always request a steering angle of 0 deg.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "B",
+      "ears": "state",
+      "id": "REQ-ACC-019",
+      "satisfied_by": [
+        "modes"
+      ],
+      "tests": [
+        "S01_MainSwitchOnEntersSTANDBYWithoutRequestingAccelerationOrBrak",
+        "S11_TheBrakePedalDisengagesWithinOneCycle",
+        "S15_MainSwitchOffClearsTheSetSpeed",
+        "S34_RadarFramesMissingFor120MsLeadToFAULT_Ex1",
+        "S35_RadarFramesMissingFor120MsLeadToFAULT_Ex2"
+      ],
+      "text": "While not ACTIVE, the AccController shall request neither acceleration nor braking.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "B",
+      "ears": "ubiquitous",
+      "id": "REQ-ACC-020",
+      "satisfied_by": [
+        "tx:AccCommand"
+      ],
+      "tests": [
+        "S02_SetEngagesAtTheCurrentSpeedRoundedToTheNearestKmH",
+        "S31_EveryCommandFrameIsE2EProtectedAndSentEveryCycle"
+      ],
+      "text": "The AccController shall send the AccCommand message every 20 ms with E2E protection and report its mode, set speed and time gap setting in it.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "B",
+      "ears": "unwanted",
+      "id": "REQ-ACC-021",
+      "satisfied_by": [
+        "rx:DriverInput",
+        "rx:EgoState",
+        "rx:RadarObject"
+      ],
+      "tests": [
+        "S32_LostRadarFramesBelowTheTimeoutAreTolerated_Ex1",
+        "S33_LostRadarFramesBelowTheTimeoutAreTolerated_Ex2",
+        "S34_RadarFramesMissingFor120MsLeadToFAULT_Ex1",
+        "S35_RadarFramesMissingFor120MsLeadToFAULT_Ex2",
+        "S36_VehicleFramesMissingFor60MsLeadToFAULT_Ex1",
+        "S37_VehicleFramesMissingFor60MsLeadToFAULT_Ex2",
+        "S38_VehicleFramesMissingFor60MsLeadToFAULT_Ex3",
+        "S39_VehicleFramesMissingFor60MsLeadToFAULT_Ex4",
+        "S40_APausedSenderIsDetectedExactlyAtTheTimeout_Ex1",
+        "S41_APausedSenderIsDetectedExactlyAtTheTimeout_Ex2",
+        "S42_APausedSenderIsDetectedExactlyAtTheTimeout_Ex3",
+        "S43_APausedSenderIsDetectedExactlyAtTheTimeout_Ex4",
+        "S44_APausedSenderIsDetectedExactlyAtTheTimeout_Ex5",
+        "S45_APausedSenderIsDetectedExactlyAtTheTimeout_Ex6"
+      ],
+      "text": "If no valid RadarObject frame is received for 120 ms, or no valid EgoState or DriverInput frame for 60 ms, then the AccController shall enter FAULT, where frames failing the E2E check count as not received.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "B",
+      "ears": "state",
+      "id": "REQ-ACC-022",
+      "satisfied_by": [
+        "modes"
+      ],
+      "tests": [
+        "S46_FAULTIsLatchedUntilTheMainSwitchIsTurnedOff"
+      ],
+      "text": "While in FAULT, the AccController shall remain in FAULT until the driver switches the ACC main switch off.",
+      "verification": [
+        "sil"
+      ]
+    }
+  ],
+  "sil_suite": "AccControllerSilTest",
+  "tests": [
+    {
+      "example": [],
+      "feature": "examples/acc/features/modes.feature",
+      "line": 6,
+      "name": "S01_MainSwitchOnEntersSTANDBYWithoutRequestingAccelerationOrBrak",
+      "requirements": [
+        "REQ-ACC-001",
+        "REQ-ACC-019"
+      ],
+      "scenario": "Main switch on enters STANDBY without requesting acceleration or braking",
+      "steps": [
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S02",
+          "cpp": "sil_.switch_main(true);",
+          "text": "When the driver switches ACC on"
+        },
+        {
+          "catalogue": "ACC-S20",
+          "cpp": "EXPECT_EQ(sil_.plant().last_command().status, ea::plant::AccStatus::kStandby);",
+          "text": "Then the ACC state is STANDBY"
+        },
+        {
+          "catalogue": "ACC-S21",
+          "cpp": "EXPECT_EQ(sil_.plant().last_command().accel_raw, 0); EXPECT_EQ(sil_.plant().last_command().brake_raw, 0);",
+          "text": "And neither acceleration nor braking is requested"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/acc/features/modes.feature",
+      "line": 13,
+      "name": "S02_SetEngagesAtTheCurrentSpeedRoundedToTheNearestKmH",
+      "requirements": [
+        "REQ-ACC-002",
+        "REQ-ACC-020"
+      ],
+      "scenario": "Set engages at the current speed rounded to the nearest km/h",
+      "steps": [
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(87.4);",
+          "text": "Given the ego vehicle drives at 87.4 km/h"
+        },
+        {
+          "catalogue": "ACC-S02",
+          "cpp": "sil_.switch_main(true);",
+          "text": "And the driver switches ACC on"
+        },
+        {
+          "catalogue": "ACC-S04",
+          "cpp": "sil_.press(ea::plant::Button::kSet, 1);",
+          "text": "When the driver presses the set button"
+        },
+        {
+          "catalogue": "ACC-S20",
+          "cpp": "EXPECT_EQ(sil_.plant().last_command().status, ea::plant::AccStatus::kActive);",
+          "text": "Then the ACC state is ACTIVE"
+        },
+        {
+          "catalogue": "ACC-S22",
+          "cpp": "EXPECT_DOUBLE_EQ(sil_.plant().last_command().set_speed_kph, 87.0);",
+          "text": "And the set speed is 87 km/h"
+        },
+        {
+          "catalogue": "ACC-S23",
+          "cpp": "EXPECT_EQ(sil_.plant().last_command().time_gap_setting, 2U);",
+          "text": "And the reported time gap setting is 2"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/acc/features/modes.feature",
+      "line": 22,
+      "name": "S03_SetIsIgnoredWhileTheBrakePedalIsPressed",
+      "requirements": [
+        "REQ-ACC-002"
+      ],
+      "scenario": "Set is ignored while the brake pedal is pressed",
+      "steps": [
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S02",
+          "cpp": "sil_.switch_main(true);",
+          "text": "And the driver switches ACC on"
+        },
+        {
+          "catalogue": "ACC-S06",
+          "cpp": "sil_.brake(true);",
+          "text": "And the driver presses the brake pedal"
+        },
+        {
+          "catalogue": "ACC-S04",
+          "cpp": "sil_.press(ea::plant::Button::kSet, 1);",
+          "text": "When the driver presses the set button"
+        },
+        {
+          "catalogue": "ACC-S20",
+          "cpp": "EXPECT_EQ(sil_.plant().last_command().status, ea::plant::AccStatus::kStandby);",
+          "text": "Then the ACC state is STANDBY"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/acc/features/modes.feature",
+      "line": 30,
+      "name": "S04_ReleasingTheBrakeWhileSetIsStillHeldDoesNotEngage",
+      "requirements": [
+        "REQ-ACC-002"
+      ],
+      "scenario": "Releasing the brake while Set is still held does not engage",
+      "steps": [
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S02",
+          "cpp": "sil_.switch_main(true);",
+          "text": "And the driver switches ACC on"
+        },
+        {
+          "catalogue": "ACC-S06",
+          "cpp": "sil_.brake(true);",
+          "text": "And the driver presses the brake pedal"
+        },
+        {
+          "catalogue": "ACC-S19",
+          "cpp": "sil_.release_brake_while_holding_set();",
+          "text": "When the driver releases the brake pedal while holding the set button"
+        },
+        {
+          "catalogue": "ACC-S20",
+          "cpp": "EXPECT_EQ(sil_.plant().last_command().status, ea::plant::AccStatus::kStandby);",
+          "text": "Then the ACC state is STANDBY"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "button",
+          "set"
+        ]
+      ],
+      "feature": "examples/acc/features/modes.feature",
+      "line": 38,
+      "name": "S05_EngagementIsRefusedBelow30KmH_Ex1",
+      "requirements": [
+        "REQ-ACC-003"
+      ],
+      "scenario": "Engagement is refused below 30 km/h #1",
+      "steps": [
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(60.0);",
+          "text": "Given the ego vehicle drives at 60 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "ACC-S04",
+          "cpp": "sil_.press(ea::plant::Button::kCancel, 1);",
+          "text": "And the driver presses the cancel button"
+        },
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(29.0);",
+          "text": "And the ego vehicle drives at 29 km/h"
+        },
+        {
+          "catalogue": "ACC-S04",
+          "cpp": "sil_.press(ea::plant::Button::kSet, 1);",
+          "text": "When the driver presses the set button"
+        },
+        {
+          "catalogue": "ACC-S20",
+          "cpp": "EXPECT_EQ(sil_.plant().last_command().status, ea::plant::AccStatus::kStandby);",
+          "text": "Then the ACC state is STANDBY"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "button",
+          "resume"
+        ]
+      ],
+      "feature": "examples/acc/features/modes.feature",
+      "line": 38,
+      "name": "S06_EngagementIsRefusedBelow30KmH_Ex2",
+      "requirements": [
+        "REQ-ACC-003"
+      ],
+      "scenario": "Engagement is refused below 30 km/h #2",
+      "steps": [
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(60.0);",
+          "text": "Given the ego vehicle drives at 60 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "ACC-S04",
+          "cpp": "sil_.press(ea::plant::Button::kCancel, 1);",
+          "text": "And the driver presses the cancel button"
+        },
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(29.0);",
+          "text": "And the ego vehicle drives at 29 km/h"
+        },
+        {
+          "catalogue": "ACC-S04",
+          "cpp": "sil_.press(ea::plant::Button::kResume, 1);",
+          "text": "When the driver presses the resume button"
+        },
+        {
+          "catalogue": "ACC-S20",
+          "cpp": "EXPECT_EQ(sil_.plant().last_command().status, ea::plant::AccStatus::kStandby);",
+          "text": "Then the ACC state is STANDBY"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/acc/features/modes.feature",
+      "line": 52,
+      "name": "S07_CancelKeepsTheSetSpeedAndResumeRestoresIt",
+      "requirements": [
+        "REQ-ACC-004",
+        "REQ-ACC-006"
+      ],
+      "scenario": "Cancel keeps the set speed and Resume restores it",
+      "steps": [
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "ACC-S04",
+          "cpp": "sil_.press(ea::plant::Button::kCancel, 1);",
+          "text": "When the driver presses the cancel button"
+        },
+        {
+          "catalogue": "ACC-S20",
+          "cpp": "EXPECT_EQ(sil_.plant().last_command().status, ea::plant::AccStatus::kStandby);",
+          "text": "Then the ACC state is STANDBY"
+        },
+        {
+          "catalogue": "ACC-S22",
+          "cpp": "EXPECT_DOUBLE_EQ(sil_.plant().last_command().set_speed_kph, 100.0);",
+          "text": "And the set speed is 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(80.0);",
+          "text": "When the ego vehicle drives at 80 km/h"
+        },
+        {
+          "catalogue": "ACC-S04",
+          "cpp": "sil_.press(ea::plant::Button::kResume, 1);",
+          "text": "And the driver presses the resume button"
+        },
+        {
+          "catalogue": "ACC-S20",
+          "cpp": "EXPECT_EQ(sil_.plant().last_command().status, ea::plant::AccStatus::kActive);",
+          "text": "Then the ACC state is ACTIVE"
+        },
+        {
+          "catalogue": "ACC-S22",
+          "cpp": "EXPECT_DOUBLE_EQ(sil_.plant().last_command().set_speed_kph, 100.0);",
+          "text": "And the set speed is 100 km/h"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/acc/features/modes.feature",
+      "line": 64,
+      "name": "S08_SpeedUpAndSpeedDownChangeTheSetSpeedIn5KmHSteps",
+      "requirements": [
+        "REQ-ACC-005"
+      ],
+      "scenario": "Speed Up and Speed Down change the set speed in 5 km/h steps",
+      "steps": [
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "ACC-S04",
+          "cpp": "sil_.press(ea::plant::Button::kSpeedUp, 1);",
+          "text": "When the driver presses the speed up button"
+        },
+        {
+          "catalogue": "ACC-S22",
+          "cpp": "EXPECT_DOUBLE_EQ(sil_.plant().last_command().set_speed_kph, 105.0);",
+          "text": "Then the set speed is 105 km/h"
+        },
+        {
+          "catalogue": "ACC-S04",
+          "cpp": "sil_.press(ea::plant::Button::kSpeedDown, 1);",
+          "text": "When the driver presses the speed down button"
+        },
+        {
+          "catalogue": "ACC-S04",
+          "cpp": "sil_.press(ea::plant::Button::kSpeedDown, 1);",
+          "text": "And the driver presses the speed down button"
+        },
+        {
+          "catalogue": "ACC-S22",
+          "cpp": "EXPECT_DOUBLE_EQ(sil_.plant().last_command().set_speed_kph, 95.0);",
+          "text": "Then the set speed is 95 km/h"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "speed",
+          "178"
+        ],
+        [
+          "button",
+          "speed up"
+        ],
+        [
+          "result",
+          "180"
+        ]
+      ],
+      "feature": "examples/acc/features/modes.feature",
+      "line": 74,
+      "name": "S09_TheSetSpeedStaysWithin30KmHTo180KmH_Ex1",
+      "requirements": [
+        "REQ-ACC-005"
+      ],
+      "scenario": "The set speed stays within 30 km/h to 180 km/h #1",
+      "steps": [
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(178.0);",
+          "text": "Given the ego vehicle drives at 178 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "ACC-S04",
+          "cpp": "sil_.press(ea::plant::Button::kSpeedUp, 1);",
+          "text": "When the driver presses the speed up button"
+        },
+        {
+          "catalogue": "ACC-S22",
+          "cpp": "EXPECT_DOUBLE_EQ(sil_.plant().last_command().set_speed_kph, 180.0);",
+          "text": "Then the set speed is 180 km/h"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "speed",
+          "32"
+        ],
+        [
+          "button",
+          "speed down"
+        ],
+        [
+          "result",
+          "30"
+        ]
+      ],
+      "feature": "examples/acc/features/modes.feature",
+      "line": 74,
+      "name": "S10_TheSetSpeedStaysWithin30KmHTo180KmH_Ex2",
+      "requirements": [
+        "REQ-ACC-005"
+      ],
+      "scenario": "The set speed stays within 30 km/h to 180 km/h #2",
+      "steps": [
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(32.0);",
+          "text": "Given the ego vehicle drives at 32 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "ACC-S04",
+          "cpp": "sil_.press(ea::plant::Button::kSpeedDown, 1);",
+          "text": "When the driver presses the speed down button"
+        },
+        {
+          "catalogue": "ACC-S22",
+          "cpp": "EXPECT_DOUBLE_EQ(sil_.plant().last_command().set_speed_kph, 30.0);",
+          "text": "Then the set speed is 30 km/h"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/acc/features/modes.feature",
+      "line": 86,
+      "name": "S11_TheBrakePedalDisengagesWithinOneCycle",
+      "requirements": [
+        "REQ-ACC-006",
+        "REQ-ACC-019"
+      ],
+      "scenario": "The brake pedal disengages within one cycle",
+      "steps": [
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "ACC-S06",
+          "cpp": "sil_.brake(true);",
+          "text": "When the driver presses the brake pedal"
+        },
+        {
+          "catalogue": "ACC-S20",
+          "cpp": "EXPECT_EQ(sil_.plant().last_command().status, ea::plant::AccStatus::kStandby);",
+          "text": "Then the ACC state is STANDBY"
+        },
+        {
+          "catalogue": "ACC-S24",
+          "cpp": "EXPECT_GE(sil_.plant().status_change_latency_ms(), 0.0); EXPECT_LE(sil_.plant().status_change_latency_ms(), 20.0);",
+          "text": "And the ACC state changed within 20 ms of the driver action"
+        },
+        {
+          "catalogue": "ACC-S22",
+          "cpp": "EXPECT_DOUBLE_EQ(sil_.plant().last_command().set_speed_kph, 100.0);",
+          "text": "And the set speed is 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S21",
+          "cpp": "EXPECT_EQ(sil_.plant().last_command().accel_raw, 0); EXPECT_EQ(sil_.plant().last_command().brake_raw, 0);",
+          "text": "And neither acceleration nor braking is requested"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/acc/features/modes.feature",
+      "line": 96,
+      "name": "S12_AcceleratorPedalOverrideSuspendsControl",
+      "requirements": [
+        "REQ-ACC-007"
+      ],
+      "scenario": "Accelerator pedal override suspends control",
+      "steps": [
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "ACC-S07",
+          "cpp": "sil_.accelerator(30.0);",
+          "text": "When the driver presses the accelerator pedal to 30 %"
+        },
+        {
+          "catalogue": "ACC-S20",
+          "cpp": "EXPECT_EQ(sil_.plant().last_command().status, ea::plant::AccStatus::kOverride);",
+          "text": "Then the ACC state is OVERRIDE"
+        },
+        {
+          "catalogue": "ACC-S21",
+          "cpp": "EXPECT_EQ(sil_.plant().last_command().accel_raw, 0); EXPECT_EQ(sil_.plant().last_command().brake_raw, 0);",
+          "text": "And neither acceleration nor braking is requested"
+        },
+        {
+          "catalogue": "ACC-S10",
+          "cpp": "sil_.run(2.0);",
+          "text": "When 2 s pass"
+        },
+        {
+          "catalogue": "ACC-S08",
+          "cpp": "sil_.accelerator(0.0);",
+          "text": "And the driver releases the accelerator pedal"
+        },
+        {
+          "catalogue": "ACC-S20",
+          "cpp": "EXPECT_EQ(sil_.plant().last_command().status, ea::plant::AccStatus::kActive);",
+          "text": "Then the ACC state is ACTIVE"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/acc/features/modes.feature",
+      "line": 107,
+      "name": "S13_TheBrakePedalAlsoEndsOVERRIDE",
+      "requirements": [
+        "REQ-ACC-006"
+      ],
+      "scenario": "The brake pedal also ends OVERRIDE",
+      "steps": [
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "ACC-S07",
+          "cpp": "sil_.accelerator(30.0);",
+          "text": "When the driver presses the accelerator pedal to 30 %"
+        },
+        {
+          "catalogue": "ACC-S20",
+          "cpp": "EXPECT_EQ(sil_.plant().last_command().status, ea::plant::AccStatus::kOverride);",
+          "text": "Then the ACC state is OVERRIDE"
+        },
+        {
+          "catalogue": "ACC-S06",
+          "cpp": "sil_.brake(true);",
+          "text": "When the driver presses the brake pedal"
+        },
+        {
+          "catalogue": "ACC-S20",
+          "cpp": "EXPECT_EQ(sil_.plant().last_command().status, ea::plant::AccStatus::kStandby);",
+          "text": "Then the ACC state is STANDBY"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/acc/features/modes.feature",
+      "line": 116,
+      "name": "S14_ALightTouchOfTheAcceleratorPedalDoesNotOverride",
+      "requirements": [
+        "REQ-ACC-007"
+      ],
+      "scenario": "A light touch of the accelerator pedal does not override",
+      "steps": [
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "ACC-S07",
+          "cpp": "sil_.accelerator(4.0);",
+          "text": "When the driver presses the accelerator pedal to 4 %"
+        },
+        {
+          "catalogue": "ACC-S20",
+          "cpp": "EXPECT_EQ(sil_.plant().last_command().status, ea::plant::AccStatus::kActive);",
+          "text": "Then the ACC state is ACTIVE"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/acc/features/modes.feature",
+      "line": 123,
+      "name": "S15_MainSwitchOffClearsTheSetSpeed",
+      "requirements": [
+        "REQ-ACC-008",
+        "REQ-ACC-019"
+      ],
+      "scenario": "Main switch off clears the set speed",
+      "steps": [
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "ACC-S02",
+          "cpp": "sil_.switch_main(false);",
+          "text": "When the driver switches ACC off"
+        },
+        {
+          "catalogue": "ACC-S20",
+          "cpp": "EXPECT_EQ(sil_.plant().last_command().status, ea::plant::AccStatus::kOff);",
+          "text": "Then the ACC state is OFF"
+        },
+        {
+          "catalogue": "ACC-S22",
+          "cpp": "EXPECT_DOUBLE_EQ(sil_.plant().last_command().set_speed_kph, 0.0);",
+          "text": "And the set speed is 0 km/h"
+        },
+        {
+          "catalogue": "ACC-S21",
+          "cpp": "EXPECT_EQ(sil_.plant().last_command().accel_raw, 0); EXPECT_EQ(sil_.plant().last_command().brake_raw, 0);",
+          "text": "And neither acceleration nor braking is requested"
+        },
+        {
+          "catalogue": "ACC-S02",
+          "cpp": "sil_.switch_main(true);",
+          "text": "When the driver switches ACC on"
+        },
+        {
+          "catalogue": "ACC-S04",
+          "cpp": "sil_.press(ea::plant::Button::kResume, 1);",
+          "text": "And the driver presses the resume button"
+        },
+        {
+          "catalogue": "ACC-S20",
+          "cpp": "EXPECT_EQ(sil_.plant().last_command().status, ea::plant::AccStatus::kStandby);",
+          "text": "Then the ACC state is STANDBY"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "lead",
+          "22"
+        ],
+        [
+          "state",
+          "STANDBY"
+        ]
+      ],
+      "feature": "examples/acc/features/modes.feature",
+      "line": 135,
+      "name": "S16_ACCHandsOverBelow25KmHAndOnlyThen_Ex1",
+      "requirements": [
+        "REQ-ACC-009"
+      ],
+      "scenario": "ACC hands over below 25 km/h and only then #1",
+      "steps": [
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(60.0);",
+          "text": "Given the ego vehicle drives at 60 km/h"
+        },
+        {
+          "catalogue": "ACC-S11",
+          "cpp": "sil_.plant().set_lead(30.0, 60.0, 0.0);",
+          "text": "And a lead vehicle drives 30 m ahead at 60 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "ACC-S13",
+          "cpp": "sil_.plant().lead_change_speed(22.0, 2.0);",
+          "text": "When the lead vehicle changes speed to 22 km/h at 2 m/s2"
+        },
+        {
+          "catalogue": "ACC-S10",
+          "cpp": "sil_.run(40.0);",
+          "text": "And 40 s pass"
+        },
+        {
+          "catalogue": "ACC-S20",
+          "cpp": "EXPECT_EQ(sil_.plant().last_command().status, ea::plant::AccStatus::kStandby);",
+          "text": "Then the ACC state is STANDBY"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "lead",
+          "27"
+        ],
+        [
+          "state",
+          "ACTIVE"
+        ]
+      ],
+      "feature": "examples/acc/features/modes.feature",
+      "line": 135,
+      "name": "S17_ACCHandsOverBelow25KmHAndOnlyThen_Ex2",
+      "requirements": [
+        "REQ-ACC-009"
+      ],
+      "scenario": "ACC hands over below 25 km/h and only then #2",
+      "steps": [
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(60.0);",
+          "text": "Given the ego vehicle drives at 60 km/h"
+        },
+        {
+          "catalogue": "ACC-S11",
+          "cpp": "sil_.plant().set_lead(30.0, 60.0, 0.0);",
+          "text": "And a lead vehicle drives 30 m ahead at 60 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "ACC-S13",
+          "cpp": "sil_.plant().lead_change_speed(27.0, 2.0);",
+          "text": "When the lead vehicle changes speed to 27 km/h at 2 m/s2"
+        },
+        {
+          "catalogue": "ACC-S10",
+          "cpp": "sil_.run(40.0);",
+          "text": "And 40 s pass"
+        },
+        {
+          "catalogue": "ACC-S20",
+          "cpp": "EXPECT_EQ(sil_.plant().last_command().status, ea::plant::AccStatus::kActive);",
+          "text": "Then the ACC state is ACTIVE"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/acc/features/control.feature",
+      "line": 4,
+      "name": "S18_AccelerateToAHigherSetSpeedWithinTheComfortLimits",
+      "requirements": [
+        "REQ-ACC-010",
+        "REQ-ACC-014",
+        "REQ-ACC-015",
+        "REQ-ACC-017",
+        "REQ-ACC-018"
+      ],
+      "scenario": "Accelerate to a higher set speed within the comfort limits",
+      "steps": [
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(80.0);",
+          "text": "Given the ego vehicle drives at 80 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "ACC-S05",
+          "cpp": "sil_.press(ea::plant::Button::kSpeedUp, 8);",
+          "text": "When the driver presses the speed up button 8 times"
+        },
+        {
+          "catalogue": "ACC-S10",
+          "cpp": "sil_.run(40.0);",
+          "text": "And 40 s pass"
+        },
+        {
+          "catalogue": "ACC-S22",
+          "cpp": "EXPECT_DOUBLE_EQ(sil_.plant().last_command().set_speed_kph, 120.0);",
+          "text": "Then the set speed is 120 km/h"
+        },
+        {
+          "catalogue": "ACC-S40",
+          "cpp": "EXPECT_NEAR(sil_.plant().ego_speed_kph(), 120.0, 1.0);",
+          "text": "And the ego speed is 120 km/h within 1 km/h"
+        },
+        {
+          "catalogue": "ACC-S27",
+          "cpp": "EXPECT_LE(sil_.plant().metrics().max_accel_raw, ea::plant::AccPlant::accel_raw(2.0));",
+          "text": "And the requested acceleration never exceeded 2.0 m/s2"
+        },
+        {
+          "catalogue": "ACC-S29",
+          "cpp": "EXPECT_LE(sil_.plant().metrics().max_jerk_up_raw, ea::plant::AccPlant::jerk_step_raw(2.5)); EXPECT_LE(sil_.plant().metrics().max_jerk_down_raw, ea::plant::AccPlant::jerk_step_raw(5.0));",
+          "text": "And the requested jerk never exceeded 2.5 m/s3 increasing and 5.0 m/s3 decreasing"
+        },
+        {
+          "catalogue": "ACC-S30",
+          "cpp": "EXPECT_EQ(sil_.plant().metrics().both_requested, 0U);",
+          "text": "And acceleration and braking were never requested together"
+        },
+        {
+          "catalogue": "ACC-S31",
+          "cpp": "EXPECT_EQ(sil_.plant().metrics().steering_nonzero, 0U);",
+          "text": "And the steering request was always 0 deg"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "setting",
+          "1"
+        ],
+        [
+          "distance",
+          "32.8"
+        ]
+      ],
+      "feature": "examples/acc/features/control.feature",
+      "line": 17,
+      "name": "S19_FollowASlowerVehicleAtTheSelectedTimeGap_Ex1",
+      "requirements": [
+        "REQ-ACC-011",
+        "REQ-ACC-012"
+      ],
+      "scenario": "Follow a slower vehicle at the selected time gap #1",
+      "steps": [
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(120.0);",
+          "text": "Given the ego vehicle drives at 120 km/h"
+        },
+        {
+          "catalogue": "ACC-S09",
+          "cpp": "sil_.plant().set_gap_setting(1U);",
+          "text": "And the time gap setting is 1"
+        },
+        {
+          "catalogue": "ACC-S11",
+          "cpp": "sil_.plant().set_lead(80.0, 100.0, 0.0);",
+          "text": "And a lead vehicle drives 80 m ahead at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "ACC-S10",
+          "cpp": "sil_.run(60.0);",
+          "text": "When 60 s pass"
+        },
+        {
+          "catalogue": "ACC-S43",
+          "cpp": "ASSERT_TRUE(sil_.plant().lead_present()); EXPECT_NEAR(sil_.plant().distance_m(), 32.8, 2.0);",
+          "text": "Then the distance to the lead vehicle is 32.8 m within 2 m"
+        },
+        {
+          "catalogue": "ACC-S40",
+          "cpp": "EXPECT_NEAR(sil_.plant().ego_speed_kph(), 100.0, 1.0);",
+          "text": "And the ego speed is 100 km/h within 1 km/h"
+        },
+        {
+          "catalogue": "ACC-S23",
+          "cpp": "EXPECT_EQ(sil_.plant().last_command().time_gap_setting, 1U);",
+          "text": "And the reported time gap setting is 1"
+        },
+        {
+          "catalogue": "ACC-S42",
+          "cpp": "EXPECT_LE(sil_.plant().metrics().max_ego_speed_kph, 120.0 + 1e-6);  // m/s <-> km/h round-off",
+          "text": "And the ego speed never exceeded 120 km/h"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "setting",
+          "2"
+        ],
+        [
+          "distance",
+          "46.7"
+        ]
+      ],
+      "feature": "examples/acc/features/control.feature",
+      "line": 17,
+      "name": "S20_FollowASlowerVehicleAtTheSelectedTimeGap_Ex2",
+      "requirements": [
+        "REQ-ACC-011",
+        "REQ-ACC-012"
+      ],
+      "scenario": "Follow a slower vehicle at the selected time gap #2",
+      "steps": [
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(120.0);",
+          "text": "Given the ego vehicle drives at 120 km/h"
+        },
+        {
+          "catalogue": "ACC-S09",
+          "cpp": "sil_.plant().set_gap_setting(2U);",
+          "text": "And the time gap setting is 2"
+        },
+        {
+          "catalogue": "ACC-S11",
+          "cpp": "sil_.plant().set_lead(80.0, 100.0, 0.0);",
+          "text": "And a lead vehicle drives 80 m ahead at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "ACC-S10",
+          "cpp": "sil_.run(60.0);",
+          "text": "When 60 s pass"
+        },
+        {
+          "catalogue": "ACC-S43",
+          "cpp": "ASSERT_TRUE(sil_.plant().lead_present()); EXPECT_NEAR(sil_.plant().distance_m(), 46.7, 2.0);",
+          "text": "Then the distance to the lead vehicle is 46.7 m within 2 m"
+        },
+        {
+          "catalogue": "ACC-S40",
+          "cpp": "EXPECT_NEAR(sil_.plant().ego_speed_kph(), 100.0, 1.0);",
+          "text": "And the ego speed is 100 km/h within 1 km/h"
+        },
+        {
+          "catalogue": "ACC-S23",
+          "cpp": "EXPECT_EQ(sil_.plant().last_command().time_gap_setting, 2U);",
+          "text": "And the reported time gap setting is 2"
+        },
+        {
+          "catalogue": "ACC-S42",
+          "cpp": "EXPECT_LE(sil_.plant().metrics().max_ego_speed_kph, 120.0 + 1e-6);  // m/s <-> km/h round-off",
+          "text": "And the ego speed never exceeded 120 km/h"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "setting",
+          "3"
+        ],
+        [
+          "distance",
+          "60.6"
+        ]
+      ],
+      "feature": "examples/acc/features/control.feature",
+      "line": 17,
+      "name": "S21_FollowASlowerVehicleAtTheSelectedTimeGap_Ex3",
+      "requirements": [
+        "REQ-ACC-011",
+        "REQ-ACC-012"
+      ],
+      "scenario": "Follow a slower vehicle at the selected time gap #3",
+      "steps": [
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(120.0);",
+          "text": "Given the ego vehicle drives at 120 km/h"
+        },
+        {
+          "catalogue": "ACC-S09",
+          "cpp": "sil_.plant().set_gap_setting(3U);",
+          "text": "And the time gap setting is 3"
+        },
+        {
+          "catalogue": "ACC-S11",
+          "cpp": "sil_.plant().set_lead(80.0, 100.0, 0.0);",
+          "text": "And a lead vehicle drives 80 m ahead at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "ACC-S10",
+          "cpp": "sil_.run(60.0);",
+          "text": "When 60 s pass"
+        },
+        {
+          "catalogue": "ACC-S43",
+          "cpp": "ASSERT_TRUE(sil_.plant().lead_present()); EXPECT_NEAR(sil_.plant().distance_m(), 60.6, 2.0);",
+          "text": "Then the distance to the lead vehicle is 60.6 m within 2 m"
+        },
+        {
+          "catalogue": "ACC-S40",
+          "cpp": "EXPECT_NEAR(sil_.plant().ego_speed_kph(), 100.0, 1.0);",
+          "text": "And the ego speed is 100 km/h within 1 km/h"
+        },
+        {
+          "catalogue": "ACC-S23",
+          "cpp": "EXPECT_EQ(sil_.plant().last_command().time_gap_setting, 3U);",
+          "text": "And the reported time gap setting is 3"
+        },
+        {
+          "catalogue": "ACC-S42",
+          "cpp": "EXPECT_LE(sil_.plant().metrics().max_ego_speed_kph, 120.0 + 1e-6);  // m/s <-> km/h round-off",
+          "text": "And the ego speed never exceeded 120 km/h"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/acc/features/control.feature",
+      "line": 35,
+      "name": "S22_AFasterLeadVehicleDoesNotPullTheEgoVehicleAboveTheSetSpeed",
+      "requirements": [
+        "REQ-ACC-011",
+        "REQ-ACC-010"
+      ],
+      "scenario": "A faster lead vehicle does not pull the ego vehicle above the set speed",
+      "steps": [
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S11",
+          "cpp": "sil_.plant().set_lead(50.0, 130.0, 0.0);",
+          "text": "And a lead vehicle drives 50 m ahead at 130 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "ACC-S10",
+          "cpp": "sil_.run(30.0);",
+          "text": "When 30 s pass"
+        },
+        {
+          "catalogue": "ACC-S40",
+          "cpp": "EXPECT_NEAR(sil_.plant().ego_speed_kph(), 100.0, 1.0);",
+          "text": "Then the ego speed is 100 km/h within 1 km/h"
+        },
+        {
+          "catalogue": "ACC-S42",
+          "cpp": "EXPECT_LE(sil_.plant().metrics().max_ego_speed_kph, 101.0 + 1e-6);  // m/s <-> km/h round-off",
+          "text": "And the ego speed never exceeded 101 km/h"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/acc/features/control.feature",
+      "line": 44,
+      "name": "S23_AVehicleInTheAdjacentLaneIsIgnored",
+      "requirements": [
+        "REQ-ACC-013"
+      ],
+      "scenario": "A vehicle in the adjacent lane is ignored",
+      "steps": [
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(120.0);",
+          "text": "Given the ego vehicle drives at 120 km/h"
+        },
+        {
+          "catalogue": "ACC-S12",
+          "cpp": "sil_.plant().set_lead(50.0, 80.0, 1.9);",
+          "text": "And a vehicle drives 50 m ahead at 80 km/h with 1.9 m lateral offset"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "ACC-S10",
+          "cpp": "sil_.run(20.0);",
+          "text": "When 20 s pass"
+        },
+        {
+          "catalogue": "ACC-S40",
+          "cpp": "EXPECT_NEAR(sil_.plant().ego_speed_kph(), 120.0, 1.0);",
+          "text": "Then the ego speed is 120 km/h within 1 km/h"
+        },
+        {
+          "catalogue": "ACC-S26",
+          "cpp": "EXPECT_EQ(sil_.plant().metrics().max_brake_raw, 0);",
+          "text": "And braking was never requested"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/acc/features/control.feature",
+      "line": 53,
+      "name": "S24_AVehicleJustInsideTheLaneBoundaryIsFollowed",
+      "requirements": [
+        "REQ-ACC-013"
+      ],
+      "scenario": "A vehicle just inside the lane boundary is followed",
+      "steps": [
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(120.0);",
+          "text": "Given the ego vehicle drives at 120 km/h"
+        },
+        {
+          "catalogue": "ACC-S12",
+          "cpp": "sil_.plant().set_lead(60.0, 80.0, 1.7);",
+          "text": "And a vehicle drives 60 m ahead at 80 km/h with 1.7 m lateral offset"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "ACC-S10",
+          "cpp": "sil_.run(2.0);",
+          "text": "When 2 s pass"
+        },
+        {
+          "catalogue": "ACC-S25",
+          "cpp": "EXPECT_GT(sil_.plant().last_command().brake_raw, 0);",
+          "text": "Then braking is requested"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/acc/features/control.feature",
+      "line": 61,
+      "name": "S25_AVehicleBeyond200MIsNotATargetEvenWhenClosingFast",
+      "requirements": [
+        "REQ-ACC-013"
+      ],
+      "scenario": "A vehicle beyond 200 m is not a target even when closing fast",
+      "steps": [
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(180.0);",
+          "text": "Given the ego vehicle drives at 180 km/h"
+        },
+        {
+          "catalogue": "ACC-S11",
+          "cpp": "sil_.plant().set_lead(245.0, 0.0, 0.0);",
+          "text": "And a lead vehicle drives 245 m ahead at 0 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "ACC-S10",
+          "cpp": "sil_.run(0.4);",
+          "text": "When 0.4 s pass"
+        },
+        {
+          "catalogue": "ACC-S26",
+          "cpp": "EXPECT_EQ(sil_.plant().metrics().max_brake_raw, 0);",
+          "text": "Then braking was never requested"
+        },
+        {
+          "catalogue": "ACC-S43",
+          "cpp": "ASSERT_TRUE(sil_.plant().lead_present()); EXPECT_NEAR(sil_.plant().distance_m(), 205.0, 2.0);",
+          "text": "And the distance to the lead vehicle is 205 m within 2 m"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "target",
+          "50"
+        ],
+        [
+          "decel",
+          "2"
+        ]
+      ],
+      "feature": "examples/acc/features/control.feature",
+      "line": 70,
+      "name": "S26_TheLeadVehicleBrakesWhileBeingFollowed_Ex1",
+      "requirements": [
+        "REQ-ACC-016",
+        "REQ-ACC-014",
+        "REQ-ACC-017"
+      ],
+      "scenario": "The lead vehicle brakes while being followed #1",
+      "steps": [
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S11",
+          "cpp": "sil_.plant().set_lead(46.7, 100.0, 0.0);",
+          "text": "And a lead vehicle drives 46.7 m ahead at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "ACC-S13",
+          "cpp": "sil_.plant().lead_change_speed(50.0, 2.0);",
+          "text": "When the lead vehicle changes speed to 50 km/h at 2 m/s2"
+        },
+        {
+          "catalogue": "ACC-S10",
+          "cpp": "sil_.run(30.0);",
+          "text": "And 30 s pass"
+        },
+        {
+          "catalogue": "ACC-S44",
+          "cpp": "EXPECT_GT(sil_.plant().metrics().min_distance_m, 5.0);",
+          "text": "Then the distance to the lead vehicle never fell below 5 m"
+        },
+        {
+          "catalogue": "ACC-S45",
+          "cpp": "EXPECT_FALSE(sil_.plant().metrics().collision);",
+          "text": "And no collision occurred"
+        },
+        {
+          "catalogue": "ACC-S28",
+          "cpp": "EXPECT_LE(sil_.plant().metrics().max_brake_raw, ea::plant::AccPlant::accel_raw(3.5));",
+          "text": "And the requested deceleration never exceeded 3.5 m/s2"
+        },
+        {
+          "catalogue": "ACC-S30",
+          "cpp": "EXPECT_EQ(sil_.plant().metrics().both_requested, 0U);",
+          "text": "And acceleration and braking were never requested together"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "target",
+          "50"
+        ],
+        [
+          "decel",
+          "3"
+        ]
+      ],
+      "feature": "examples/acc/features/control.feature",
+      "line": 70,
+      "name": "S27_TheLeadVehicleBrakesWhileBeingFollowed_Ex2",
+      "requirements": [
+        "REQ-ACC-016",
+        "REQ-ACC-014",
+        "REQ-ACC-017"
+      ],
+      "scenario": "The lead vehicle brakes while being followed #2",
+      "steps": [
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S11",
+          "cpp": "sil_.plant().set_lead(46.7, 100.0, 0.0);",
+          "text": "And a lead vehicle drives 46.7 m ahead at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "ACC-S13",
+          "cpp": "sil_.plant().lead_change_speed(50.0, 3.0);",
+          "text": "When the lead vehicle changes speed to 50 km/h at 3 m/s2"
+        },
+        {
+          "catalogue": "ACC-S10",
+          "cpp": "sil_.run(30.0);",
+          "text": "And 30 s pass"
+        },
+        {
+          "catalogue": "ACC-S44",
+          "cpp": "EXPECT_GT(sil_.plant().metrics().min_distance_m, 5.0);",
+          "text": "Then the distance to the lead vehicle never fell below 5 m"
+        },
+        {
+          "catalogue": "ACC-S45",
+          "cpp": "EXPECT_FALSE(sil_.plant().metrics().collision);",
+          "text": "And no collision occurred"
+        },
+        {
+          "catalogue": "ACC-S28",
+          "cpp": "EXPECT_LE(sil_.plant().metrics().max_brake_raw, ea::plant::AccPlant::accel_raw(3.5));",
+          "text": "And the requested deceleration never exceeded 3.5 m/s2"
+        },
+        {
+          "catalogue": "ACC-S30",
+          "cpp": "EXPECT_EQ(sil_.plant().metrics().both_requested, 0U);",
+          "text": "And acceleration and braking were never requested together"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "target",
+          "30"
+        ],
+        [
+          "decel",
+          "3"
+        ]
+      ],
+      "feature": "examples/acc/features/control.feature",
+      "line": 70,
+      "name": "S28_TheLeadVehicleBrakesWhileBeingFollowed_Ex3",
+      "requirements": [
+        "REQ-ACC-016",
+        "REQ-ACC-014",
+        "REQ-ACC-017"
+      ],
+      "scenario": "The lead vehicle brakes while being followed #3",
+      "steps": [
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S11",
+          "cpp": "sil_.plant().set_lead(46.7, 100.0, 0.0);",
+          "text": "And a lead vehicle drives 46.7 m ahead at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "ACC-S13",
+          "cpp": "sil_.plant().lead_change_speed(30.0, 3.0);",
+          "text": "When the lead vehicle changes speed to 30 km/h at 3 m/s2"
+        },
+        {
+          "catalogue": "ACC-S10",
+          "cpp": "sil_.run(30.0);",
+          "text": "And 30 s pass"
+        },
+        {
+          "catalogue": "ACC-S44",
+          "cpp": "EXPECT_GT(sil_.plant().metrics().min_distance_m, 5.0);",
+          "text": "Then the distance to the lead vehicle never fell below 5 m"
+        },
+        {
+          "catalogue": "ACC-S45",
+          "cpp": "EXPECT_FALSE(sil_.plant().metrics().collision);",
+          "text": "And no collision occurred"
+        },
+        {
+          "catalogue": "ACC-S28",
+          "cpp": "EXPECT_LE(sil_.plant().metrics().max_brake_raw, ea::plant::AccPlant::accel_raw(3.5));",
+          "text": "And the requested deceleration never exceeded 3.5 m/s2"
+        },
+        {
+          "catalogue": "ACC-S30",
+          "cpp": "EXPECT_EQ(sil_.plant().metrics().both_requested, 0U);",
+          "text": "And acceleration and braking were never requested together"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/acc/features/control.feature",
+      "line": 88,
+      "name": "S29_ASlowerVehicleCutsIn25MAhead",
+      "requirements": [
+        "REQ-ACC-016",
+        "REQ-ACC-014",
+        "REQ-ACC-015"
+      ],
+      "scenario": "A slower vehicle cuts in 25 m ahead",
+      "steps": [
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "ACC-S14",
+          "cpp": "sil_.plant().cut_in(25.0, 80.0);",
+          "text": "When a vehicle cuts in 25 m ahead at 80 km/h"
+        },
+        {
+          "catalogue": "ACC-S10",
+          "cpp": "sil_.run(30.0);",
+          "text": "And 30 s pass"
+        },
+        {
+          "catalogue": "ACC-S44",
+          "cpp": "EXPECT_GT(sil_.plant().metrics().min_distance_m, 5.0);",
+          "text": "Then the distance to the lead vehicle never fell below 5 m"
+        },
+        {
+          "catalogue": "ACC-S28",
+          "cpp": "EXPECT_LE(sil_.plant().metrics().max_brake_raw, ea::plant::AccPlant::accel_raw(3.5));",
+          "text": "And the requested deceleration never exceeded 3.5 m/s2"
+        },
+        {
+          "catalogue": "ACC-S29",
+          "cpp": "EXPECT_LE(sil_.plant().metrics().max_jerk_up_raw, ea::plant::AccPlant::jerk_step_raw(2.5)); EXPECT_LE(sil_.plant().metrics().max_jerk_down_raw, ea::plant::AccPlant::jerk_step_raw(5.0));",
+          "text": "And the requested jerk never exceeded 2.5 m/s3 increasing and 5.0 m/s3 decreasing"
+        },
+        {
+          "catalogue": "ACC-S43",
+          "cpp": "ASSERT_TRUE(sil_.plant().lead_present()); EXPECT_NEAR(sil_.plant().distance_m(), 38.3, 2.0);",
+          "text": "And the distance to the lead vehicle is 38.3 m within 2 m"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/acc/features/control.feature",
+      "line": 99,
+      "name": "S30_TheLeadVehicleLeavesAndTheEgoVehicleResumesTheSetSpeed",
+      "requirements": [
+        "REQ-ACC-011"
+      ],
+      "scenario": "The lead vehicle leaves and the ego vehicle resumes the set speed",
+      "steps": [
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(120.0);",
+          "text": "Given the ego vehicle drives at 120 km/h"
+        },
+        {
+          "catalogue": "ACC-S11",
+          "cpp": "sil_.plant().set_lead(46.7, 100.0, 0.0);",
+          "text": "And a lead vehicle drives 46.7 m ahead at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "ACC-S10",
+          "cpp": "sil_.run(10.0);",
+          "text": "When 10 s pass"
+        },
+        {
+          "catalogue": "ACC-S15",
+          "cpp": "sil_.plant().remove_lead();",
+          "text": "And the lead vehicle leaves the lane"
+        },
+        {
+          "catalogue": "ACC-S10",
+          "cpp": "sil_.run(40.0);",
+          "text": "And 40 s pass"
+        },
+        {
+          "catalogue": "ACC-S40",
+          "cpp": "EXPECT_NEAR(sil_.plant().ego_speed_kph(), 120.0, 1.0);",
+          "text": "Then the ego speed is 120 km/h within 1 km/h"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/acc/features/control.feature",
+      "line": 109,
+      "name": "S31_EveryCommandFrameIsE2EProtectedAndSentEveryCycle",
+      "requirements": [
+        "REQ-ACC-020",
+        "REQ-ACC-018"
+      ],
+      "scenario": "Every command frame is E2E protected and sent every cycle",
+      "steps": [
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S11",
+          "cpp": "sil_.plant().set_lead(60.0, 90.0, 0.0);",
+          "text": "And a lead vehicle drives 60 m ahead at 90 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "ACC-S10",
+          "cpp": "sil_.run(10.0);",
+          "text": "When 10 s pass"
+        },
+        {
+          "catalogue": "ACC-S32",
+          "cpp": "EXPECT_GT(sil_.plant().metrics().command_frames, 0U); EXPECT_EQ(sil_.plant().metrics().command_e2e_errors, 0U);",
+          "text": "Then every command frame passed the E2E check"
+        },
+        {
+          "catalogue": "ACC-S33",
+          "cpp": "EXPECT_EQ(sil_.plant().metrics().command_frames, sil_.plant().metrics().ticks);",
+          "text": "And one command frame was sent per 20 ms"
+        },
+        {
+          "catalogue": "ACC-S31",
+          "cpp": "EXPECT_EQ(sil_.plant().metrics().steering_nonzero, 0U);",
+          "text": "And the steering request was always 0 deg"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "n",
+          "2"
+        ],
+        [
+          "fault",
+          "lost"
+        ]
+      ],
+      "feature": "examples/acc/features/faults.feature",
+      "line": 4,
+      "name": "S32_LostRadarFramesBelowTheTimeoutAreTolerated_Ex1",
+      "requirements": [
+        "REQ-ACC-021"
+      ],
+      "scenario": "Lost radar frames below the timeout are tolerated #1",
+      "steps": [
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "ACC-S16",
+          "cpp": "sil_.plant().lose_frames(ea::plant::Stream::kRadar, 2U);",
+          "text": "When the next 2 radar frames are lost"
+        },
+        {
+          "catalogue": "ACC-S10",
+          "cpp": "sil_.run(1.0);",
+          "text": "And 1 s passes"
+        },
+        {
+          "catalogue": "ACC-S20",
+          "cpp": "EXPECT_EQ(sil_.plant().last_command().status, ea::plant::AccStatus::kActive);",
+          "text": "Then the ACC state is ACTIVE"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "n",
+          "2"
+        ],
+        [
+          "fault",
+          "corrupted"
+        ]
+      ],
+      "feature": "examples/acc/features/faults.feature",
+      "line": 4,
+      "name": "S33_LostRadarFramesBelowTheTimeoutAreTolerated_Ex2",
+      "requirements": [
+        "REQ-ACC-021"
+      ],
+      "scenario": "Lost radar frames below the timeout are tolerated #2",
+      "steps": [
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "ACC-S16",
+          "cpp": "sil_.plant().corrupt_frames(ea::plant::Stream::kRadar, 2U);",
+          "text": "When the next 2 radar frames are corrupted"
+        },
+        {
+          "catalogue": "ACC-S10",
+          "cpp": "sil_.run(1.0);",
+          "text": "And 1 s passes"
+        },
+        {
+          "catalogue": "ACC-S20",
+          "cpp": "EXPECT_EQ(sil_.plant().last_command().status, ea::plant::AccStatus::kActive);",
+          "text": "Then the ACC state is ACTIVE"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "n",
+          "3"
+        ],
+        [
+          "fault",
+          "lost"
+        ]
+      ],
+      "feature": "examples/acc/features/faults.feature",
+      "line": 17,
+      "name": "S34_RadarFramesMissingFor120MsLeadToFAULT_Ex1",
+      "requirements": [
+        "REQ-ACC-021",
+        "REQ-ACC-019"
+      ],
+      "scenario": "Radar frames missing for 120 ms lead to FAULT #1",
+      "steps": [
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "ACC-S16",
+          "cpp": "sil_.plant().lose_frames(ea::plant::Stream::kRadar, 3U);",
+          "text": "When the next 3 radar frames are lost"
+        },
+        {
+          "catalogue": "ACC-S10",
+          "cpp": "sil_.run(1.0);",
+          "text": "And 1 s passes"
+        },
+        {
+          "catalogue": "ACC-S20",
+          "cpp": "EXPECT_EQ(sil_.plant().last_command().status, ea::plant::AccStatus::kFault);",
+          "text": "Then the ACC state is FAULT"
+        },
+        {
+          "catalogue": "ACC-S21",
+          "cpp": "EXPECT_EQ(sil_.plant().last_command().accel_raw, 0); EXPECT_EQ(sil_.plant().last_command().brake_raw, 0);",
+          "text": "And neither acceleration nor braking is requested"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "n",
+          "3"
+        ],
+        [
+          "fault",
+          "corrupted"
+        ]
+      ],
+      "feature": "examples/acc/features/faults.feature",
+      "line": 17,
+      "name": "S35_RadarFramesMissingFor120MsLeadToFAULT_Ex2",
+      "requirements": [
+        "REQ-ACC-021",
+        "REQ-ACC-019"
+      ],
+      "scenario": "Radar frames missing for 120 ms lead to FAULT #2",
+      "steps": [
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "ACC-S16",
+          "cpp": "sil_.plant().corrupt_frames(ea::plant::Stream::kRadar, 3U);",
+          "text": "When the next 3 radar frames are corrupted"
+        },
+        {
+          "catalogue": "ACC-S10",
+          "cpp": "sil_.run(1.0);",
+          "text": "And 1 s passes"
+        },
+        {
+          "catalogue": "ACC-S20",
+          "cpp": "EXPECT_EQ(sil_.plant().last_command().status, ea::plant::AccStatus::kFault);",
+          "text": "Then the ACC state is FAULT"
+        },
+        {
+          "catalogue": "ACC-S21",
+          "cpp": "EXPECT_EQ(sil_.plant().last_command().accel_raw, 0); EXPECT_EQ(sil_.plant().last_command().brake_raw, 0);",
+          "text": "And neither acceleration nor braking is requested"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "n",
+          "2"
+        ],
+        [
+          "message",
+          "ego state"
+        ],
+        [
+          "state",
+          "ACTIVE"
+        ]
+      ],
+      "feature": "examples/acc/features/faults.feature",
+      "line": 31,
+      "name": "S36_VehicleFramesMissingFor60MsLeadToFAULT_Ex1",
+      "requirements": [
+        "REQ-ACC-021"
+      ],
+      "scenario": "Vehicle frames missing for 60 ms lead to FAULT #1",
+      "steps": [
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "ACC-S17",
+          "cpp": "sil_.plant().lose_frames(ea::plant::Stream::kEgoState, 2U);",
+          "text": "When the next 2 ego state frames are lost"
+        },
+        {
+          "catalogue": "ACC-S10",
+          "cpp": "sil_.run(1.0);",
+          "text": "And 1 s passes"
+        },
+        {
+          "catalogue": "ACC-S20",
+          "cpp": "EXPECT_EQ(sil_.plant().last_command().status, ea::plant::AccStatus::kActive);",
+          "text": "Then the ACC state is ACTIVE"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "n",
+          "3"
+        ],
+        [
+          "message",
+          "ego state"
+        ],
+        [
+          "state",
+          "FAULT"
+        ]
+      ],
+      "feature": "examples/acc/features/faults.feature",
+      "line": 31,
+      "name": "S37_VehicleFramesMissingFor60MsLeadToFAULT_Ex2",
+      "requirements": [
+        "REQ-ACC-021"
+      ],
+      "scenario": "Vehicle frames missing for 60 ms lead to FAULT #2",
+      "steps": [
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "ACC-S17",
+          "cpp": "sil_.plant().lose_frames(ea::plant::Stream::kEgoState, 3U);",
+          "text": "When the next 3 ego state frames are lost"
+        },
+        {
+          "catalogue": "ACC-S10",
+          "cpp": "sil_.run(1.0);",
+          "text": "And 1 s passes"
+        },
+        {
+          "catalogue": "ACC-S20",
+          "cpp": "EXPECT_EQ(sil_.plant().last_command().status, ea::plant::AccStatus::kFault);",
+          "text": "Then the ACC state is FAULT"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "n",
+          "2"
+        ],
+        [
+          "message",
+          "driver input"
+        ],
+        [
+          "state",
+          "ACTIVE"
+        ]
+      ],
+      "feature": "examples/acc/features/faults.feature",
+      "line": 31,
+      "name": "S38_VehicleFramesMissingFor60MsLeadToFAULT_Ex3",
+      "requirements": [
+        "REQ-ACC-021"
+      ],
+      "scenario": "Vehicle frames missing for 60 ms lead to FAULT #3",
+      "steps": [
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "ACC-S17",
+          "cpp": "sil_.plant().lose_frames(ea::plant::Stream::kDriverInput, 2U);",
+          "text": "When the next 2 driver input frames are lost"
+        },
+        {
+          "catalogue": "ACC-S10",
+          "cpp": "sil_.run(1.0);",
+          "text": "And 1 s passes"
+        },
+        {
+          "catalogue": "ACC-S20",
+          "cpp": "EXPECT_EQ(sil_.plant().last_command().status, ea::plant::AccStatus::kActive);",
+          "text": "Then the ACC state is ACTIVE"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "n",
+          "3"
+        ],
+        [
+          "message",
+          "driver input"
+        ],
+        [
+          "state",
+          "FAULT"
+        ]
+      ],
+      "feature": "examples/acc/features/faults.feature",
+      "line": 31,
+      "name": "S39_VehicleFramesMissingFor60MsLeadToFAULT_Ex4",
+      "requirements": [
+        "REQ-ACC-021"
+      ],
+      "scenario": "Vehicle frames missing for 60 ms lead to FAULT #4",
+      "steps": [
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "ACC-S17",
+          "cpp": "sil_.plant().lose_frames(ea::plant::Stream::kDriverInput, 3U);",
+          "text": "When the next 3 driver input frames are lost"
+        },
+        {
+          "catalogue": "ACC-S10",
+          "cpp": "sil_.run(1.0);",
+          "text": "And 1 s passes"
+        },
+        {
+          "catalogue": "ACC-S20",
+          "cpp": "EXPECT_EQ(sil_.plant().last_command().status, ea::plant::AccStatus::kFault);",
+          "text": "Then the ACC state is FAULT"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "message",
+          "radar"
+        ],
+        [
+          "n",
+          "2"
+        ],
+        [
+          "state",
+          "ACTIVE"
+        ]
+      ],
+      "feature": "examples/acc/features/faults.feature",
+      "line": 46,
+      "name": "S40_APausedSenderIsDetectedExactlyAtTheTimeout_Ex1",
+      "requirements": [
+        "REQ-ACC-021"
+      ],
+      "scenario": "A paused sender is detected exactly at the timeout #1",
+      "steps": [
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "ACC-S18",
+          "cpp": "sil_.plant().skip_frames(ea::plant::Stream::kRadar, 2U);",
+          "text": "When the radar sender pauses for 2 frames"
+        },
+        {
+          "catalogue": "ACC-S10",
+          "cpp": "sil_.run(1.0);",
+          "text": "And 1 s passes"
+        },
+        {
+          "catalogue": "ACC-S20",
+          "cpp": "EXPECT_EQ(sil_.plant().last_command().status, ea::plant::AccStatus::kActive);",
+          "text": "Then the ACC state is ACTIVE"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "message",
+          "radar"
+        ],
+        [
+          "n",
+          "3"
+        ],
+        [
+          "state",
+          "FAULT"
+        ]
+      ],
+      "feature": "examples/acc/features/faults.feature",
+      "line": 46,
+      "name": "S41_APausedSenderIsDetectedExactlyAtTheTimeout_Ex2",
+      "requirements": [
+        "REQ-ACC-021"
+      ],
+      "scenario": "A paused sender is detected exactly at the timeout #2",
+      "steps": [
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "ACC-S18",
+          "cpp": "sil_.plant().skip_frames(ea::plant::Stream::kRadar, 3U);",
+          "text": "When the radar sender pauses for 3 frames"
+        },
+        {
+          "catalogue": "ACC-S10",
+          "cpp": "sil_.run(1.0);",
+          "text": "And 1 s passes"
+        },
+        {
+          "catalogue": "ACC-S20",
+          "cpp": "EXPECT_EQ(sil_.plant().last_command().status, ea::plant::AccStatus::kFault);",
+          "text": "Then the ACC state is FAULT"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "message",
+          "ego state"
+        ],
+        [
+          "n",
+          "2"
+        ],
+        [
+          "state",
+          "ACTIVE"
+        ]
+      ],
+      "feature": "examples/acc/features/faults.feature",
+      "line": 46,
+      "name": "S42_APausedSenderIsDetectedExactlyAtTheTimeout_Ex3",
+      "requirements": [
+        "REQ-ACC-021"
+      ],
+      "scenario": "A paused sender is detected exactly at the timeout #3",
+      "steps": [
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "ACC-S18",
+          "cpp": "sil_.plant().skip_frames(ea::plant::Stream::kEgoState, 2U);",
+          "text": "When the ego state sender pauses for 2 frames"
+        },
+        {
+          "catalogue": "ACC-S10",
+          "cpp": "sil_.run(1.0);",
+          "text": "And 1 s passes"
+        },
+        {
+          "catalogue": "ACC-S20",
+          "cpp": "EXPECT_EQ(sil_.plant().last_command().status, ea::plant::AccStatus::kActive);",
+          "text": "Then the ACC state is ACTIVE"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "message",
+          "ego state"
+        ],
+        [
+          "n",
+          "3"
+        ],
+        [
+          "state",
+          "FAULT"
+        ]
+      ],
+      "feature": "examples/acc/features/faults.feature",
+      "line": 46,
+      "name": "S43_APausedSenderIsDetectedExactlyAtTheTimeout_Ex4",
+      "requirements": [
+        "REQ-ACC-021"
+      ],
+      "scenario": "A paused sender is detected exactly at the timeout #4",
+      "steps": [
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "ACC-S18",
+          "cpp": "sil_.plant().skip_frames(ea::plant::Stream::kEgoState, 3U);",
+          "text": "When the ego state sender pauses for 3 frames"
+        },
+        {
+          "catalogue": "ACC-S10",
+          "cpp": "sil_.run(1.0);",
+          "text": "And 1 s passes"
+        },
+        {
+          "catalogue": "ACC-S20",
+          "cpp": "EXPECT_EQ(sil_.plant().last_command().status, ea::plant::AccStatus::kFault);",
+          "text": "Then the ACC state is FAULT"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "message",
+          "driver input"
+        ],
+        [
+          "n",
+          "2"
+        ],
+        [
+          "state",
+          "ACTIVE"
+        ]
+      ],
+      "feature": "examples/acc/features/faults.feature",
+      "line": 46,
+      "name": "S44_APausedSenderIsDetectedExactlyAtTheTimeout_Ex5",
+      "requirements": [
+        "REQ-ACC-021"
+      ],
+      "scenario": "A paused sender is detected exactly at the timeout #5",
+      "steps": [
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "ACC-S18",
+          "cpp": "sil_.plant().skip_frames(ea::plant::Stream::kDriverInput, 2U);",
+          "text": "When the driver input sender pauses for 2 frames"
+        },
+        {
+          "catalogue": "ACC-S10",
+          "cpp": "sil_.run(1.0);",
+          "text": "And 1 s passes"
+        },
+        {
+          "catalogue": "ACC-S20",
+          "cpp": "EXPECT_EQ(sil_.plant().last_command().status, ea::plant::AccStatus::kActive);",
+          "text": "Then the ACC state is ACTIVE"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "message",
+          "driver input"
+        ],
+        [
+          "n",
+          "3"
+        ],
+        [
+          "state",
+          "FAULT"
+        ]
+      ],
+      "feature": "examples/acc/features/faults.feature",
+      "line": 46,
+      "name": "S45_APausedSenderIsDetectedExactlyAtTheTimeout_Ex6",
+      "requirements": [
+        "REQ-ACC-021"
+      ],
+      "scenario": "A paused sender is detected exactly at the timeout #6",
+      "steps": [
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "ACC-S18",
+          "cpp": "sil_.plant().skip_frames(ea::plant::Stream::kDriverInput, 3U);",
+          "text": "When the driver input sender pauses for 3 frames"
+        },
+        {
+          "catalogue": "ACC-S10",
+          "cpp": "sil_.run(1.0);",
+          "text": "And 1 s passes"
+        },
+        {
+          "catalogue": "ACC-S20",
+          "cpp": "EXPECT_EQ(sil_.plant().last_command().status, ea::plant::AccStatus::kFault);",
+          "text": "Then the ACC state is FAULT"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/acc/features/faults.feature",
+      "line": 63,
+      "name": "S46_FAULTIsLatchedUntilTheMainSwitchIsTurnedOff",
+      "requirements": [
+        "REQ-ACC-022"
+      ],
+      "scenario": "FAULT is latched until the main switch is turned off",
+      "steps": [
+        {
+          "catalogue": "ACC-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "ACC-S16",
+          "cpp": "sil_.plant().lose_frames(ea::plant::Stream::kRadar, 5U);",
+          "text": "When the next 5 radar frames are lost"
+        },
+        {
+          "catalogue": "ACC-S10",
+          "cpp": "sil_.run(2.0);",
+          "text": "And 2 s pass"
+        },
+        {
+          "catalogue": "ACC-S04",
+          "cpp": "sil_.press(ea::plant::Button::kSet, 1);",
+          "text": "And the driver presses the set button"
+        },
+        {
+          "catalogue": "ACC-S20",
+          "cpp": "EXPECT_EQ(sil_.plant().last_command().status, ea::plant::AccStatus::kFault);",
+          "text": "Then the ACC state is FAULT"
+        },
+        {
+          "catalogue": "ACC-S02",
+          "cpp": "sil_.switch_main(false);",
+          "text": "When the driver switches ACC off"
+        },
+        {
+          "catalogue": "ACC-S20",
+          "cpp": "EXPECT_EQ(sil_.plant().last_command().status, ea::plant::AccStatus::kOff);",
+          "text": "Then the ACC state is OFF"
+        },
+        {
+          "catalogue": "ACC-S02",
+          "cpp": "sil_.switch_main(true);",
+          "text": "When the driver switches ACC on"
+        },
+        {
+          "catalogue": "ACC-S04",
+          "cpp": "sil_.press(ea::plant::Button::kSet, 1);",
+          "text": "And the driver presses the set button"
+        },
+        {
+          "catalogue": "ACC-S20",
+          "cpp": "EXPECT_EQ(sil_.plant().last_command().status, ea::plant::AccStatus::kActive);",
+          "text": "Then the ACC state is ACTIVE"
+        }
+      ]
+    }
+  ]
+}
