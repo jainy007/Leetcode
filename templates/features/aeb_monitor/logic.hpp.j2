@@ -1,0 +1,48 @@
+#pragma once
+
+#include <cstdint>
+
+#include "{{ inc }}/{{ snake }}_types.hpp"
+
+namespace {{ ns }} {
+
+// Feature 'aeb_monitor' logic: justification of the AEB controller's braking requests from an
+// independent evaluation of the radar target. Every new command (new E2E counter) is checked;
+// a violation latches SAFE_STATE. In MONITORING the permit is granted and the counter of the
+// last checked command is echoed for the actuator ECU.
+class {{ component.name }}Logic {
+public:
+    enum class Reason : std::uint8_t {
+{% for r in reasons %}
+        k{{ r | camel }} = {{ loop.index0 }}U,
+{% endfor %}
+    };
+
+    static constexpr double kPartialStatusCode = {{ cal.partial_status_code | cpp_double }};
+    static constexpr double kFullStatusCode = {{ cal.full_status_code | cpp_double }};
+    static constexpr double kPartialDecelMps2 = {{ cal.partial_decel_mps2 | cpp_double }};
+    static constexpr double kFullDecelMps2 = {{ cal.full_decel_mps2 | cpp_double }};
+    static constexpr double kRequestToleranceMps2 = {{ cal.request_tolerance_mps2 | cpp_double }};
+    static constexpr double kPartialBrakeTtcS = {{ cal.partial_brake_ttc_s | cpp_double }};
+    static constexpr double kFullBrakeTtcS = {{ cal.full_brake_ttc_s | cpp_double }};
+    static constexpr double kTtcMarginS = {{ cal.ttc_margin_s | cpp_double }};
+    static constexpr double kMaxTargetRangeM = {{ cal.max_target_range_m | cpp_double }};
+    static constexpr double kLaneHalfWidthM = {{ cal.lane_half_width_m | cpp_double }};
+    static constexpr double kLaneMarginM = {{ cal.lane_margin_m | cpp_double }};
+
+    void step(const Inputs& in, Outputs& out) noexcept;
+    State state() const noexcept { return state_; }
+    Reason reason() const noexcept { return reason_; }
+
+private:
+    void check_command(const Inputs& in) noexcept;
+    void violation(Reason r) noexcept;
+
+    State state_ = State::kInit;
+    Reason reason_ = Reason::kNone;
+    double last_counter_ = -1.0;  // counter of the last checked command
+    bool braking_justified_ = false;
+    bool full_braking_justified_ = false;
+};
+
+}  // namespace {{ ns }}

@@ -1,0 +1,42 @@
+# Qualitative fault tree analysis of the ACC safety goals (ISO 26262-9 clause 8, deductive).
+# The generator computes the minimal cut sets (GEN-068). A cut set that lies inside a single
+# element needs that element's own ASIL to reach the goal's ASIL. A cut set over several elements
+# is acceptable if one of them reaches it, or if all of them are rated for it by decomposition
+# (X(Y) with Y >= goal). Quantitative analysis (PMHF, FMEDA) needs hardware data and is open.
+schema_version: 1
+
+elements:
+  controller: {asil: B(D), node: controller, text: "AccController node (generated, examples/acc)"}
+  monitor: {asil: B(D), node: monitor, text: "AccMonitor node (generated, examples/acc_monitor)"}
+  actuator: {asil: D, text: "powertrain and brake ECU, assumptions of use AoU-1 to AoU-4"}
+  radar: {asil: B, text: "radar object list, assumption of use AoU-5"}
+  bus: {asil: D, text: "vehicle bus with E2E protection (residual error of the E2E check)"}
+
+events:
+  C-ACCEL-HIGH: {element: controller, text: "controller requests acceleration above the envelope or faster than the jerk limit"}
+  C-DECEL-HIGH: {element: controller, text: "controller requests deceleration above the envelope or faster than the jerk limit"}
+  C-ACCEL-CLOSE: {element: controller, text: "controller keeps requesting acceleration toward a close vehicle"}
+  C-FROZEN: {element: controller, text: "controller output freezes, stops, or requests outside ACTIVE"}
+  C-BRAKE-LOST: {element: controller, text: "controller silently stops braking while reporting ACTIVE"}
+  M-APPROVE-LIMIT: {element: monitor, text: "monitor approves a command outside the limits or the rate envelope"}
+  M-APPROVE-CLOSE: {element: monitor, text: "monitor approves acceleration toward a close vehicle that does not decay"}
+  A-UNGATED: {element: actuator, text: "actuator applies a command the monitor did not approve (violates AoU-1)"}
+  A-HOLD: {element: actuator, text: "actuator keeps applying a request beyond 60 ms without a new approved command (violates AoU-2)"}
+  A-NO-TOR: {element: actuator, text: "actuator raises no takeover request in its safe state (violates AoU-3)"}
+  A-SPURIOUS: {element: actuator, text: "actuator accelerates or brakes on its own"}
+  R-MISSED: {element: radar, text: "radar misses or misplaces the vehicle ahead"}
+  B-UNDETECTED: {element: bus, text: "bus corruption that the E2E check does not detect"}
+
+gates:
+  G-ACCS-001: {or: [{and: [C-ACCEL-HIGH, {or: [M-APPROVE-LIMIT, A-UNGATED]}]}, A-SPURIOUS, B-UNDETECTED]}
+  G-ACCS-002: {or: [{and: [C-DECEL-HIGH, {or: [M-APPROVE-LIMIT, A-UNGATED]}]}, A-SPURIOUS, B-UNDETECTED]}
+  G-ACCS-003: {or: [{and: [C-ACCEL-CLOSE, {or: [M-APPROVE-CLOSE, A-UNGATED]}]}, R-MISSED, A-SPURIOUS, B-UNDETECTED]}
+  G-ACCS-004: {or: [{and: [C-FROZEN, {or: [A-HOLD, A-UNGATED]}]}, A-SPURIOUS, B-UNDETECTED]}
+  G-ACCS-007: {or: [C-BRAKE-LOST, {and: [C-FROZEN, A-NO-TOR]}]}
+
+trees:
+  - {safety_goal: REQ-ACCS-001, top: acceleration above the ACC envelope is applied, gate: G-ACCS-001}
+  - {safety_goal: REQ-ACCS-002, top: deceleration above the ACC envelope is applied, gate: G-ACCS-002}
+  - {safety_goal: REQ-ACCS-003, top: acceleration toward a close vehicle continues, gate: G-ACCS-003}
+  - {safety_goal: REQ-ACCS-004, top: a frozen or invalid command keeps being applied, gate: G-ACCS-004}
+  - {safety_goal: REQ-ACCS-007, top: ACC braking is lost without a takeover request, gate: G-ACCS-007}

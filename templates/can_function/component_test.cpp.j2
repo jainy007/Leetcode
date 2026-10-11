@@ -1,0 +1,92 @@
+#include <gtest/gtest.h>
+
+#include <array>
+#include <cstdint>
+
+#include "ea/codec/bits.hpp"
+#include "ea/e2e/p11.hpp"
+#include "{{ inc }}/{{ snake }}.hpp"
+
+// Robustness of the generated receive / send framework of {{ component.name }}: paths that no
+// driving scenario reaches (oversized payloads, wrong CRC, out-of-range value behind a valid CRC,
+// unknown ids, state names, tx index out of range). Each rx message must count such frames as
+// not received and become unhealthy after its timeout.
+
+namespace {{ ns }} {
+namespace {
+
+TEST({{ component.name }}ComponentTest, StateNames) {
+{% for s in states %}
+    EXPECT_STREQ(to_string(State::k{{ s | camel }}), "{{ s }}");
+{% endfor %}
+    EXPECT_STREQ(to_string(static_cast<State>(255U)), "UNKNOWN");
+}
+
+TEST({{ component.name }}ComponentTest, TxIndexOutOfRange) {
+    const {{ component.name }} c;
+    EXPECT_EQ(c.tx_can_id({{ component.name }}::kTxCount), 0U);
+    EXPECT_EQ(c.tx_frame({{ component.name }}::kTxCount).size(), 0U);
+}
+{% for r in rx %}
+{% set vec = codec_vectors | selectattr("name", "equalto", r.cname) | first %}
+{% set probes = inputs | selectattr("entry.cname", "equalto", r.cname) | list %}
+{% set ok = (probes[0].name ~ "_ok") if probes else "all_ok" %}
+{% set bads = vec.signals | selectattr("raw_above", "ne", none) | list %}
+{% set bad = bads[0] if bads else none %}
+
+std::array<std::uint8_t, k{{ r.cname }}PayloadLength> {{ r.snake }}_frame(ea::e2e::P11Protector& prot, bool out_of_range) {
+    {{ r.cname }} m{};
+{% for s in vec.signals %}
+    m.{{ s.name }} = {{ s.phys.mid | cpp_double }};
+{% endfor %}
+    std::array<std::uint8_t, k{{ r.cname }}PayloadLength> f{};
+    EXPECT_TRUE(encode_{{ r.snake }}(m, ea::ByteSpan(f.data(), f.size())).ok());
+{% if bad %}
+    if (out_of_range) {  // {{ bad.name }} one step above its range, behind a valid CRC
+        EXPECT_TRUE(ea::codec::insert(ea::ByteSpan(f.data(), f.size()), ea::codec::ByteOrder::{{ bad.order }}, {{ bad.start }}U, {{ bad.length }}U, {{ bad.raw_above }}ULL).ok());
+    }
+{% else %}
+    (void)out_of_range;  // every raw value of every signal is in range
+{% endif %}
+    EXPECT_TRUE(prot.protect(ea::ByteSpan(f.data(), f.size())).ok());
+    return f;
+}
+
+TEST({{ component.name }}ComponentTest, {{ r.cname }}InvalidFramesCountAsMissing) {
+    {{ component.name }} c;
+    ea::e2e::P11Protector prot(ea::e2e::P11Config{ {{- r.e2e.data_id | cpp_hex(4) }}, {{ r.e2e.crc_byte }}U, {{ r.e2e.counter_bit }}U, {{ r.msg.payload_length }}U, {{ r.e2e.max_delta }}U});
+    std::array<std::uint8_t, k{{ r.cname }}PayloadLength> f = {{ r.snake }}_frame(prot, false);
+    c.on_frame(k{{ r.cname }}CanId, ea::ConstByteSpan(f.data(), f.size()));
+    c.on_frame(0x7FFU, ea::ConstByteSpan(f.data(), f.size()));  // unknown id: ignored
+    c.step();
+{% if probes %}
+    ASSERT_TRUE(c.inputs().{{ ok }});
+{% else %}
+    // No input is bound to {{ r.cname }}: its health is visible only through all_ok.
+{% endif %}
+    const std::array<std::uint8_t, k{{ r.cname }}PayloadLength + 1U> oversized{};
+    for (std::uint32_t k = 0U; k < {{ r.timeout_cycles }}U; ++k) {
+        if (k % 3U == 0U) {
+            f = {{ r.snake }}_frame(prot, true);
+{% if not bad %}
+            f[{{ r.e2e.crc_byte }}U] = static_cast<std::uint8_t>(f[{{ r.e2e.crc_byte }}U] ^ 0x01U);
+{% endif %}
+            c.on_frame(k{{ r.cname }}CanId, ea::ConstByteSpan(f.data(), f.size()));
+        } else if (k % 3U == 1U) {
+            f = {{ r.snake }}_frame(prot, false);
+            f[{{ r.e2e.crc_byte }}U] = static_cast<std::uint8_t>(f[{{ r.e2e.crc_byte }}U] ^ 0x01U);  // wrong CRC
+            c.on_frame(k{{ r.cname }}CanId, ea::ConstByteSpan(f.data(), f.size()));
+        } else {
+            c.on_frame(k{{ r.cname }}CanId, ea::ConstByteSpan(oversized.data(), oversized.size()));
+        }
+        c.step();
+    }
+{% if probes %}
+    EXPECT_FALSE(c.inputs().{{ ok }});
+{% endif %}
+    EXPECT_FALSE(c.inputs().all_ok);
+}
+{% endfor %}
+
+}  // namespace
+}  // namespace {{ ns }}

@@ -1,0 +1,133 @@
+{% import "gpu_stage/_macros.j2" as m %}
+#include "{{ inc }}/{{ snake }}.hpp"
+
+#include <cmath>
+#include <cstdio>
+
+#include "ea/core/sha256.hpp"
+
+namespace {{ ns }} {
+
+namespace {
+
+// Reads exactly dst.size() bytes from <dir>/<rel> and verifies the SHA-256 (GPU-006). INIT only.
+ea::Result<void> load_verified(const char* dir, const char* rel, const char* sha256_hex, ea::ByteSpan dst) noexcept {
+    char path[512];
+    const int n = std::snprintf(path, sizeof(path), "%s/%s", dir, rel);
+    if (n < 0 || static_cast<std::size_t>(n) >= sizeof(path)) {
+        return ea::ErrorCode::kInvalidArgument;
+    }
+    std::FILE* f = std::fopen(path, "rb");
+    if (f == nullptr) {
+        return ea::ErrorCode::kIoError;
+    }
+    const std::size_t got = std::fread(dst.data(), 1U, dst.size(), f);
+    const int extra = std::fgetc(f);
+    (void)std::fclose(f);
+    if (got != dst.size() || extra != EOF) {
+        return ea::ErrorCode::kLengthMismatch;
+    }
+    ea::Sha256Digest expected{};
+    if (!ea::parse_sha256_hex(sha256_hex, expected)) {
+        return ea::ErrorCode::kInvalidArgument;
+    }
+    if (ea::Sha256::digest(ea::ConstByteSpan(dst)) != expected) {
+        return ea::ErrorCode::kIntegrityError;
+    }
+    return ea::ok_result();
+}
+
+}  // namespace
+
+const char* to_string(OutputStatus s) noexcept {
+    switch (s) {
+        case OutputStatus::kValid:
+            return "VALID";
+        case OutputStatus::kDeadlineMiss:
+            return "DEADLINE_MISS";
+        case OutputStatus::kImplausible:
+            return "IMPLAUSIBLE";
+        case OutputStatus::kBackendError:
+            return "BACKEND_ERROR";
+    }
+    return "UNKNOWN";
+}
+
+const char* {{ component.name }}::weight_file(Weight w) noexcept {
+    switch (w) {
+{% for w in weights %}
+        case Weight::k{{ w.cname }}:
+            return "{{ w.file }}";
+{% endfor %}
+    }
+    return "";
+}
+
+const char* {{ component.name }}::weight_sha256(Weight w) noexcept {
+    switch (w) {
+{% for w in weights %}
+        case Weight::k{{ w.cname }}:
+            return "{{ w.sha256 }}";
+{% endfor %}
+    }
+    return "";
+}
+
+ea::Result<void> {{ component.name }}::init(const char* model_dir) noexcept {
+    if (initialized_) {
+        return ea::ErrorCode::kAlreadyInitialized;
+    }
+    if (model_dir == nullptr) {
+        return ea::ErrorCode::kInvalidArgument;
+    }
+    // 1. Verify every artefact before touching the backend.
+{% for w in weights %}
+    EA_TRY(load_verified(model_dir, weight_file(Weight::k{{ w.cname }}), weight_sha256(Weight::k{{ w.cname }}),
+                         ea::ByteSpan({{ w.name }}_.data(), {{ w.name }}_.size())));
+{% endfor %}
+    // 2. Allocate all memory and load constants (INIT phase).
+    EA_TRY(backend_.configure(ea::Span<const ea::gpu::TensorDesc>(kTensors), ea::Span<const ea::gpu::OpDesc>(kOps)));
+{% for w in weights %}
+    EA_TRY(backend_.upload({{ w.index }}U, ea::ConstByteSpan({{ w.name }}_.data(), {{ w.name }}_.size())));
+{% endfor %}
+    // 3. Freeze the graph; no allocation from here on.
+    EA_TRY(backend_.seal());
+    allocations_at_init_ = backend_.allocation_count();
+    initialized_ = true;
+    return ea::ok_result();
+}
+
+Output {{ component.name }}::run(const Input& input) noexcept {
+    Output out{};
+    sequence_ += 1U;
+    out.sequence = sequence_;
+    if (!initialized_) {
+        out.timestamp_ns = clock_.now();
+        out.status = OutputStatus::kBackendError;
+        return out;
+    }
+    const ea::osal::Nanoseconds t0 = clock_.now();
+    const bool ok =
+        backend_.upload(kInputTensor, ea::ConstByteSpan(input.data(), input.size())).ok() && backend_.execute().ok() &&
+        backend_.download(kOutputTensor, ea::ByteSpan(reinterpret_cast<std::uint8_t*>(out.scores.data()),  // NOLINT
+                                                      sizeof(out.scores)))
+            .ok();
+    const ea::osal::Nanoseconds t1 = clock_.now();
+    out.timestamp_ns = t1;
+    if (!ok) {
+        out.status = OutputStatus::kBackendError;
+    } else if (t1 - t0 > kDeadline) {
+        out.status = OutputStatus::kDeadlineMiss;  // GPU-009
+    } else if (!plausible(out.scores)) {
+        out.status = OutputStatus::kImplausible;  // GPU-008
+    } else {
+        out.status = OutputStatus::kValid;
+    }
+    return out;
+}
+
+bool {{ component.name }}::plausible(const Scores& s) noexcept {
+{{ m.plausibility_body(checks) }}
+}
+
+}  // namespace {{ ns }}

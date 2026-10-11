@@ -1,0 +1,21 @@
+#include <gtest/gtest.h>
+
+#include "sil/{{ snake }}_sil.hpp"
+
+// System SIL tests generated from the Gherkin scenarios; each step expands from the step
+// catalogues (sil/steps/can_function.yaml, monitored_actuator.yaml, can_system.yaml and the
+// feature catalogues of both nodes). Test names are referenced by trace.json.
+
+namespace {{ ns }} {
+namespace {
+
+namespace cmd = {{ controller.tables[1] }};  // command signal layout for override faults
+
+class {{ sil_suite }} : public ::testing::Test {
+protected:
+    {{ component.name }}Sil sil_;
+};
+{% include "common/sil_test.cpp.j2" %}
+
+}  // namespace
+}  // namespace {{ ns }}

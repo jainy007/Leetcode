@@ -1,0 +1,70 @@
+#pragma once
+
+#include <cstdint>
+
+#include "ea/core/result.hpp"
+#include "ea/core/span.hpp"
+#include "ea/osal/clock.hpp"
+#include "ea/osal/periodic_task.hpp"
+#include "ea/supervision/supervision.hpp"
+#include "{{ inc }}/{{ snake }}.hpp"
+
+namespace {{ ns }} {
+
+// Provides the frame received since the previous cycle (empty span if none).
+class IFrameSource {
+public:
+    virtual ~IFrameSource() = default;
+    virtual ea::ConstByteSpan poll() noexcept = 0;
+
+protected:
+    IFrameSource() = default;
+    IFrameSource(const IFrameSource&) = default;
+    IFrameSource& operator=(const IFrameSource&) = default;
+};
+{% if status %}
+
+// Sends the status message payload ({{ status.message.name }}).
+class IStatusSink {
+public:
+    virtual ~IStatusSink() = default;
+    virtual void send(ea::ConstByteSpan payload) noexcept = 0;
+
+protected:
+    IStatusSink() = default;
+    IStatusSink(const IStatusSink&) = default;
+    IStatusSink& operator=(const IStatusSink&) = default;
+};
+{% endif %}
+
+// Binds {{ component.name }} to a periodic real-time task (CPU-006, CPU-007) with deadline supervision.
+class {{ component.name }}Task {
+public:
+    static constexpr ea::osal::TaskConfig kConfig{"{{ task.name }}", {{ task.period_ms }} * ea::osal::kNsPerMs, {{ task.fifo_priority }}, {{ task.cpu_mask | cpp_hex }}};
+    static constexpr ea::osal::Nanoseconds kWcetBudget = {{ task.wcet_budget_us }} * ea::osal::kNsPerUs;
+
+    {{ component.name }}Task({{ component.name }}& component, IFrameSource& source,{% if status %} IStatusSink& sink,{% endif %} const ea::osal::IClock& clock) noexcept;
+
+    ea::Result<void> start() noexcept;
+    void stop() noexcept;
+
+    // One activation; called by the task thread, or directly by SIL with a virtual clock.
+    void cycle() noexcept;
+
+    const ea::sup::DeadlineSupervision& deadline() const noexcept { return deadline_; }
+    const ea::osal::PeriodicTask& task() const noexcept { return task_; }
+
+private:
+    static void entry(void* self) noexcept;
+
+    {{ component.name }}& component_;
+    IFrameSource& source_;
+{% if status %}
+    IStatusSink& sink_;
+{% endif %}
+    const ea::osal::IClock& clock_;
+    ea::sup::DeadlineSupervision deadline_{0, kWcetBudget};
+    ea::osal::PeriodicTask task_;
+};
+
+}  // namespace {{ ns }}

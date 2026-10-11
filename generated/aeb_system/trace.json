@@ -1,0 +1,894 @@
+{
+  "component": {
+    "asil": "D",
+    "name": "AebSystem",
+    "namespace": "adas::aeb_system",
+    "profile": "asil"
+  },
+  "generated_files": [
+    "generated/aeb_system/CMakeLists.txt",
+    "generated/aeb_system/safety_analysis.md",
+    "generated/aeb_system/sil/aeb_system_sil.hpp",
+    "generated/aeb_system/sil/aeb_system_sil_test.cpp"
+  ],
+  "generator": "ea-gen 0.1.0",
+  "inputs_sha256": "3c38374823eec23e9813f37d7d20dee2e10abbfc8a620b8f99e7ed929b104323",
+  "pattern": "can_system",
+  "project": "aeb_system",
+  "requirements": [
+    {
+      "asil": "D",
+      "ears": "unwanted",
+      "id": "REQ-AEBS-001",
+      "satisfied_by": [
+        "safety_goal:REQ-AEBS-001"
+      ],
+      "tests": [
+        "S01_BrakingRequestedOnAFreeRoadIsNeverApplied_Ex1",
+        "S02_BrakingRequestedOnAFreeRoadIsNeverApplied_Ex2",
+        "S03_FullBrakingRequestedDuringAWarningIsNeverApplied",
+        "S04_BrakingAboveTheFullBrakingLevelIsNeverApplied"
+      ],
+      "text": "If the AEB function requests braking that is not justified by an in-lane target, outside a braking state or above the braking levels, then the AebSystem shall prevent its application and reach the safe state within the FTTI of 780 ms.",
+      "verification": [
+        "sil",
+        "analysis"
+      ]
+    },
+    {
+      "asil": "B",
+      "ears": "unwanted",
+      "id": "REQ-AEBS-002",
+      "satisfied_by": [
+        "safety_goal:REQ-AEBS-002"
+      ],
+      "tests": [
+        "S05_AStoppedOrFrozenControllerDuringFullBrakingIsRampedOut_Ex1",
+        "S06_AStoppedOrFrozenControllerDuringFullBrakingIsRampedOut_Ex2"
+      ],
+      "text": "If the AEB commands stop or freeze, then the AebSystem shall reach the safe state within the FTTI of 780 ms.",
+      "verification": [
+        "sil",
+        "analysis"
+      ]
+    },
+    {
+      "asil": "D",
+      "ears": "ubiquitous",
+      "id": "REQ-AEBS-003",
+      "satisfied_by": [
+        "actuator"
+      ],
+      "tests": [
+        "S05_AStoppedOrFrozenControllerDuringFullBrakingIsRampedOut_Ex1",
+        "S06_AStoppedOrFrozenControllerDuringFullBrakingIsRampedOut_Ex2",
+        "S07_ALostMonitorDuringBrakingMakesTheActuatorRampOut"
+      ],
+      "text": "The AebSystem shall apply an AEB command only if the AebMonitor grants the permit and echoes that command's E2E counter; on monitor SAFE_STATE or 60 ms without a valid monitor frame it shall ramp braking out at 20 m/s3 and request a driver takeover.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "QM",
+      "ears": "unwanted",
+      "id": "REQ-AEBS-004",
+      "satisfied_by": [
+        "allocation"
+      ],
+      "tests": [
+        "S08_AStationaryVehicleIsStillAvoided_Ex1",
+        "S09_AStationaryVehicleIsStillAvoided_Ex2",
+        "S10_AStationaryVehicleIsStillAvoided_Ex3",
+        "S11_TheImpactSpeedAt80KmHStaysAt40KmHOrLess",
+        "S12_AVehicleDrivingAt20KmHIsAvoidedFrom80KmH",
+        "S13_ALateCutInIsBrakedForAtOnce",
+        "S14_KickdownCancelsBrakingWithoutAMonitorIntervention"
+      ],
+      "text": "If no fault is present, then the AebSystem shall not let the AebMonitor intervene and shall keep the collision avoidance performance of REQ-AEB-010 to REQ-AEB-012.",
+      "verification": [
+        "sil"
+      ]
+    }
+  ],
+  "sil_suite": "AebSystemSilTest",
+  "tests": [
+    {
+      "example": [
+        [
+          "a",
+          "4.0"
+        ]
+      ],
+      "feature": "examples/aeb_system/features/safety_goals.feature",
+      "line": 7,
+      "name": "S01_BrakingRequestedOnAFreeRoadIsNeverApplied_Ex1",
+      "requirements": [
+        "REQ-AEBS-001"
+      ],
+      "scenario": "Braking requested on a free road is never applied #1",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(80.0);",
+          "text": "Given the ego vehicle drives at 80 km/h"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(1.0);",
+          "text": "When 1 s pass"
+        },
+        {
+          "catalogue": "SYS-S01",
+          "cpp": "sil_.override_command(cmd::kAebBrakeRequest, 4.0, 100U);",
+          "text": "And the controller sends AebBrakeRequest = 4.0 with a valid CRC for 100 frames"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(2.0);",
+          "text": "And 2 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kSafeState);",
+          "text": "Then the monitor state is SAFE_STATE"
+        },
+        {
+          "catalogue": "AEBM-S02",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AebMonitorReason::kRequestOutsideBraking));",
+          "text": "And the monitor reports the fault reason REQUEST_OUTSIDE_BRAKING"
+        },
+        {
+          "catalogue": "SYS-S02",
+          "cpp": "ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 680.0 + 1e-6);",
+          "text": "And the actuator entered its safe state within the fault detection budget of REQ-AEBS-001"
+        },
+        {
+          "catalogue": "MON-S12",
+          "cpp": "EXPECT_LE(sil_.actuator().metrics().max_applied_decel_mps2, 0.0 + 1e-9);",
+          "text": "And the applied deceleration never exceeded 0 m/s2"
+        },
+        {
+          "catalogue": "MON-S16",
+          "cpp": "EXPECT_LE(sil_.plant().metrics().max_decel_mps2, 0.1 + 1e-9);",
+          "text": "And the actual deceleration of the vehicle never exceeded 0.1 m/s2"
+        },
+        {
+          "catalogue": "MON-S09",
+          "cpp": "EXPECT_EQ(sil_.actuator().takeover_request(), true);",
+          "text": "And the actuator requests a driver takeover"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "a",
+          "8.0"
+        ]
+      ],
+      "feature": "examples/aeb_system/features/safety_goals.feature",
+      "line": 7,
+      "name": "S02_BrakingRequestedOnAFreeRoadIsNeverApplied_Ex2",
+      "requirements": [
+        "REQ-AEBS-001"
+      ],
+      "scenario": "Braking requested on a free road is never applied #2",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(80.0);",
+          "text": "Given the ego vehicle drives at 80 km/h"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(1.0);",
+          "text": "When 1 s pass"
+        },
+        {
+          "catalogue": "SYS-S01",
+          "cpp": "sil_.override_command(cmd::kAebBrakeRequest, 8.0, 100U);",
+          "text": "And the controller sends AebBrakeRequest = 8.0 with a valid CRC for 100 frames"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(2.0);",
+          "text": "And 2 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kSafeState);",
+          "text": "Then the monitor state is SAFE_STATE"
+        },
+        {
+          "catalogue": "AEBM-S02",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AebMonitorReason::kRequestOutsideBraking));",
+          "text": "And the monitor reports the fault reason REQUEST_OUTSIDE_BRAKING"
+        },
+        {
+          "catalogue": "SYS-S02",
+          "cpp": "ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 680.0 + 1e-6);",
+          "text": "And the actuator entered its safe state within the fault detection budget of REQ-AEBS-001"
+        },
+        {
+          "catalogue": "MON-S12",
+          "cpp": "EXPECT_LE(sil_.actuator().metrics().max_applied_decel_mps2, 0.0 + 1e-9);",
+          "text": "And the applied deceleration never exceeded 0 m/s2"
+        },
+        {
+          "catalogue": "MON-S16",
+          "cpp": "EXPECT_LE(sil_.plant().metrics().max_decel_mps2, 0.1 + 1e-9);",
+          "text": "And the actual deceleration of the vehicle never exceeded 0.1 m/s2"
+        },
+        {
+          "catalogue": "MON-S09",
+          "cpp": "EXPECT_EQ(sil_.actuator().takeover_request(), true);",
+          "text": "And the actuator requests a driver takeover"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/aeb_system/features/safety_goals.feature",
+      "line": 25,
+      "name": "S03_FullBrakingRequestedDuringAWarningIsNeverApplied",
+      "requirements": [
+        "REQ-AEBS-001"
+      ],
+      "scenario": "Full braking requested during a warning is never applied",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(50.0);",
+          "text": "Given the ego vehicle drives at 50 km/h"
+        },
+        {
+          "catalogue": "FN-S19",
+          "cpp": "sil_.plant().set_lead(60.0, 0.0, 0.0);",
+          "text": "And a stationary vehicle stands 60 m ahead"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(1.6);",
+          "text": "When 1.6 s pass"
+        },
+        {
+          "catalogue": "AEB-S01",
+          "cpp": "EXPECT_EQ(sil_.feature().last_command().status, ea::plant::AebStatus::kWarning);",
+          "text": "Then the AEB state is WARNING"
+        },
+        {
+          "catalogue": "SYS-S01",
+          "cpp": "sil_.override_command(cmd::kAebBrakeRequest, 8.0, 5U);",
+          "text": "When the controller sends AebBrakeRequest = 8.0 with a valid CRC for 5 frames"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "And 0.2 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kSafeState);",
+          "text": "Then the monitor state is SAFE_STATE"
+        },
+        {
+          "catalogue": "SYS-S02",
+          "cpp": "ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 680.0 + 1e-6);",
+          "text": "And the actuator entered its safe state within the fault detection budget of REQ-AEBS-001"
+        },
+        {
+          "catalogue": "MON-S12",
+          "cpp": "EXPECT_LE(sil_.actuator().metrics().max_applied_decel_mps2, 0.0 + 1e-9);",
+          "text": "And the applied deceleration never exceeded 0 m/s2"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/aeb_system/features/safety_goals.feature",
+      "line": 37,
+      "name": "S04_BrakingAboveTheFullBrakingLevelIsNeverApplied",
+      "requirements": [
+        "REQ-AEBS-001"
+      ],
+      "scenario": "Braking above the full braking level is never applied",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(50.0);",
+          "text": "Given the ego vehicle drives at 50 km/h"
+        },
+        {
+          "catalogue": "FN-S19",
+          "cpp": "sil_.plant().set_lead(60.0, 0.0, 0.0);",
+          "text": "And a stationary vehicle stands 60 m ahead"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(4.0);",
+          "text": "When 4 s pass"
+        },
+        {
+          "catalogue": "AEB-S01",
+          "cpp": "EXPECT_EQ(sil_.feature().last_command().status, ea::plant::AebStatus::kFullBrake);",
+          "text": "Then the AEB state is FULL_BRAKE"
+        },
+        {
+          "catalogue": "SYS-S01",
+          "cpp": "sil_.override_command(cmd::kAebBrakeRequest, 9.5, 100U);",
+          "text": "When the controller sends AebBrakeRequest = 9.5 with a valid CRC for 100 frames"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "And 0.2 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kSafeState);",
+          "text": "Then the monitor state is SAFE_STATE"
+        },
+        {
+          "catalogue": "AEBM-S02",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AebMonitorReason::kRequestLimit));",
+          "text": "And the monitor reports the fault reason REQUEST_LIMIT"
+        },
+        {
+          "catalogue": "SYS-S02",
+          "cpp": "ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 680.0 + 1e-6);",
+          "text": "And the actuator entered its safe state within the fault detection budget of REQ-AEBS-001"
+        },
+        {
+          "catalogue": "MON-S12",
+          "cpp": "EXPECT_LE(sil_.actuator().metrics().max_applied_decel_mps2, 8.1 + 1e-9);",
+          "text": "And the applied deceleration never exceeded 8.1 m/s2"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "f",
+          "stops"
+        ]
+      ],
+      "feature": "examples/aeb_system/features/safety_goals.feature",
+      "line": 50,
+      "name": "S05_AStoppedOrFrozenControllerDuringFullBrakingIsRampedOut_Ex1",
+      "requirements": [
+        "REQ-AEBS-002",
+        "REQ-AEBS-003"
+      ],
+      "scenario": "A stopped or frozen controller during full braking is ramped out #1",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(50.0);",
+          "text": "Given the ego vehicle drives at 50 km/h"
+        },
+        {
+          "catalogue": "FN-S19",
+          "cpp": "sil_.plant().set_lead(60.0, 0.0, 0.0);",
+          "text": "And a stationary vehicle stands 60 m ahead"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(4.0);",
+          "text": "When 4 s pass"
+        },
+        {
+          "catalogue": "AEB-S01",
+          "cpp": "EXPECT_EQ(sil_.feature().last_command().status, ea::plant::AebStatus::kFullBrake);",
+          "text": "Then the AEB state is FULL_BRAKE"
+        },
+        {
+          "catalogue": "MON-S20",
+          "cpp": "sil_.command_fault(ea::plant::NodeFault::kLose, 1000000U);",
+          "text": "When the command sender stops"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(2.0);",
+          "text": "And 2 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kSafeState);",
+          "text": "Then the monitor state is SAFE_STATE"
+        },
+        {
+          "catalogue": "AEBM-S02",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AebMonitorReason::kCommandTimeout));",
+          "text": "And the monitor reports the fault reason COMMAND_TIMEOUT"
+        },
+        {
+          "catalogue": "SYS-S02",
+          "cpp": "ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 680.0 + 1e-6);",
+          "text": "And the actuator entered its safe state within the fault detection budget of REQ-AEBS-002"
+        },
+        {
+          "catalogue": "MON-S13",
+          "cpp": "ASSERT_GE(sil_.actuator().metrics().ramp_out_done_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().ramp_out_done_s - sil_.plant().metrics().first_fault_s) * 1000.0, 460 + 1e-6);",
+          "text": "And the request was ramped out within 460 ms of the first fault"
+        },
+        {
+          "catalogue": "MON-S09",
+          "cpp": "EXPECT_EQ(sil_.actuator().takeover_request(), true);",
+          "text": "And the actuator requests a driver takeover"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "f",
+          "freezes"
+        ]
+      ],
+      "feature": "examples/aeb_system/features/safety_goals.feature",
+      "line": 50,
+      "name": "S06_AStoppedOrFrozenControllerDuringFullBrakingIsRampedOut_Ex2",
+      "requirements": [
+        "REQ-AEBS-002",
+        "REQ-AEBS-003"
+      ],
+      "scenario": "A stopped or frozen controller during full braking is ramped out #2",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(50.0);",
+          "text": "Given the ego vehicle drives at 50 km/h"
+        },
+        {
+          "catalogue": "FN-S19",
+          "cpp": "sil_.plant().set_lead(60.0, 0.0, 0.0);",
+          "text": "And a stationary vehicle stands 60 m ahead"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(4.0);",
+          "text": "When 4 s pass"
+        },
+        {
+          "catalogue": "AEB-S01",
+          "cpp": "EXPECT_EQ(sil_.feature().last_command().status, ea::plant::AebStatus::kFullBrake);",
+          "text": "Then the AEB state is FULL_BRAKE"
+        },
+        {
+          "catalogue": "MON-S20",
+          "cpp": "sil_.command_fault(ea::plant::NodeFault::kFreeze, 1000000U);",
+          "text": "When the command sender freezes"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(2.0);",
+          "text": "And 2 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kSafeState);",
+          "text": "Then the monitor state is SAFE_STATE"
+        },
+        {
+          "catalogue": "AEBM-S02",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AebMonitorReason::kCommandTimeout));",
+          "text": "And the monitor reports the fault reason COMMAND_TIMEOUT"
+        },
+        {
+          "catalogue": "SYS-S02",
+          "cpp": "ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 680.0 + 1e-6);",
+          "text": "And the actuator entered its safe state within the fault detection budget of REQ-AEBS-002"
+        },
+        {
+          "catalogue": "MON-S13",
+          "cpp": "ASSERT_GE(sil_.actuator().metrics().ramp_out_done_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().ramp_out_done_s - sil_.plant().metrics().first_fault_s) * 1000.0, 460 + 1e-6);",
+          "text": "And the request was ramped out within 460 ms of the first fault"
+        },
+        {
+          "catalogue": "MON-S09",
+          "cpp": "EXPECT_EQ(sil_.actuator().takeover_request(), true);",
+          "text": "And the actuator requests a driver takeover"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/aeb_system/features/safety_goals.feature",
+      "line": 69,
+      "name": "S07_ALostMonitorDuringBrakingMakesTheActuatorRampOut",
+      "requirements": [
+        "REQ-AEBS-003"
+      ],
+      "scenario": "A lost monitor during braking makes the actuator ramp out",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(50.0);",
+          "text": "Given the ego vehicle drives at 50 km/h"
+        },
+        {
+          "catalogue": "FN-S19",
+          "cpp": "sil_.plant().set_lead(60.0, 0.0, 0.0);",
+          "text": "And a stationary vehicle stands 60 m ahead"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(4.0);",
+          "text": "When 4 s pass"
+        },
+        {
+          "catalogue": "MON-S22",
+          "cpp": "sil_.monitor_fault(ea::plant::NodeFault::kLose, 1000000U);",
+          "text": "And the monitor sender stops"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(2.0);",
+          "text": "And 2 s pass"
+        },
+        {
+          "catalogue": "MON-S09",
+          "cpp": "EXPECT_EQ(sil_.actuator().takeover_request(), true);",
+          "text": "Then the actuator requests a driver takeover"
+        },
+        {
+          "catalogue": "MON-S10",
+          "cpp": "ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 40 + 1e-6);",
+          "text": "And the actuator entered its safe state within 40 ms of the first fault"
+        },
+        {
+          "catalogue": "MON-S08",
+          "cpp": "EXPECT_FALSE(sil_.actuator().applying());",
+          "text": "And the actuator applies no request"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "v",
+          "20"
+        ],
+        [
+          "d",
+          "40"
+        ]
+      ],
+      "feature": "examples/aeb_system/features/availability.feature",
+      "line": 6,
+      "name": "S08_AStationaryVehicleIsStillAvoided_Ex1",
+      "requirements": [
+        "REQ-AEBS-004"
+      ],
+      "scenario": "A stationary vehicle is still avoided #1",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(20.0);",
+          "text": "Given the ego vehicle drives at 20 km/h"
+        },
+        {
+          "catalogue": "FN-S19",
+          "cpp": "sil_.plant().set_lead(40.0, 0.0, 0.0);",
+          "text": "And a stationary vehicle stands 40 m ahead"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(15.0);",
+          "text": "When 15 s pass"
+        },
+        {
+          "catalogue": "FN-S45",
+          "cpp": "EXPECT_FALSE(sil_.plant().metrics().collision);",
+          "text": "Then no collision occurred"
+        },
+        {
+          "catalogue": "FN-S47",
+          "cpp": "EXPECT_LT(sil_.plant().ego_speed_kph(), 0.5);",
+          "text": "And the ego vehicle has stopped"
+        },
+        {
+          "catalogue": "MON-S05",
+          "cpp": "EXPECT_LT(sil_.actuator().metrics().monitor_safe_state_s, 0.0);",
+          "text": "And the monitor never entered SAFE_STATE"
+        },
+        {
+          "catalogue": "MON-S06",
+          "cpp": "EXPECT_GT(sil_.actuator().metrics().applied_commands, 0U); EXPECT_EQ(sil_.actuator().metrics().rejected_commands, 0U);",
+          "text": "And the actuator applied every command"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "v",
+          "40"
+        ],
+        [
+          "d",
+          "60"
+        ]
+      ],
+      "feature": "examples/aeb_system/features/availability.feature",
+      "line": 6,
+      "name": "S09_AStationaryVehicleIsStillAvoided_Ex2",
+      "requirements": [
+        "REQ-AEBS-004"
+      ],
+      "scenario": "A stationary vehicle is still avoided #2",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(40.0);",
+          "text": "Given the ego vehicle drives at 40 km/h"
+        },
+        {
+          "catalogue": "FN-S19",
+          "cpp": "sil_.plant().set_lead(60.0, 0.0, 0.0);",
+          "text": "And a stationary vehicle stands 60 m ahead"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(15.0);",
+          "text": "When 15 s pass"
+        },
+        {
+          "catalogue": "FN-S45",
+          "cpp": "EXPECT_FALSE(sil_.plant().metrics().collision);",
+          "text": "Then no collision occurred"
+        },
+        {
+          "catalogue": "FN-S47",
+          "cpp": "EXPECT_LT(sil_.plant().ego_speed_kph(), 0.5);",
+          "text": "And the ego vehicle has stopped"
+        },
+        {
+          "catalogue": "MON-S05",
+          "cpp": "EXPECT_LT(sil_.actuator().metrics().monitor_safe_state_s, 0.0);",
+          "text": "And the monitor never entered SAFE_STATE"
+        },
+        {
+          "catalogue": "MON-S06",
+          "cpp": "EXPECT_GT(sil_.actuator().metrics().applied_commands, 0U); EXPECT_EQ(sil_.actuator().metrics().rejected_commands, 0U);",
+          "text": "And the actuator applied every command"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "v",
+          "60"
+        ],
+        [
+          "d",
+          "80"
+        ]
+      ],
+      "feature": "examples/aeb_system/features/availability.feature",
+      "line": 6,
+      "name": "S10_AStationaryVehicleIsStillAvoided_Ex3",
+      "requirements": [
+        "REQ-AEBS-004"
+      ],
+      "scenario": "A stationary vehicle is still avoided #3",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(60.0);",
+          "text": "Given the ego vehicle drives at 60 km/h"
+        },
+        {
+          "catalogue": "FN-S19",
+          "cpp": "sil_.plant().set_lead(80.0, 0.0, 0.0);",
+          "text": "And a stationary vehicle stands 80 m ahead"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(15.0);",
+          "text": "When 15 s pass"
+        },
+        {
+          "catalogue": "FN-S45",
+          "cpp": "EXPECT_FALSE(sil_.plant().metrics().collision);",
+          "text": "Then no collision occurred"
+        },
+        {
+          "catalogue": "FN-S47",
+          "cpp": "EXPECT_LT(sil_.plant().ego_speed_kph(), 0.5);",
+          "text": "And the ego vehicle has stopped"
+        },
+        {
+          "catalogue": "MON-S05",
+          "cpp": "EXPECT_LT(sil_.actuator().metrics().monitor_safe_state_s, 0.0);",
+          "text": "And the monitor never entered SAFE_STATE"
+        },
+        {
+          "catalogue": "MON-S06",
+          "cpp": "EXPECT_GT(sil_.actuator().metrics().applied_commands, 0U); EXPECT_EQ(sil_.actuator().metrics().rejected_commands, 0U);",
+          "text": "And the actuator applied every command"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/aeb_system/features/availability.feature",
+      "line": 22,
+      "name": "S11_TheImpactSpeedAt80KmHStaysAt40KmHOrLess",
+      "requirements": [
+        "REQ-AEBS-004"
+      ],
+      "scenario": "The impact speed at 80 km/h stays at 40 km/h or less",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(80.0);",
+          "text": "Given the ego vehicle drives at 80 km/h"
+        },
+        {
+          "catalogue": "FN-S19",
+          "cpp": "sil_.plant().set_lead(100.0, 0.0, 0.0);",
+          "text": "And a stationary vehicle stands 100 m ahead"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(15.0);",
+          "text": "When 15 s pass"
+        },
+        {
+          "catalogue": "FN-S46",
+          "cpp": "EXPECT_LE(sil_.plant().metrics().impact_speed_kph, 40.0);",
+          "text": "Then the impact speed was at most 40 km/h"
+        },
+        {
+          "catalogue": "MON-S05",
+          "cpp": "EXPECT_LT(sil_.actuator().metrics().monitor_safe_state_s, 0.0);",
+          "text": "And the monitor never entered SAFE_STATE"
+        },
+        {
+          "catalogue": "MON-S06",
+          "cpp": "EXPECT_GT(sil_.actuator().metrics().applied_commands, 0U); EXPECT_EQ(sil_.actuator().metrics().rejected_commands, 0U);",
+          "text": "And the actuator applied every command"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/aeb_system/features/availability.feature",
+      "line": 31,
+      "name": "S12_AVehicleDrivingAt20KmHIsAvoidedFrom80KmH",
+      "requirements": [
+        "REQ-AEBS-004"
+      ],
+      "scenario": "A vehicle driving at 20 km/h is avoided from 80 km/h",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(80.0);",
+          "text": "Given the ego vehicle drives at 80 km/h"
+        },
+        {
+          "catalogue": "FN-S11",
+          "cpp": "sil_.plant().set_lead(100.0, 20.0, 0.0);",
+          "text": "And a lead vehicle drives 100 m ahead at 20 km/h"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(15.0);",
+          "text": "When 15 s pass"
+        },
+        {
+          "catalogue": "FN-S45",
+          "cpp": "EXPECT_FALSE(sil_.plant().metrics().collision);",
+          "text": "Then no collision occurred"
+        },
+        {
+          "catalogue": "MON-S05",
+          "cpp": "EXPECT_LT(sil_.actuator().metrics().monitor_safe_state_s, 0.0);",
+          "text": "And the monitor never entered SAFE_STATE"
+        },
+        {
+          "catalogue": "MON-S06",
+          "cpp": "EXPECT_GT(sil_.actuator().metrics().applied_commands, 0U); EXPECT_EQ(sil_.actuator().metrics().rejected_commands, 0U);",
+          "text": "And the actuator applied every command"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/aeb_system/features/availability.feature",
+      "line": 40,
+      "name": "S13_ALateCutInIsBrakedForAtOnce",
+      "requirements": [
+        "REQ-AEBS-004"
+      ],
+      "scenario": "A late cut-in is braked for at once",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(50.0);",
+          "text": "Given the ego vehicle drives at 50 km/h"
+        },
+        {
+          "catalogue": "FN-S14",
+          "cpp": "sil_.plant().cut_in(9.0, 20.0);",
+          "text": "When a vehicle cuts in 9 m ahead at 20 km/h"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "And 0.2 s pass"
+        },
+        {
+          "catalogue": "AEB-S01",
+          "cpp": "EXPECT_EQ(sil_.feature().last_command().status, ea::plant::AebStatus::kFullBrake);",
+          "text": "Then the AEB state is FULL_BRAKE"
+        },
+        {
+          "catalogue": "MON-S07",
+          "cpp": "ASSERT_TRUE(sil_.actuator().applying()); EXPECT_NEAR(sil_.actuator().applied_mps2(), -8.0, 1e-6);",
+          "text": "And the actuator applies -8.0 m/s2"
+        },
+        {
+          "catalogue": "MON-S05",
+          "cpp": "EXPECT_LT(sil_.actuator().metrics().monitor_safe_state_s, 0.0);",
+          "text": "And the monitor never entered SAFE_STATE"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/aeb_system/features/availability.feature",
+      "line": 49,
+      "name": "S14_KickdownCancelsBrakingWithoutAMonitorIntervention",
+      "requirements": [
+        "REQ-AEBS-004"
+      ],
+      "scenario": "Kickdown cancels braking without a monitor intervention",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(50.0);",
+          "text": "Given the ego vehicle drives at 50 km/h"
+        },
+        {
+          "catalogue": "FN-S19",
+          "cpp": "sil_.plant().set_lead(60.0, 0.0, 0.0);",
+          "text": "And a stationary vehicle stands 60 m ahead"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(4.0);",
+          "text": "When 4 s pass"
+        },
+        {
+          "catalogue": "FN-S07",
+          "cpp": "sil_.accelerator(90.0);",
+          "text": "And the driver presses the accelerator pedal to 90 %"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "And 0.2 s pass"
+        },
+        {
+          "catalogue": "AEB-S01",
+          "cpp": "EXPECT_EQ(sil_.feature().last_command().status, ea::plant::AebStatus::kStandby);",
+          "text": "Then the AEB state is STANDBY"
+        },
+        {
+          "catalogue": "MON-S05",
+          "cpp": "EXPECT_LT(sil_.actuator().metrics().monitor_safe_state_s, 0.0);",
+          "text": "And the monitor never entered SAFE_STATE"
+        },
+        {
+          "catalogue": "MON-S06",
+          "cpp": "EXPECT_GT(sil_.actuator().metrics().applied_commands, 0U); EXPECT_EQ(sil_.actuator().metrics().rejected_commands, 0U);",
+          "text": "And the actuator applied every command"
+        }
+      ]
+    }
+  ]
+}

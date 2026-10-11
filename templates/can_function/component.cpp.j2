@@ -1,0 +1,129 @@
+#include "{{ inc }}/{{ snake }}.hpp"
+
+#include <cstring>
+
+#include "ea/core/assert.hpp"
+#include "ea/core/saturating.hpp"
+
+namespace {{ ns }} {
+
+namespace {
+{% for r in rx %}
+constexpr ea::e2e::P11Config k{{ r.cname }}E2e{ {{- r.e2e.data_id | cpp_hex(4) }}, {{ r.e2e.crc_byte }}U, {{ r.e2e.counter_bit }}U, {{ r.msg.payload_length }}U, {{ r.e2e.max_delta }}U};
+constexpr std::uint16_t k{{ r.cname }}TimeoutCycles = {{ r.timeout_cycles }}U;
+{% endfor %}
+{% for t in tx %}
+constexpr ea::e2e::P11Config k{{ t.cname }}E2e{ {{- t.e2e.data_id | cpp_hex(4) }}, {{ t.e2e.crc_byte }}U, {{ t.e2e.counter_bit }}U, {{ t.msg.payload_length }}U, {{ t.e2e.max_delta }}U};
+{% endfor %}
+
+}  // namespace
+
+const char* to_string(State s) noexcept {
+    switch (s) {
+{% for s in states %}
+        case State::k{{ s | camel }}:
+            return "{{ s }}";
+{% endfor %}
+    }
+    return "UNKNOWN";
+}
+
+{{ component.name }}::{{ component.name }}() noexcept
+    : {% for r in rx %}e2e_{{ r.snake }}_(k{{ r.cname }}E2e), age_{{ r.snake }}_(k{{ r.cname }}TimeoutCycles), {% endfor %}{% for t in tx %}e2e_{{ t.snake }}_(k{{ t.cname }}E2e){% if not loop.last %}, {% endif %}{% endfor %} {
+    send();  // all-zero outputs (state code 0 = initial state) are valid before the first cycle
+}
+
+void {{ component.name }}::on_frame(std::uint32_t can_id, ea::ConstByteSpan payload) noexcept {
+    Mailbox* mb = nullptr;
+    switch (can_id) {
+{% for r in rx %}
+        case k{{ r.cname }}CanId:
+            mb = &mb_{{ r.snake }}_;
+            break;
+{% endfor %}
+        default:
+            return;
+    }
+    if (payload.size() > mb->data.size()) {
+        return;
+    }
+    std::memcpy(mb->data.data(), payload.data(), payload.size());
+    mb->length = payload.size();
+    mb->fresh = true;
+}
+
+void {{ component.name }}::receive() noexcept {
+{% for r in rx %}
+    {
+        // {{ r.cname }}: frames failing E2E or decoding count as not received.
+        bool received = false;
+        if (mb_{{ r.snake }}_.fresh) {
+            mb_{{ r.snake }}_.fresh = false;
+            const ea::ConstByteSpan frame(mb_{{ r.snake }}_.data.data(), mb_{{ r.snake }}_.length);
+            if (ea::e2e::is_usable(e2e_{{ r.snake }}_.check(frame))) {
+                const ea::Result<{{ r.cname }}> d = decode_{{ r.snake }}(frame);
+                if (d.ok()) {
+                    {{ r.var }} = *d;
+                    received = true;
+                }
+            }
+        }
+        age_{{ r.snake }}_ = received ? static_cast<std::uint16_t>(0U) : ea::sat_inc(age_{{ r.snake }}_);
+    }
+{% endfor %}
+{% for r in rx %}
+    const bool {{ r.snake }}_ok = age_{{ r.snake }}_ < k{{ r.cname }}TimeoutCycles;
+{% endfor %}
+{% for i in inputs %}
+    in_.{{ i.name }} = {{ i.entry.var }}.{{ i.sig.name }};
+    in_.{{ i.name }}_ok = {{ i.entry.snake }}_ok;
+{% endfor %}
+    in_.all_ok = {% for r in rx %}{{ r.snake }}_ok{% if not loop.last %} && {% endif %}{% endfor %};
+}
+
+void {{ component.name }}::send() noexcept {
+{% for t in tx %}
+    {
+        {{ t.cname }} msg{};
+{% for o in outputs if o.entry.cname == t.cname %}
+        msg.{{ o.sig.name }} = out_.{{ o.name }};
+{% endfor %}
+        {{ t.var }}_.fill(0U);
+        // Values are within the ranges proven by GEN-061; a failure is a contract violation.
+        const ea::Result<void> enc = encode_{{ t.snake }}(msg, ea::ByteSpan({{ t.var }}_.data(), {{ t.var }}_.size()));
+        EA_ASSERT(enc.ok());
+        const ea::Result<void> prot = e2e_{{ t.snake }}_.protect(ea::ByteSpan({{ t.var }}_.data(), {{ t.var }}_.size()));
+        EA_ASSERT(prot.ok());
+    }
+{% endfor %}
+}
+
+std::uint32_t {{ component.name }}::tx_can_id(std::size_t i) const noexcept {
+    switch (i) {
+{% for t in tx %}
+        case {{ loop.index0 }}U:
+            return k{{ t.cname }}CanId;
+{% endfor %}
+        default:
+            return 0U;
+    }
+}
+
+ea::ConstByteSpan {{ component.name }}::tx_frame(std::size_t i) const noexcept {
+    switch (i) {
+{% for t in tx %}
+        case {{ loop.index0 }}U:
+            return ea::ConstByteSpan({{ t.var }}_.data(), {{ t.var }}_.size());
+{% endfor %}
+        default:
+            return ea::ConstByteSpan();
+    }
+}
+
+void {{ component.name }}::step() noexcept {
+    receive();
+    logic_.step(in_, out_);
+    send();
+}
+
+}  // namespace {{ ns }}

@@ -1,0 +1,59 @@
+schema_version: 1
+component: ObstacleScoreStage
+requirements:
+  - id: REQ-OBS-001
+    asil: QM
+    ears: ubiquitous
+    text: >-
+      The ObstacleScoreStage shall allocate all tensor memory during initialization and shall not
+      allocate memory while processing frames.
+    verification: [sil]
+  - id: REQ-OBS-002
+    asil: QM
+    ears: unwanted
+    text: >-
+      If a weight file does not match the SHA-256 digest recorded in the model, then the
+      ObstacleScoreStage shall refuse to initialize with an integrity error.
+    verification: [sil]
+  - id: REQ-OBS-003
+    asil: QM
+    ears: ubiquitous
+    text: >-
+      The ObstacleScoreStage shall compute the obstacle class scores within 1e-4 of the reference
+      model.
+    verification: [sil, hil]
+  - id: REQ-OBS-004
+    asil: QM
+    ears: unwanted
+    text: >-
+      If processing a frame takes longer than the 33 ms deadline, then the ObstacleScoreStage shall
+      mark the output DEADLINE_MISS.
+    verification: [sil]
+  - id: REQ-OBS-005
+    asil: QM
+    ears: unwanted
+    text: >-
+      If the scores contain a non-finite value, a value outside [0, 1], or do not sum to 1 within
+      1e-3, then the ObstacleScoreStage shall mark the output IMPLAUSIBLE.
+    verification: [sil]
+  - id: REQ-OBS-006
+    asil: B
+    ears: unwanted
+    text: >-
+      If no new output has been published for more than 66 ms, then the ObstacleScoreMonitor shall
+      report TIMEOUT.
+    verification: [sil]
+  - id: REQ-OBS-007
+    asil: B
+    ears: event
+    text: >-
+      When the ObstacleScoreMonitor reads an output, the ObstacleScoreMonitor shall independently
+      repeat the plausibility checks and report IMPLAUSIBLE if any check fails.
+    verification: [sil]
+  - id: REQ-OBS-008
+    asil: B
+    ears: ubiquitous
+    text: >-
+      The ObstacleScoreMonitor shall receive stage outputs only through the shared-memory channel
+      and shall report NO_DATA until the first output is published.
+    verification: [sil, review]

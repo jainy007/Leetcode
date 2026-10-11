@@ -1,0 +1,34 @@
+{% import "common/_codec_macros.j2" as m %}
+#include "{{ inc }}/{{ snake }}_codec.hpp"
+
+#include <cmath>
+
+#include "ea/codec/bits.hpp"
+#include "ea/core/rounding.hpp"
+
+namespace {{ ns }} {
+{% for msg in messages %}
+
+ea::Result<{{ msg.name }}> decode_{{ msg.snake }}(ea::ConstByteSpan payload) noexcept {
+    if (payload.size() != k{{ msg.name }}PayloadLength) {
+        return ea::ErrorCode::kLengthMismatch;
+    }
+    {{ msg.name }} out{};
+{% for s in msg.signals %}
+{{ m.decode_signal(s, 'out', 'k' ~ msg.name ~ 'PayloadLength') }}
+{%- endfor %}
+    return out;
+}
+
+ea::Result<void> encode_{{ msg.snake }}(const {{ msg.name }}& in, ea::ByteSpan payload) noexcept {
+    if (payload.size() != k{{ msg.name }}PayloadLength) {
+        return ea::ErrorCode::kLengthMismatch;
+    }
+{% for s in msg.signals %}
+{{ m.encode_signal(s, 'in', s.raw_lo, s.raw_hi, 'k' ~ msg.name ~ 'PayloadLength') }}
+{%- endfor %}
+    return ea::ok_result();
+}
+{% endfor %}
+
+}  // namespace {{ ns }}

@@ -1,0 +1,112 @@
+# Forward collision warning (FCW) and autonomous emergency braking (AEB) for passenger cars.
+# Written in the spirit of UN R152 / Euro NCAP AEB Car-to-Car; values are project choices,
+# NOT normative. TTC = range / closing speed of the relevant target.
+# ASIL D safety goals are decomposed (ISO 26262-9): controller B(D) + independent monitor B(D).
+# Safety goals, FTTI and the monitor live in examples/*_system and examples/*_monitor.
+schema_version: 1
+component: AebController
+requirements:
+  # --- Warning and braking cascade ------------------------------------------------------------
+  - id: REQ-AEB-001
+    asil: B(D)
+    ears: event
+    text: >-
+      When a relevant target is approached with a time to collision of 2.8 s or less at an ego
+      speed between 10 km/h and 150 km/h, the AebController shall issue a forward collision
+      warning.
+    verification: [sil]
+  - id: REQ-AEB-002
+    asil: B(D)
+    ears: event
+    text: >-
+      When the forward collision warning has been active for at least 0.8 s and the time to
+      collision is 1.8 s or less, the AebController shall request partial braking of 4 m/s2.
+    verification: [sil]
+  - id: REQ-AEB-003
+    asil: B(D)
+    ears: event
+    text: >-
+      When the time to collision is 1.2 s or less during a warning or partial braking, the
+      AebController shall request full braking of 8 m/s2.
+    verification: [sil]
+  - id: REQ-AEB-004
+    asil: QM
+    ears: event
+    text: >-
+      When during a warning without braking the time to collision rises above 3.3 s or the target
+      is no longer relevant, the AebController shall end the warning.
+    verification: [sil]
+  - id: REQ-AEB-005
+    asil: B(D)
+    ears: state
+    text: >-
+      While braking, the AebController shall continue braking until the ego vehicle no longer
+      approaches the target or has stopped.
+    verification: [sil]
+  - id: REQ-AEB-006
+    asil: B(D)
+    ears: event
+    text: >-
+      When the driver presses the accelerator pedal to 80 % or more during a warning or braking,
+      the AebController shall cancel the intervention.
+    verification: [sil]
+  - id: REQ-AEB-007
+    asil: B(D)
+    ears: event
+    text: >-
+      When the driver presses the brake pedal during braking, the AebController shall continue
+      braking.
+    verification: [sil]
+  # --- Relevance (false positives) --------------------------------------------------------------
+  - id: REQ-AEB-008
+    asil: B(D)
+    ears: ubiquitous
+    text: >-
+      The AebController shall treat a radar object as relevant only if it is valid, at most 150 m
+      ahead, at most 1.8 m from the ego lane centre and approaching at more than 0.5 m/s.
+    verification: [sil]
+  - id: REQ-AEB-009
+    asil: B(D)
+    ears: unwanted
+    text: >-
+      If the ego speed is below 10 km/h or above 150 km/h, then the AebController shall not start
+      a warning.
+    verification: [sil]
+  # --- Performance ------------------------------------------------------------------------------
+  - id: REQ-AEB-010
+    asil: B(D)
+    ears: unwanted
+    text: >-
+      If the ego vehicle approaches a stationary vehicle in its lane at 20 km/h to 60 km/h without
+      driver reaction, then the AebController shall avoid the collision.
+    verification: [sil]
+  - id: REQ-AEB-011
+    asil: B(D)
+    ears: unwanted
+    text: >-
+      If the ego vehicle approaches a stationary vehicle in its lane at 80 km/h without driver
+      reaction, then the AebController shall reduce the impact speed to 40 km/h or less.
+    verification: [sil]
+  - id: REQ-AEB-012
+    asil: B(D)
+    ears: unwanted
+    text: >-
+      If the ego vehicle approaches a vehicle driving at 20 km/h in its lane at up to 80 km/h
+      without driver reaction, then the AebController shall avoid the collision.
+    verification: [sil]
+  # --- Outputs and faults -----------------------------------------------------------------------
+  - id: REQ-AEB-013
+    asil: B(D)
+    ears: unwanted
+    text: >-
+      If no valid RadarObject frame is received for 120 ms, or no valid EgoState or DriverInput
+      frame for 60 ms, then the AebController shall enter FAULT, request no braking and issue no
+      warning, until all inputs are valid again.
+    verification: [sil]
+  - id: REQ-AEB-014
+    asil: B(D)
+    ears: ubiquitous
+    text: >-
+      The AebController shall send the AebCommand message every 20 ms with E2E protection and
+      report its state, the warning and the requested deceleration in it.
+    verification: [sil]

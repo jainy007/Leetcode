@@ -1,0 +1,3 @@
+# The repository owner reviews every change. The generated code is additionally guarded by CI:
+# `python3 -m tools.gen --check` fails if generated/ is not exactly the generator output.
+*                @jainy007

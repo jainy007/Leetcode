@@ -1,0 +1,131 @@
+#include "{{ inc }}/{{ snake }}.hpp"
+
+#include "ea/codec/someip.hpp"
+#include "ea/core/assert.hpp"
+#include "ea/core/saturating.hpp"
+
+namespace {{ ns }} {
+
+const char* to_string(State s) noexcept {
+    switch (s) {
+{% for s in states %}
+        case State::k{{ s | camel }}:
+            return "{{ s }}";
+{% endfor %}
+    }
+    return "UNKNOWN";
+}
+
+{{ component.name }}::{{ component.name }}() noexcept
+    : checker_(k{{ input.name }}E2e), state_(State::k{{ initial | camel }}) {
+    out_.state = state_;
+    out_.qualifier = Qualifier::kInvalid;
+    out_.condition = CycleCondition::kMissing;
+    out_.e2e_status = ea::e2e::P4Status::kNoNewData;
+}
+
+CycleCondition {{ component.name }}::classify(ea::ConstByteSpan frame, {{ input.name }}& decoded) noexcept {
+    if (frame.empty()) {
+        out_.e2e_status = ea::e2e::P4Status::kNoNewData;
+        return CycleCondition::kMissing;
+    }
+    const ea::Result<ea::ConstByteSpan> payload = ea::someip::parse(frame, k{{ input.name }}SomeIp);
+    if (!payload.ok()) {
+        out_.e2e_status = ea::e2e::P4Status::kError;
+        return CycleCondition::kE2eError;  // malformed transport is treated as a communication fault
+    }
+    out_.e2e_status = checker_.check(*payload);
+    if (!ea::e2e::is_usable(out_.e2e_status)) {
+        return CycleCondition::kE2eError;
+    }
+    const ea::Result<{{ input.name }}> d = decode_{{ input.snake }}(*payload);
+    if (!d.ok()) {
+        return (d.error() == ea::ErrorCode::kOutOfRange) ? CycleCondition::kRangeError : CycleCondition::kE2eError;
+    }
+    decoded = *d;
+    return CycleCondition::kValid;
+}
+
+void {{ component.name }}::update_debounce(CycleCondition c) noexcept {
+{% for d in debounce %}
+    // {{ d.name }}: consecutive {{ d.counts | join(' | ') }}, threshold {{ d.threshold }}{% if d.satisfies %}  [{{ d.satisfies | join(', ') }}]{% endif %}
+
+    counters_[k{{ d.cname }}] = ({% for c in d.counts %}c == CycleCondition::k{{ c | camel }}{% if not loop.last %} || {% endif %}{% endfor %})
+        ? ea::sat_inc(counters_[k{{ d.cname }}])
+        : static_cast<std::uint16_t>(0U);
+{% endfor %}
+}
+
+void {{ component.name }}::transition() noexcept {
+    switch (state_) {
+{% for s in states %}
+        case State::k{{ s | camel }}:
+{% if s in latched %}
+            // latched: no exit until restart
+{% else %}
+{% for t in transitions_by_state[s] %}
+            {{ '} else ' if not loop.first else '' }}if (counters_[k{{ t.on | camel }}] >= {{ (debounce | selectattr('name', 'equalto', t.on) | first).threshold }}U) {
+                state_ = State::k{{ t.to | camel }};{% if t.satisfies %}  // {{ t.satisfies | join(', ') }}{% endif %}
+
+{% endfor %}
+            } else {
+                // no transition
+            }
+{% endif %}
+            break;
+{% endfor %}
+    }
+}
+{% if status %}
+
+void {{ component.name }}::publish_status() noexcept {
+    {{ status.message.name }} msg{};
+{% for f in status.fields %}
+{% if f.source == 'state' %}
+    msg.{{ f.signal.name }} = static_cast<double>(static_cast<std::uint8_t>(state_));
+{% elif f.source == 'qualifier' %}
+    msg.{{ f.signal.name }} = static_cast<double>(static_cast<std::uint8_t>(out_.qualifier));
+{% elif f.source == 'alive_counter' %}
+    alive_counter_ = (alive_counter_ + 1U) % {{ f.modulo }}U;  // protocol counter, wraps by definition
+    msg.{{ f.signal.name }} = static_cast<double>(alive_counter_);
+{% elif f.source == 'e2e_error_count' %}
+    msg.{{ f.signal.name }} = static_cast<double>((e2e_error_count_ < {{ f.saturate }}U) ? e2e_error_count_ : {{ f.saturate }}U);
+{% else %}
+    msg.{{ f.signal.name }} = out_.data.{{ f.input_signal }};
+{% endif %}
+{% endfor %}
+    // Ranges are proven compatible by the generator (GEN-046); a failure is a contract violation.
+    const ea::Result<void> r = encode_{{ status.message.snake }}(msg, ea::ByteSpan(status_.data(), status_.size()));
+    EA_ASSERT(r.ok());
+}
+{% endif %}
+
+void {{ component.name }}::step(ea::ConstByteSpan frame) noexcept {
+    {{ input.name }} decoded{};
+    const CycleCondition c = classify(frame, decoded);
+{% if status %}
+{% for f in status.fields if f.source == 'e2e_error_count' %}
+    if (c == CycleCondition::kE2eError) {
+        e2e_error_count_ = ea::sat_inc(e2e_error_count_);
+    }
+{% endfor %}
+{% endif %}
+    update_debounce(c);
+    transition();
+
+    out_.state = state_;
+    out_.condition = c;
+    const bool valid_state = {% for s in valid_output_states %}(state_ == State::k{{ s | camel }}){% if not loop.last %} || {% endif %}{% endfor %};
+    if (valid_state && c == CycleCondition::kValid) {
+        out_.qualifier = Qualifier::kValid;
+        out_.data = decoded;
+    } else {
+        out_.qualifier = Qualifier::kInvalid;  // last valid data is kept, never overwritten by unchecked data
+    }
+{% if status %}
+    publish_status();
+{% endif %}
+    heartbeat_.beat();
+}
+
+}  // namespace {{ ns }}

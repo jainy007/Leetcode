@@ -1,0 +1,33 @@
+# Deliberate defects the chain must detect (python3 -m tools.mutate aeb_monitor).
+mutations:
+  # ---- inputs: model ----
+  - {name: "partial TTC 1.8 -> 2.2 s", file: examples/aeb_monitor/model.yaml, old: "partial_brake_ttc_s: {value: 1.8", new: "partial_brake_ttc_s: {value: 2.2"}
+  - {name: "full TTC 1.2 -> 1.0 s", file: examples/aeb_monitor/model.yaml, old: "full_brake_ttc_s: {value: 1.2", new: "full_brake_ttc_s: {value: 1.0"}
+  - {name: "TTC margin 0.3 -> 0.5 s", file: examples/aeb_monitor/model.yaml, old: "ttc_margin_s: {value: 0.3", new: "ttc_margin_s: {value: 0.5"}
+  - {name: "partial decel 4.0 -> 4.5 m/s2", file: examples/aeb_monitor/model.yaml, old: "partial_decel_mps2: {value: 4.0", new: "partial_decel_mps2: {value: 4.5"}
+  - {name: "full decel 8.0 -> 8.5 m/s2", file: examples/aeb_monitor/model.yaml, old: "full_decel_mps2: {value: 8.0", new: "full_decel_mps2: {value: 8.5"}
+  - {name: "request tolerance 0.1 -> 0.01 m/s2", file: examples/aeb_monitor/model.yaml, old: "request_tolerance_mps2: {value: 0.1", new: "request_tolerance_mps2: {value: 0.01"}
+  - {name: "lane margin 0.3 -> 0.6 m", file: examples/aeb_monitor/model.yaml, old: "lane_margin_m: {value: 0.3", new: "lane_margin_m: {value: 0.6"}
+  - {name: "lane half width 1.8 -> 1.5 m", file: examples/aeb_monitor/model.yaml, old: "lane_half_width_m: {value: 1.8", new: "lane_half_width_m: {value: 1.5"}
+  - {name: "partial status code 2 -> 1", file: examples/aeb_monitor/model.yaml, old: "partial_status_code: {value: 2", new: "partial_status_code: {value: 1"}
+  - {name: "full status code 3 -> 4", file: examples/aeb_monitor/model.yaml, old: "full_status_code: {value: 3", new: "full_status_code: {value: 4"}
+  - {name: "max target range 150 -> 100 m", file: examples/aeb_monitor/model.yaml, old: "max_target_range_m: {value: 150", new: "max_target_range_m: {value: 100", expect: equivalent,
+     note: "TTC <= 2.1 s beyond 100 m needs a closing speed above 47 m/s; the check is defensive only"}
+  - {name: "command timeout 60 -> 80 ms", file: examples/aeb_monitor/model.yaml, old: "{message: AebCommand, period_ms: 20, timeout_ms: 60", new: "{message: AebCommand, period_ms: 20, timeout_ms: 80"}
+  # ---- inputs: DBC ----
+  - {name: "AebBrakeRequest factor 0.01 -> 0.02", file: examples/aeb_monitor/interfaces/aeb_monitor.dbc, old: "AebBrakeRequest : 16|10@1+ (0.01,0)", new: "AebBrakeRequest : 16|10@1+ (0.02,0)"}
+  - {name: "MonStatus moved by one bit", file: examples/aeb_monitor/interfaces/aeb_monitor.dbc, old: "MonStatus : 12|2@1+", new: "MonStatus : 13|2@1+"}
+  # ---- generator: feature template ----
+  - {name: "onset justification dropped", file: templates/features/aeb_monitor/logic.cpp.j2, old: "            braking_justified_ = approaching && in.target_range <= (kPartialBrakeTtcS + kTtcMarginS) * closing;", new: "            braking_justified_ = true;"}
+  - {name: "full onset uses the partial threshold", file: templates/features/aeb_monitor/logic.cpp.j2, old: "(kFullBrakeTtcS + kTtcMarginS) * closing", new: "(kPartialBrakeTtcS + kTtcMarginS) * closing"}
+  - {name: "approach direction ignored", file: templates/features/aeb_monitor/logic.cpp.j2, old: "    const bool approaching = in_lane && closing > 0.0;", new: "    const bool approaching = in_lane;", expect: equivalent,
+     note: "range <= TTC * closing already fails for closing <= 0 and a positive range; the explicit check is defensive"}
+  - {name: "lane margin ignored", file: templates/features/aeb_monitor/logic.cpp.j2, old: "kLaneHalfWidthM + kLaneMarginM", new: "kLaneHalfWidthM"}
+  - {name: "continuation check dropped", file: templates/features/aeb_monitor/logic.cpp.j2, old: "    } else if (!in_lane) {\n        violation(Reason::kUnjustifiedBraking);  // braking continued without an in-lane target", new: "    } else if (false) {\n        violation(Reason::kUnjustifiedBraking);"}
+  - {name: "justification never reset", file: templates/features/aeb_monitor/logic.cpp.j2, old: "        braking_justified_ = false;\n        full_braking_justified_ = false;", new: ""}
+  - {name: "limit check dropped", file: templates/features/aeb_monitor/logic.cpp.j2, old: "if (in.cmd_brake > kFullDecelMps2 + kRequestToleranceMps2 || (partial && full_request)) {", new: "if (false) {"}
+  - {name: "partial limit dropped", file: templates/features/aeb_monitor/logic.cpp.j2, old: " || (partial && full_request)) {", new: ") {"}
+  - {name: "state check dropped", file: templates/features/aeb_monitor/logic.cpp.j2, old: "} else if (in.cmd_brake > 0.0 && !partial && !full) {", new: "} else if (false) {"}
+  - {name: "timeout not checked", file: templates/features/aeb_monitor/logic.cpp.j2, old: "        if (!in.cmd_status_ok) {\n            violation(Reason::kCommandTimeout);", new: "        if (false) {\n            violation(Reason::kCommandTimeout);"}
+  - {name: "violating command approved", file: templates/features/aeb_monitor/logic.cpp.j2, old: "    if (state_ == State::kMonitoring) {\n        last_counter_ = in.cmd_counter;\n    }", new: "    last_counter_ = in.cmd_counter;", expect: equivalent,
+     note: "a violation withdraws the permit in the same cycle; the actuator needs permit AND counter (AoU-1), so the echoed counter is redundant protection"}

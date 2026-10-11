@@ -1,0 +1,56 @@
+#pragma once
+
+#include <array>
+#include <cstddef>
+#include <cstdint>
+
+#include "{{ inc }}/{{ snake }}_types.hpp"
+
+namespace {{ ns }} {
+
+// Feature 'acc' logic: driver mode machine, speed and time-gap control with acceleration,
+// deceleration and jerk limits. Pure function of Inputs and its own state; no I/O.
+class {{ component.name }}Logic {
+public:
+    static constexpr double kMinActivationSpeedKph = {{ cal.min_activation_speed_kph | cpp_double }};
+    static constexpr double kDisengageSpeedKph = {{ cal.disengage_speed_kph | cpp_double }};
+    static constexpr double kMaxSetSpeedKph = {{ cal.max_set_speed_kph | cpp_double }};
+    static constexpr double kSetSpeedStepKph = {{ cal.set_speed_step_kph | cpp_double }};
+    static constexpr std::size_t kGapSettings = {{ cal.time_gaps_s | length }}U;
+    static constexpr std::array<double, kGapSettings> kTimeGapsS{ {%- for g in cal.time_gaps_s %}{{ g | cpp_double }}{% if not loop.last %}, {% endif %}{% endfor %}};
+    static constexpr double kStandstillDistanceM = {{ cal.standstill_distance_m | cpp_double }};
+    static constexpr double kMaxTargetRangeM = {{ cal.max_target_range_m | cpp_double }};
+    static constexpr double kLaneHalfWidthM = {{ cal.lane_half_width_m | cpp_double }};
+    static constexpr double kAccelMaxMps2 = {{ cal.accel_max_mps2 | cpp_double }};
+    static constexpr double kDecelMaxMps2 = {{ cal.decel_max_mps2 | cpp_double }};
+    static constexpr double kOverridePedalPct = {{ cal.override_pedal_pct | cpp_double }};
+    static constexpr double kSpeedGainPerS = {{ cal.speed_gain_per_s | cpp_double }};
+    static constexpr double kGapGainPerS2 = {{ cal.gap_gain_per_s2 | cpp_double }};
+    static constexpr double kRangeRateGainPerS = {{ cal.range_rate_gain_per_s | cpp_double }};
+    // Acceleration in integer steps of the command resolution: transmitted values honour the
+    // jerk limits exactly.
+    static constexpr double kAccelResolution = {{ jerk.resolution | cpp_double }};
+    static constexpr std::int32_t kJerkUpStep = {{ jerk.jerk_increase_max_mps3 }};    // per cycle
+    static constexpr std::int32_t kJerkDownStep = {{ jerk.jerk_decrease_max_mps3 }};  // per cycle
+
+    void step(const Inputs& in, Outputs& out) noexcept;
+
+    State state() const noexcept { return state_; }
+    double set_speed_kph() const noexcept { return set_speed_kph_; }
+
+private:
+    void update_mode(const Inputs& in) noexcept;
+    void control(const Inputs& in) noexcept;
+
+    State state_ = State::kOff;
+    double set_speed_kph_ = 0.0;
+    std::uint32_t gap_setting_ = {{ default_gap }}U;
+    std::int32_t accel_raw_ = 0;  // commanded acceleration in kAccelResolution steps (+ accel, - decel)
+    bool prev_set_ = false;
+    bool prev_resume_ = false;
+    bool prev_cancel_ = false;
+    bool prev_up_ = false;
+    bool prev_down_ = false;
+};
+
+}  // namespace {{ ns }}

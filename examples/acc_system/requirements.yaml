@@ -1,0 +1,64 @@
+# ACC as an ASIL D system: safety goals, their FTTI and the allocation to the decomposed
+# elements AccController B(D) + AccMonitor B(D) + actuator ECU (assumption of use).
+# Safety goals, ASIL and FTTI follow from the project HARA in safety/hara.yaml (S/E/C assessed by
+# the project, ASIL and FTTI computed: GEN-067, GEN-069); see generated/acc_system/safety_analysis.md.
+schema_version: 1
+component: AccSystem
+requirements:
+  # --- Safety goals ---------------------------------------------------------------------------
+  - id: REQ-ACCS-001
+    asil: B
+    ears: unwanted
+    text: >-
+      If the ACC function requests an acceleration above 2.1 m/s2 or an acceleration step above
+      the jerk envelope, then the AccSystem shall prevent its application and reach the safe
+      state within the FTTI of 2200 ms.
+    verification: [sil, analysis]
+  - id: REQ-ACCS-002
+    asil: D
+    ears: unwanted
+    text: >-
+      If the ACC function requests a deceleration above 3.6 m/s2 or a deceleration step above
+      the jerk envelope, then the AccSystem shall prevent its application and reach the safe
+      state within the FTTI of 490 ms.
+    verification: [sil, analysis]
+  - id: REQ-ACCS-003
+    asil: B
+    ears: unwanted
+    text: >-
+      If the ACC function requests acceleration that does not decay by at least 4 m/s3 toward an
+      in-lane vehicle with a time to collision below 3 s, or requests acceleration and braking
+      together, then the AccSystem shall reach the safe state within the FTTI of 370 ms.
+    verification: [sil, analysis]
+  - id: REQ-ACCS-004
+    asil: B
+    ears: unwanted
+    text: >-
+      If the ACC commands stop, freeze or come from a non-ACTIVE function, then the AccSystem
+      shall reach the safe state within the FTTI of 380 ms.
+    verification: [sil, analysis]
+  - id: REQ-ACCS-007
+    asil: A
+    ears: unwanted
+    text: >-
+      If the ACC commands stop while ACC is braking, then the AccSystem shall request a driver
+      takeover within the FTTI of 590 ms.
+    verification: [sil, analysis]
+  # --- Allocation to the actuator ECU (assumption of use) -------------------------------------
+  - id: REQ-ACCS-005
+    asil: D
+    ears: ubiquitous
+    text: >-
+      The AccSystem shall apply a controller command only if the AccMonitor grants the permit
+      and echoes that command's E2E counter; on monitor SAFE_STATE or 60 ms without a valid
+      monitor frame it shall cut acceleration, ramp braking out at 20 m/s3 and request a driver
+      takeover.
+    verification: [sil]
+  # --- Availability ---------------------------------------------------------------------------
+  - id: REQ-ACCS-006
+    asil: QM
+    ears: unwanted
+    text: >-
+      If no fault is present, then the AccSystem shall not let the AccMonitor intervene and shall
+      apply every command of the AccController.
+    verification: [sil]

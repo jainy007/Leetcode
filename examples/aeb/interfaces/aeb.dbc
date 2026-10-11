@@ -1,0 +1,42 @@
+VERSION ""
+
+NS_ :
+
+BS_:
+
+BU_: RADAR VEHICLE AEB
+
+BO_ 512 RadarObject: 8 RADAR
+ SG_ Crc : 0|8@1+ (1,0) [0|255] "" AEB
+ SG_ Counter : 8|4@1+ (1,0) [0|15] "" AEB
+ SG_ ObjValid : 12|1@1+ (1,0) [0|1] "" AEB
+ SG_ ObjRange : 16|12@1+ (0.1,0) [0|409.5] "m" AEB
+ SG_ ObjRangeRate : 28|12@1- (0.05,0) [-102.4|102.35] "m/s" AEB
+ SG_ ObjLateralPos : 40|10@1- (0.02,0) [-10.24|10.22] "m" AEB
+
+BO_ 528 EgoState: 8 VEHICLE
+ SG_ Crc : 0|8@1+ (1,0) [0|255] "" AEB
+ SG_ Counter : 8|4@1+ (1,0) [0|15] "" AEB
+ SG_ VehicleSpeed : 16|16@1+ (0.01,0) [0|655.35] "km/h" AEB
+
+BO_ 544 DriverInput: 8 VEHICLE
+ SG_ Crc : 0|8@1+ (1,0) [0|255] "" AEB
+ SG_ Counter : 8|4@1+ (1,0) [0|15] "" AEB
+ SG_ MainSwitch : 12|1@1+ (1,0) [0|1] "" AEB
+ SG_ SetButton : 13|1@1+ (1,0) [0|1] "" AEB
+ SG_ ResumeButton : 14|1@1+ (1,0) [0|1] "" AEB
+ SG_ CancelButton : 15|1@1+ (1,0) [0|1] "" AEB
+ SG_ SpeedUpButton : 16|1@1+ (1,0) [0|1] "" AEB
+ SG_ SpeedDownButton : 17|1@1+ (1,0) [0|1] "" AEB
+ SG_ GapSetting : 18|2@1+ (1,0) [1|3] "" AEB
+ SG_ BrakePedal : 20|1@1+ (1,0) [0|1] "" AEB
+ SG_ AccelPedalPos : 24|8@1+ (0.5,0) [0|100] "%" AEB
+
+BO_ 784 AebCommand: 8 AEB
+ SG_ Crc : 0|8@1+ (1,0) [0|255] "" VEHICLE
+ SG_ Counter : 8|4@1+ (1,0) [0|15] "" VEHICLE
+ SG_ AebStatus : 12|3@1+ (1,0) [0|4] "" VEHICLE
+ SG_ FcwWarning : 15|1@1+ (1,0) [0|1] "" VEHICLE
+ SG_ AebBrakeRequest : 16|10@1+ (0.01,0) [0|10] "m/s2" VEHICLE
+
+CM_ SG_ 784 AebStatus "0=STANDBY 1=WARNING 2=PARTIAL_BRAKE 3=FULL_BRAKE 4=FAULT";

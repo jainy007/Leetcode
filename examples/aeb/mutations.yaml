@@ -1,0 +1,36 @@
+# Deliberate defects the chain must detect (python3 -m tools.mutate aeb). See docs/aeb_sil_report.md.
+mutations:
+  # ---- inputs: model ----
+  - {name: "FCW TTC 2.8 -> 3.0 s", file: examples/aeb/model.yaml, old: "fcw_ttc_s: {value: 2.8", new: "fcw_ttc_s: {value: 3.0"}
+  - {name: "partial brake TTC 1.8 -> 2.0 s", file: examples/aeb/model.yaml, old: "partial_brake_ttc_s: {value: 1.8", new: "partial_brake_ttc_s: {value: 2.0"}
+  - {name: "full brake TTC 1.2 -> 1.0 s", file: examples/aeb/model.yaml, old: "full_brake_ttc_s: {value: 1.2", new: "full_brake_ttc_s: {value: 1.0"}
+  - {name: "min warning time 0.8 -> 0.6 s", file: examples/aeb/model.yaml, old: "min_warning_time_s: {value: 0.8", new: "min_warning_time_s: {value: 0.6"}
+  - {name: "partial decel 4 -> 3 m/s2", file: examples/aeb/model.yaml, old: "partial_decel_mps2: {value: 4.0", new: "partial_decel_mps2: {value: 3.0"}
+  - {name: "full decel 8 -> 7 m/s2", file: examples/aeb/model.yaml, old: "full_decel_mps2: {value: 8.0", new: "full_decel_mps2: {value: 7.0"}
+  - {name: "kickdown 80 -> 70 %", file: examples/aeb/model.yaml, old: "kickdown_pedal_pct: {value: 80", new: "kickdown_pedal_pct: {value: 70"}
+  - {name: "lane half width 1.8 -> 2.1 m", file: examples/aeb/model.yaml, old: "lane_half_width_m: {value: 1.8", new: "lane_half_width_m: {value: 2.1"}
+  - {name: "min speed 10 -> 12 km/h", file: examples/aeb/model.yaml, old: "min_speed_kph: {value: 10", new: "min_speed_kph: {value: 12"}
+  - {name: "max speed 150 -> 160 km/h", file: examples/aeb/model.yaml, old: "max_speed_kph: {value: 150", new: "max_speed_kph: {value: 160"}
+  - {name: "warning release 3.3 -> 2.9 s", file: examples/aeb/model.yaml, old: "warning_release_ttc_s: {value: 3.3", new: "warning_release_ttc_s: {value: 2.9"}
+  - {name: "partial above FCW threshold", file: examples/aeb/model.yaml, old: "partial_brake_ttc_s: {value: 1.8", new: "partial_brake_ttc_s: {value: 2.9"}
+  - {name: "radar timeout 120 -> 160 ms", file: examples/aeb/model.yaml, old: "period_ms: 40, timeout_ms: 120", new: "period_ms: 40, timeout_ms: 160"}
+  - {name: "max target range 150 -> 100 m", file: examples/aeb/model.yaml, old: "max_target_range_m: {value: 150", new: "max_target_range_m: {value: 100"}
+  - {name: "min closing speed 0.5 -> 2.5 m/s", file: examples/aeb/model.yaml, old: "min_closing_speed_mps: {value: 0.5", new: "min_closing_speed_mps: {value: 2.5"}
+  - {name: "standstill speed 1 -> 5 km/h", file: examples/aeb/model.yaml, old: "standstill_speed_kph: {value: 1.0", new: "standstill_speed_kph: {value: 5.0"}
+  # ---- inputs: DBC ----
+  - {name: "AebBrakeRequest factor 0.01 -> 0.02", file: examples/aeb/interfaces/aeb.dbc, old: "AebBrakeRequest : 16|10@1+ (0.01,0)", new: "AebBrakeRequest : 16|10@1+ (0.02,0)"}
+  - {name: "FcwWarning overlaps AebStatus", file: examples/aeb/interfaces/aeb.dbc, old: "FcwWarning : 15|1@1+", new: "FcwWarning : 14|1@1+"}
+  # ---- generator: feature template ----
+  - {name: "kickdown ignored while braking", file: templates/features/aeb/logic.cpp.j2, old: "            case State::kFullBrake:\n                if (kickdown || !relevant || stopped) {", new: "            case State::kFullBrake:\n                if (!relevant || stopped) {"}
+  - {name: "driver brake cancels AEB", file: templates/features/aeb/logic.cpp.j2, old: "            case State::kPartialBrake:\n                if (kickdown || !relevant || stopped) {", new: "            case State::kPartialBrake:\n                if (kickdown || !relevant || stopped || in.brake_pedal > 0.5) {"}
+  - {name: "minimum warning time ignored", file: templates/features/aeb/logic.cpp.j2, old: "ttc <= kPartialBrakeTtcS && warning_cycles_ >= kMinWarningCycles", new: "ttc <= kPartialBrakeTtcS"}
+  - {name: "no escalation to full braking", file: templates/features/aeb/logic.cpp.j2, old: "                } else if (ttc <= kFullBrakeTtcS) {\n                    state_ = State::kFullBrake;\n                } else {", new: "                } else if (false) {\n                    state_ = State::kFullBrake;\n                } else {"}
+  - {name: "speed range check dropped", file: templates/features/aeb/logic.cpp.j2, old: "if (relevant && speed_ok && !kickdown && ttc <= kFcwTtcS) {", new: "if (relevant && !kickdown && ttc <= kFcwTtcS) { (void)speed_ok;"}
+  - {name: "lane check dropped", file: templates/features/aeb/logic.cpp.j2, old: "std::fabs(in.target_lateral) <= kLaneHalfWidthM && closing", new: "closing"}
+  - {name: "closing threshold dropped", file: templates/features/aeb/logic.cpp.j2, old: "&& closing > kMinClosingSpeedMps;", new: "&& closing > 0.0;", expect: equivalent,
+     note: "no scenario approaches at 0..0.5 m/s; a sub-0.5 m/s closing speed never reaches TTC 2.8 s within 150 m"}
+  - {name: "FAULT never entered", file: templates/features/aeb/logic.cpp.j2, old: "    if (!in.all_ok) {", new: "    if (false) {"}
+  - {name: "warning only in WARNING state", file: templates/features/aeb/logic.cpp.j2, old: "(state_ == State::kWarning || state_ == State::kPartialBrake || state_ == State::kFullBrake) ? 1.0 : 0.0", new: "(state_ == State::kWarning) ? 1.0 : 0.0"}
+  - {name: "partial/full decel swapped", file: templates/features/aeb/logic.cpp.j2, old: "(state_ == State::kPartialBrake) ? kPartialDecelMps2", new: "(state_ == State::kPartialBrake) ? kFullDecelMps2"}
+  - {name: "range check dropped", file: templates/features/aeb/logic.cpp.j2, old: "in.target_range <= kMaxTargetRangeM &&", new: "", expect: equivalent,
+     note: "TTC <= 2.8 s at > 150 m needs > 53 m/s closing, above the 150 km/h speed limit"}

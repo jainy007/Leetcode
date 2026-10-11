@@ -1,0 +1,19 @@
+#include <gtest/gtest.h>
+
+#include "sil/{{ snake }}_sil.hpp"
+
+// Closed-loop SIL tests generated from the Gherkin scenarios; each step expands from the step
+// catalogues sil/steps/can_function.yaml and sil/steps/features/{{ feature }}.yaml.
+// Test names are referenced by trace.json.
+
+namespace {{ ns }} {
+namespace {
+
+class {{ sil_suite }} : public ::testing::Test {
+protected:
+    {{ component.name }}Sil sil_;
+};
+{% include "common/sil_test.cpp.j2" %}
+
+}  // namespace
+}  // namespace {{ ns }}

@@ -1,0 +1,121 @@
+# Hazard analysis and risk assessment of the ACC item (ISO 26262-3:2018, clause 6).
+# Hazards are found with HAZOP guide words on the item's function: longitudinal control by
+# acceleration and deceleration requests. S, E and C are assessed by the project, not taken
+# from a published HARA (none with these parameters exists publicly). The generator computes
+# each ASIL with ISO 26262-3 table 4 (GEN-067) and derives the FTTI of each hazardous event from
+# the stated situations with point-mass kinematics (GEN-069, tools/gen/safety.py).
+schema_version: 1
+item: AccSystem
+
+assumptions:
+  - id: A-01
+    text: A driver reacts to an unexpected event, including a takeover request, after 1.25 s.
+    source: M. Green, "How long does it take to stop?", Transportation Human Factors 2(3), 2000 (0.7 s expected, 1.25 s unexpected, 1.5 s surprise)
+  - id: A-02
+    text: Ordinary drivers brake at 6 m/s2 in an emergency, below the 8-9 m/s2 tyre limit on a dry road.
+    source: engineering estimate, consistent with emergency-braking field studies
+  - id: A-03
+    text: A following vehicle keeps a headway of 0.8 s. Shorter headways than the 2 s rule are common on motorways.
+    source: engineering estimate (conservative within observed motorway headways)
+  - id: A-04
+    text: A powertrain fault can accelerate the car by up to 4 m/s2 at 80-130 km/h; a brake fault can decelerate it by up to 10 m/s2.
+    source: passenger-car capability, engineering estimate
+  - id: A-05
+    text: In its safe state the actuator ECU cuts acceleration at once and ramps braking out at 20 m/s3 (AoU-3), within 100 ms of the monitor's verdict (AoU-4).
+    source: system model actuator.reaction_ms and actuator.ramp_out_mps3
+  - id: A-06
+    text: ACC is an SAE level 1 function (ISO 15622) with authority limited to 2.0 m/s2 acceleration and 3.5 m/s2 deceleration; the driver supervises.
+    source: examples/acc/requirements.yaml
+  - id: A-07
+    text: Severity follows the impact speed of a car-to-car collision. S3 if more than 40 km/h is plausible, S2 for 20-40 km/h, S1 below.
+    source: ISO 26262-3 Annex B examples, engineering estimate
+
+ftti_defaults:
+  reaction_s: 1.25
+  follower_decel_mps2: 6.0
+  driver_decel_mps2: 6.0
+  ramp_out_mps3: 20.0
+
+hazards:
+  - {id: H-ACC-01, guide_word: more, function: acceleration request, malfunction: "acceleration above the ACC envelope (more than 2.1 m/s2 or faster than the jerk limit)"}
+  - {id: H-ACC-02, guide_word: more, function: deceleration request, malfunction: "deceleration above the ACC envelope (more than 3.6 m/s2 or faster than the jerk limit)"}
+  - {id: H-ACC-03, guide_word: unintended, function: acceleration request, malfunction: "acceleration continues toward a close vehicle in the lane"}
+  - {id: H-ACC-04, guide_word: stuck, function: acceleration and deceleration requests, malfunction: "the command freezes or keeps being applied after the function stopped"}
+  - {id: H-ACC-05, guide_word: "no", function: deceleration request, malfunction: "deceleration is lost while ACC is expected to brake, without a takeover request"}
+
+hazardous_events:
+  - id: HE-ACC-01
+    hazard: H-ACC-01
+    situation: Motorway, following a vehicle at the shortest time gap (1.0 s) at 80-130 km/h.
+    severity: {class: S2, rationale: "The driver brakes after noticing the acceleration, so a collision with the lead vehicle happens at a moderate speed difference (20-40 km/h)."}
+    exposure: {class: E4, rationale: "Following on motorways is the main use of ACC and takes far more than 10 % of its operating time."}
+    controllability: {class: C2, rationale: "The supervising driver perceives an unexpected acceleration at once and overrides it with the brake pedal; 90 % or more of drivers avoid harm."}
+    safety_goal: REQ-ACCS-001
+    ftti:
+      model: approach_with_accel
+      situations:
+        - {speed_kph: 80, closing_kph: 0, ttc_s: 0, time_gap_s: 1.0, fault_accel_mps2: 4.0}
+        - {speed_kph: 100, closing_kph: 0, ttc_s: 0, time_gap_s: 1.0, fault_accel_mps2: 4.0}
+        - {speed_kph: 130, closing_kph: 0, ttc_s: 0, time_gap_s: 1.0, fault_accel_mps2: 4.0}
+  - id: HE-ACC-02
+    hazard: H-ACC-02
+    situation: Motorway or main road at 50-130 km/h with a following vehicle at 0.8 s headway.
+    severity: {class: S3, rationale: "A rear-end collision by the following car can exceed 40 km/h after full braking from 130 km/h."}
+    exposure: {class: E4, rationale: "Being followed at a short headway is a common motorway situation (more than 10 % of the driving time)."}
+    controllability: {class: C3, rationale: "The follower is at risk. With 0.8 s headway and a 1.25 s reaction time, it cannot avoid an unexpected 10 m/s2 braking. The ego driver cannot cancel a braking fault in time."}
+    safety_goal: REQ-ACCS-002
+    ftti:
+      model: rear_end_by_follower
+      situations:
+        - {speed_kph: 50, headway_s: 0.8, fault_decel_mps2: 10.0}
+        - {speed_kph: 80, headway_s: 0.8, fault_decel_mps2: 10.0}
+        - {speed_kph: 130, headway_s: 0.8, fault_decel_mps2: 10.0}
+  - id: HE-ACC-03
+    hazard: H-ACC-03
+    situation: Approaching a slower vehicle in the lane (closing at 20-50 km/h) at a time to collision of 3 s.
+    severity: {class: S3, rationale: "A collision at a closing speed of up to 50 km/h is plausible if the acceleration continues."}
+    exposure: {class: E3, rationale: "Approaching within 3 s of a slower vehicle while ACC is active occurs in 1-10 % of the operating time (cut-ins, traffic jams)."}
+    controllability: {class: C2, rationale: "The supervising driver sees the closing vehicle and brakes; the takeover request supports this. The margin is small, so not C1."}
+    safety_goal: REQ-ACCS-003
+    ftti:
+      model: approach_with_accel
+      situations:
+        - {speed_kph: 100, closing_kph: 20, ttc_s: 3.0, time_gap_s: 0, fault_accel_mps2: 2.1}
+        - {speed_kph: 100, closing_kph: 30, ttc_s: 3.0, time_gap_s: 0, fault_accel_mps2: 2.1}
+        - {speed_kph: 100, closing_kph: 50, ttc_s: 3.0, time_gap_s: 0, fault_accel_mps2: 2.1}
+  - id: HE-ACC-04
+    hazard: H-ACC-04
+    situation: A frozen braking command at the ACC limit (3.5 m/s2) with a following vehicle at 0.8 s headway, 50-130 km/h.
+    severity: {class: S3, rationale: "A rear-end collision at more than 40 km/h is plausible if the follower does not react."}
+    exposure: {class: E4, rationale: "ACC braking while being followed closely is a common situation."}
+    controllability: {class: C1, rationale: "The follower brakes harder (6 m/s2) than the frozen 3.5 m/s2 and avoids the collision after its reaction time. The kinematic FTTI confirms there is no collision for any duration."}
+    safety_goal: REQ-ACCS-004
+    ftti:
+      model: rear_end_by_follower
+      situations:
+        - {speed_kph: 50, headway_s: 0.8, fault_decel_mps2: 3.5}
+        - {speed_kph: 130, headway_s: 0.8, fault_decel_mps2: 3.5}
+  - id: HE-ACC-05
+    hazard: H-ACC-04
+    situation: A frozen acceleration command at the ACC limit (2.0 m/s2) while approaching a slower vehicle (closing 20-50 km/h) at TTC 3 s.
+    severity: {class: S3, rationale: "A collision at a closing speed of up to 50 km/h is plausible."}
+    exposure: {class: E3, rationale: "As HE-ACC-03; the frozen command must coincide with an approach."}
+    controllability: {class: C2, rationale: "As HE-ACC-03: the driver supervises and brakes."}
+    safety_goal: REQ-ACCS-004
+    ftti:
+      model: approach_with_accel
+      situations:
+        - {speed_kph: 100, closing_kph: 30, ttc_s: 3.0, time_gap_s: 0, fault_accel_mps2: 2.0}
+        - {speed_kph: 100, closing_kph: 50, ttc_s: 3.0, time_gap_s: 0, fault_accel_mps2: 2.0}
+  - id: HE-ACC-06
+    hazard: H-ACC-05
+    situation: Approaching a slower vehicle (closing 30-50 km/h) at TTC 3 s; the ACC braking is lost and the car coasts.
+    severity: {class: S3, rationale: "If the driver notices too late, a collision at a closing speed of up to 50 km/h is plausible."}
+    exposure: {class: E3, rationale: "As HE-ACC-03: an approach within 3 s while ACC is active."}
+    controllability: {class: C1, rationale: "ACC braking is limited to 3.5 m/s2, and the supervising driver expects to brake in such situations. With a takeover request, nearly all drivers brake in time."}
+    safety_goal: REQ-ACCS-007
+    ftti:
+      model: approach_with_accel
+      situations:
+        - {speed_kph: 100, closing_kph: 30, ttc_s: 3.0, time_gap_s: 0, fault_accel_mps2: 0.0}
+        - {speed_kph: 100, closing_kph: 50, ttc_s: 3.0, time_gap_s: 0, fault_accel_mps2: 0.0}

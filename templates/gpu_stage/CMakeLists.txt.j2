@@ -1,0 +1,19 @@
+# Types shared by producer and monitor (the only coupling between the two processes).
+add_library({{ inc }}_types INTERFACE)
+target_include_directories({{ inc }}_types INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+# Producer: {{ component.name }} (ASIL {{ component.asil }})
+add_library({{ inc }} STATIC src/{{ snake }}.cpp)
+target_link_libraries({{ inc }} PUBLIC {{ inc }}_types ea::runtime PRIVATE ea::profile_{{ component.profile }})
+
+# Monitor: {{ monitor.name }} (ASIL {{ monitor.asil }}); does not link the producer (MP-001).
+add_library({{ inc }}_monitor STATIC src/{{ monitor_snake }}.cpp)
+target_link_libraries({{ inc }}_monitor PUBLIC {{ inc }}_types ea::runtime PRIVATE ea::profile_asil)
+
+if(EA_BUILD_TESTS)
+    ea_add_gtest({{ inc }}_sil
+        SOURCES sil/{{ snake }}_sil_test.cpp
+        LIBS {{ inc }} {{ inc }}_monitor ea::sil)
+    target_include_directories({{ inc }}_sil PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    target_compile_definitions({{ inc }}_sil PRIVATE EA_SIL_MODEL_DIR="${PROJECT_SOURCE_DIR}/{{ repo_relative_project_dir }}")
+endif()

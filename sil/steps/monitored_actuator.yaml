@@ -1,0 +1,97 @@
+# Step vocabulary shared by the safety monitors and the systems that use them: observations of
+# the monitor message and of the actuator ECU model (ea::plant::MonitoredActuator, reached as
+# sil_.actuator()) and faults on the command / monitor senders (sil_.command_fault(),
+# sil_.monitor_fault()). Times are measured by the plant.
+schema_version: 1
+pattern: monitored_actuator
+steps:
+  - id: MON-S01
+    keywords: [then]
+    pattern: '^the monitor state is (?P<s>INIT|MONITORING|SAFE_STATE)$'
+    types: {s: 'enum:[INIT, MONITORING, SAFE_STATE]'}
+    cpp: 'EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::k{{ s | camel }});'
+  - id: MON-S02
+    keywords: [then]
+    pattern: '^the permit is (?P<p>granted|withdrawn)$'
+    types: {p: 'enum:[granted, withdrawn]'}
+    cpp: 'EXPECT_EQ(sil_.actuator().monitor().permit, {{ "true" if p == "granted" else "false" }});'
+  - id: MON-S03
+    keywords: [then]
+    pattern: '^the monitor entered SAFE_STATE within (?P<ms>[0-9]+) ms of the first fault$'
+    types: {ms: int}
+    cpp: 'ASSERT_GE(sil_.actuator().metrics().monitor_safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().monitor_safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, {{ ms }} + 1e-6);'
+  - id: MON-S04
+    keywords: [then]
+    pattern: '^the monitor entered SAFE_STATE between (?P<lo>[0-9]+(?:\.[0-9]+)?) s and (?P<hi>[0-9]+(?:\.[0-9]+)?) s$'
+    types: {lo: number, hi: number}
+    cpp: 'EXPECT_GE(sil_.actuator().metrics().monitor_safe_state_s, {{ lo }} - 1e-9); EXPECT_LE(sil_.actuator().metrics().monitor_safe_state_s, {{ hi }} + 1e-9);'
+  - id: MON-S05
+    keywords: [then]
+    pattern: '^the monitor never entered SAFE_STATE$'
+    cpp: 'EXPECT_LT(sil_.actuator().metrics().monitor_safe_state_s, 0.0);'
+  - id: MON-S06
+    keywords: [then]
+    pattern: '^the actuator applied every command$'
+    cpp: 'EXPECT_GT(sil_.actuator().metrics().applied_commands, 0U); EXPECT_EQ(sil_.actuator().metrics().rejected_commands, 0U);'
+  - id: MON-S07
+    keywords: [then]
+    pattern: '^the actuator applies (?P<a>-?[0-9]+(?:\.[0-9]+)?) m/s2$'
+    types: {a: number}
+    cpp: 'ASSERT_TRUE(sil_.actuator().applying()); EXPECT_NEAR(sil_.actuator().applied_mps2(), {{ a }}, 1e-6);'
+  - id: MON-S08
+    keywords: [then]
+    pattern: '^the actuator applies no request$'
+    cpp: 'EXPECT_FALSE(sil_.actuator().applying());'
+  - id: MON-S09
+    keywords: [then]
+    pattern: '^the actuator (?P<q>requests|does not request) a driver takeover$'
+    types: {q: 'enum:[requests, does not request]'}
+    cpp: 'EXPECT_EQ(sil_.actuator().takeover_request(), {{ "true" if q == "requests" else "false" }});'
+  - id: MON-S10
+    keywords: [then]
+    pattern: '^the actuator entered its safe state within (?P<ms>[0-9]+) ms of the first fault$'
+    types: {ms: int}
+    cpp: 'ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, {{ ms }} + 1e-6);'
+  - id: MON-S11
+    keywords: [then]
+    pattern: '^the applied acceleration never exceeded (?P<a>[0-9]+(?:\.[0-9]+)?) m/s2$'
+    types: {a: number}
+    cpp: 'EXPECT_LE(sil_.actuator().metrics().max_applied_accel_mps2, {{ a }} + 1e-9);'
+  - id: MON-S12
+    keywords: [then]
+    pattern: '^the applied deceleration never exceeded (?P<a>[0-9]+(?:\.[0-9]+)?) m/s2$'
+    types: {a: number}
+    cpp: 'EXPECT_LE(sil_.actuator().metrics().max_applied_decel_mps2, {{ a }} + 1e-9);'
+  - id: MON-S13
+    keywords: [then]
+    pattern: '^the request was ramped out within (?P<ms>[0-9]+) ms of the first fault$'
+    types: {ms: int}
+    cpp: 'ASSERT_GE(sil_.actuator().metrics().ramp_out_done_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().ramp_out_done_s - sil_.plant().metrics().first_fault_s) * 1000.0, {{ ms }} + 1e-6);'
+  - id: MON-S14
+    keywords: [then]
+    pattern: '^every monitor frame passed the E2E check$'
+    cpp: 'EXPECT_GT(sil_.actuator().metrics().monitor_frames, 0U); EXPECT_EQ(sil_.actuator().metrics().monitor_e2e_errors, 0U);'
+  - id: MON-S15
+    keywords: [then]
+    pattern: '^one monitor frame was sent per 20 ms$'
+    cpp: 'EXPECT_EQ(sil_.actuator().metrics().monitor_frames, sil_.plant().metrics().ticks);'
+  - id: MON-S16
+    keywords: [then]
+    pattern: '^the actual (?P<dir>acceleration|deceleration) of the vehicle never exceeded (?P<a>[0-9]+(?:\.[0-9]+)?) m/s2$'
+    types: {dir: 'enum:[acceleration, deceleration]', a: number}
+    cpp: 'EXPECT_LE(sil_.plant().metrics().max_{{ "accel" if dir == "acceleration" else "decel" }}_mps2, {{ a }} + 1e-9);'
+  - id: MON-S20
+    keywords: [when]
+    pattern: '^the command sender (?P<f>stops|freezes)$'
+    types: {f: 'enum:[stops, freezes]'}
+    cpp: 'sil_.command_fault(ea::plant::NodeFault::k{{ "Lose" if f == "stops" else "Freeze" }}, 1000000U);'
+  - id: MON-S21
+    keywords: [when]
+    pattern: '^the next (?P<n>[0-9]{1,3}) command frames are (?P<f>lost|corrupted)$'
+    types: {n: int, f: 'enum:[lost, corrupted]'}
+    cpp: 'sil_.command_fault(ea::plant::NodeFault::k{{ "Lose" if f == "lost" else "Corrupt" }}, {{ n }}U);'
+  - id: MON-S22
+    keywords: [when]
+    pattern: '^the monitor sender (?P<f>stops|freezes)$'
+    types: {f: 'enum:[stops, freezes]'}
+    cpp: 'sil_.monitor_fault(ea::plant::NodeFault::k{{ "Lose" if f == "stops" else "Freeze" }}, 1000000U);'

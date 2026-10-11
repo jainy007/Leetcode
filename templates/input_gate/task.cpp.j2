@@ -1,0 +1,33 @@
+#include "{{ inc }}/{{ snake }}_task.hpp"
+
+namespace {{ ns }} {
+
+{{ component.name }}Task::{{ component.name }}Task({{ component.name }}& component, IFrameSource& source,
+{% if status %}
+        IStatusSink& sink,
+{% endif %}
+        const ea::osal::IClock& clock) noexcept
+    : component_(component), source_(source),{% if status %} sink_(sink),{% endif %} clock_(clock) {}
+
+ea::Result<void> {{ component.name }}Task::start() noexcept {
+    return task_.start(kConfig, &{{ component.name }}Task::entry, this);
+}
+
+void {{ component.name }}Task::stop() noexcept {
+    task_.stop();
+}
+
+void {{ component.name }}Task::entry(void* self) noexcept {
+    static_cast<{{ component.name }}Task*>(self)->cycle();
+}
+
+void {{ component.name }}Task::cycle() noexcept {
+    deadline_.start(clock_.now());
+    component_.step(source_.poll());
+{% if status %}
+    sink_.send(component_.status_payload());
+{% endif %}
+    (void)deadline_.stop(clock_.now());  // violations are counted and read by the health monitor
+}
+
+}  // namespace {{ ns }}

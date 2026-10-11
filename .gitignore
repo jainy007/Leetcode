@@ -6,3 +6,7 @@
 /bazel-template
 /bazel-*
 *.md2
+/build/
+__pycache__/
+*.pyc
+/reports/

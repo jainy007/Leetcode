@@ -1,0 +1,83 @@
+# Independent safety monitor of the ACC controller. ASIL D safety goals of ACC (see
+# examples/acc_system) are decomposed per ISO 26262-9: AccController B(D) + AccMonitor B(D).
+# The monitor checks every controller command against a safety envelope derived from the
+# safety goals, not from the control law. Values are project choices, not normative.
+schema_version: 1
+component: AccMonitor
+requirements:
+  # --- Approval -------------------------------------------------------------------------------
+  - id: REQ-ACCM-001
+    asil: B(D)
+    ears: event
+    text: >-
+      When the first valid AccCommand frame is received, the AccMonitor shall enter MONITORING
+      and check that command.
+    verification: [sil]
+  - id: REQ-ACCM-002
+    asil: B(D)
+    ears: state
+    text: >-
+      While in MONITORING, the AccMonitor shall grant the permit and report the E2E counter of the
+      last AccCommand that passed every check as the approved counter.
+    verification: [sil]
+  # --- Safety envelope ------------------------------------------------------------------------
+  - id: REQ-ACCM-003
+    asil: B(D)
+    ears: unwanted
+    text: >-
+      If an AccCommand requests more than 2.1 m/s2 acceleration or more than 3.6 m/s2
+      deceleration, then the AccMonitor shall enter SAFE_STATE with reason REQUEST_LIMIT.
+    verification: [sil]
+  - id: REQ-ACCM-004
+    asil: B(D)
+    ears: unwanted
+    text: >-
+      If an AccCommand requests acceleration and deceleration at the same time, then the
+      AccMonitor shall enter SAFE_STATE with reason ACCEL_AND_BRAKE.
+    verification: [sil]
+  - id: REQ-ACCM-005
+    asil: B(D)
+    ears: unwanted
+    text: >-
+      If an AccCommand requests acceleration or deceleration while its status is not ACTIVE, then
+      the AccMonitor shall enter SAFE_STATE with reason REQUEST_OUTSIDE_ACTIVE.
+    verification: [sil]
+  - id: REQ-ACCM-006
+    asil: B(D)
+    ears: unwanted
+    text: >-
+      If the acceleration request rises faster than 3.5 m/s3 or the deceleration request rises
+      faster than 6 m/s3 between two consecutive valid AccCommands, then the AccMonitor shall
+      enter SAFE_STATE with reason REQUEST_RATE.
+    verification: [sil]
+  - id: REQ-ACCM-007
+    asil: B(D)
+    ears: unwanted
+    text: >-
+      If an AccCommand requests acceleration that did not decrease by at least 4 m/s3 since the
+      previous valid AccCommand while a valid radar target at most 200 m ahead and at most 1.8 m
+      from the lane centre has a time to collision below 3 s, or while no valid RadarObject frame
+      was received for 120 ms, then the AccMonitor shall enter SAFE_STATE with reason
+      UNINTENDED_ACCEL.
+    verification: [sil]
+  - id: REQ-ACCM-008
+    asil: B(D)
+    ears: unwanted
+    text: >-
+      If in MONITORING no valid AccCommand frame is received for 60 ms, then the AccMonitor shall
+      enter SAFE_STATE with reason COMMAND_TIMEOUT.
+    verification: [sil]
+  - id: REQ-ACCM-009
+    asil: B(D)
+    ears: state
+    text: >-
+      While in SAFE_STATE, the AccMonitor shall withdraw the permit and report the reason of the
+      first violation until the next power cycle.
+    verification: [sil]
+  # --- Output ---------------------------------------------------------------------------------
+  - id: REQ-ACCM-010
+    asil: B(D)
+    ears: ubiquitous
+    text: >-
+      The AccMonitor shall send the AccMonitorStatus message every 20 ms with E2E protection.
+    verification: [sil]

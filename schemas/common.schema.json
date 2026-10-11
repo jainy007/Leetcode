@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ea/common.schema.json",
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+    "type_name": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Za-z0-9]*$"
+    },
+    "namespace": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*(::[a-z][a-z0-9_]*)*$"
+    },
+    "req_refs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^REQ-[A-Z0-9]+-[0-9]{3}$"
+      }
+    },
+    "component": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "namespace",
+        "asil",
+        "profile"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/type_name"
+        },
+        "namespace": {
+          "$ref": "#/$defs/namespace"
+        },
+        "asil": {
+          "type": "string",
+          "pattern": "^(QM|A|B|C|D)(\\((A|B|C|D)\\))?$"
+        },
+        "profile": {
+          "enum": [
+            "asil",
+            "qm"
+          ]
+        }
+      }
+    },
+    "relpath": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_][A-Za-z0-9_./-]*$",
+      "not": {
+        "pattern": "\\.\\."
+      }
+    }
+  }
+}

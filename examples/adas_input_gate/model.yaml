@@ -1,0 +1,77 @@
+# Model for the ADAS input gate (pattern: input_gate).
+# Edited by humans (or proposed by an agent and approved). Never edit generated/ instead.
+schema_version: 1
+pattern: input_gate
+
+component:
+  name: AdasInputGate
+  namespace: adas::input_gate
+  asil: B
+  profile: asil
+
+inputs:
+  requirements: requirements.yaml
+  features: [features/gate.feature]
+  dbc: [interfaces/gate_status.dbc]
+
+messages:
+  - name: ObjectSummary
+    transport: someip
+    someip: {service_id: 0x1234, event_id: 0x8001, interface_version: 1}
+    payload_length: 18
+    e2e: {profile: P4, data_id: 0x0A0B0C0D, offset: 0, max_delta_counter: 3}
+    satisfies: [REQ-GATE-001, REQ-GATE-003]
+    signals:
+      - {name: object_count, byte_offset: 12, type: uint8, factor: 1, offset: 0,
+         min: 0, max: 64, unit: "1", sil_default: 3, satisfies: [REQ-GATE-004]}
+      - {name: nearest_distance, byte_offset: 13, type: uint16, factor: 0.01, offset: 0,
+         min: 0, max: 250, unit: m, sil_default: 42.5, satisfies: [REQ-GATE-004]}
+      - {name: nearest_rel_speed, byte_offset: 15, type: int16, factor: 0.01, offset: 0,
+         min: -80, max: 80, unit: m/s, sil_default: -3.25, satisfies: [REQ-GATE-004]}
+      - {name: nearest_confidence, byte_offset: 17, type: uint8, factor: 0.5, offset: 0,
+         min: 0, max: 100, unit: "%", sil_default: 87.5, satisfies: [REQ-GATE-004]}
+  # GateStatus is imported from interfaces/gate_status.dbc.
+
+gate:
+  input: ObjectSummary
+  status_output:
+    message: GateStatus
+    satisfies: [REQ-GATE-008]
+    map:
+      State: state
+      Qualifier: qualifier
+      AliveCounter: alive_counter
+      NearestDistance: input.nearest_distance
+      E2eErrorCount: e2e_error_count
+
+  # Every cycle is classified as exactly one of: valid, e2e_error, range_error, missing.
+  debounce:
+    - {name: first_valid, counts: [valid], threshold: 1, satisfies: [REQ-GATE-001]}
+    - {name: e2e_fault, counts: [e2e_error], threshold: 3, satisfies: [REQ-GATE-003]}
+    - {name: range_fault, counts: [range_error], threshold: 1, satisfies: [REQ-GATE-004]}
+    - {name: timeout, counts: [missing], threshold: 5, satisfies: [REQ-GATE-005]}
+    - {name: recovered, counts: [valid], threshold: 10, satisfies: [REQ-GATE-006]}
+
+  state_machine:
+    initial: INIT
+    states: [INIT, RUN, DEGRADED, SAFE]
+    latched: [SAFE]
+    valid_output_states: [RUN]
+    satisfies: [REQ-GATE-002, REQ-GATE-007]
+    # Evaluated in order; at most one transition per cycle.
+    transitions:
+      - {from: INIT, to: RUN, on: first_valid, satisfies: [REQ-GATE-001]}
+      - {from: INIT, to: SAFE, on: timeout, satisfies: [REQ-GATE-005]}
+      - {from: RUN, to: SAFE, on: timeout, satisfies: [REQ-GATE-005]}
+      - {from: RUN, to: DEGRADED, on: e2e_fault, satisfies: [REQ-GATE-003]}
+      - {from: RUN, to: DEGRADED, on: range_fault, satisfies: [REQ-GATE-004]}
+      - {from: DEGRADED, to: SAFE, on: timeout, satisfies: [REQ-GATE-005]}
+      - {from: DEGRADED, to: RUN, on: recovered, satisfies: [REQ-GATE-006]}
+
+task:
+  name: gate_task
+  period_ms: 20
+  wcet_budget_us: 500
+  fifo_priority: 60
+  cpu_mask: 0x4
+  satisfies: [REQ-GATE-009]

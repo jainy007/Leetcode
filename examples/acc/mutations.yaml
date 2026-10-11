@@ -1,0 +1,54 @@
+# Deliberate defects the chain must detect (python3 -m tools.mutate acc). See docs/acc_sil_report.md.
+mutations:
+  # ---- inputs: model ----
+  - {name: "time gap 1.5 -> 1.6 s", file: examples/acc/model.yaml, old: "[1.0, 1.5, 2.0]", new: "[1.0, 1.6, 2.0]"}
+  - {name: "decel limit 3.5 -> 4.5", file: examples/acc/model.yaml, old: "decel_max_mps2: {value: 3.5", new: "decel_max_mps2: {value: 4.5"}
+  - {name: "accel limit 2.0 -> 2.5", file: examples/acc/model.yaml, old: "accel_max_mps2: {value: 2.0", new: "accel_max_mps2: {value: 2.5"}
+  - {name: "jerk up 2.5 -> 3.0", file: examples/acc/model.yaml, old: "jerk_increase_max_mps3: {value: 2.5", new: "jerk_increase_max_mps3: {value: 3.0"}
+  - {name: "disengage 25 -> 20 km/h", file: examples/acc/model.yaml, old: "disengage_speed_kph: {value: 25", new: "disengage_speed_kph: {value: 20"}
+  - {name: "disengage 25 -> 28 km/h", file: examples/acc/model.yaml, old: "disengage_speed_kph: {value: 25", new: "disengage_speed_kph: {value: 28"}
+  - {name: "lane half width 1.8 -> 2.0", file: examples/acc/model.yaml, old: "lane_half_width_m: {value: 1.8", new: "lane_half_width_m: {value: 2.0"}
+  - {name: "override pedal 5 -> 3 %", file: examples/acc/model.yaml, old: "override_pedal_pct: {value: 5.0", new: "override_pedal_pct: {value: 3.0"}
+  - {name: "set step 5 -> 10 km/h", file: examples/acc/model.yaml, old: "set_speed_step_kph: {value: 5", new: "set_speed_step_kph: {value: 10"}
+  - {name: "standstill gap 5 -> 7 m", file: examples/acc/model.yaml, old: "standstill_distance_m: {value: 5.0", new: "standstill_distance_m: {value: 7.0"}
+  - {name: "radar timeout 120 -> 160 ms", file: examples/acc/model.yaml, old: "period_ms: 40, timeout_ms: 120", new: "period_ms: 40, timeout_ms: 160"}
+  - {name: "wrong E2E data id (radar)", file: examples/acc/model.yaml, old: "data_id: 0x0200", new: "data_id: 0x0201"}
+  - {name: "E2E max delta 3 -> 2 (ego)", file: examples/acc/model.yaml, old: "data_id: 0x0210, crc: Crc, counter: Counter, max_delta_counter: 3", new: "data_id: 0x0210, crc: Crc, counter: Counter, max_delta_counter: 2"}
+  - {name: "brake request bound to accel signal", file: examples/acc/model.yaml, old: "brake_request: AccCommand.BrakeRequest", new: "brake_request: AccCommand.AccelRequest"}
+  # ---- inputs: model, remaining calibration values (every value has a mutant: tools.mutate gate) ----
+  - {name: "min activation speed 30 -> 35 km/h", file: examples/acc/model.yaml, old: "min_activation_speed_kph: {value: 30", new: "min_activation_speed_kph: {value: 35"}
+  - {name: "max set speed 180 -> 170 km/h", file: examples/acc/model.yaml, old: "max_set_speed_kph: {value: 180", new: "max_set_speed_kph: {value: 170"}
+  - {name: "time gaps 2.0 -> 2.1 s", file: examples/acc/model.yaml, old: "time_gaps_s: {value: [1.0, 1.5, 2.0]", new: "time_gaps_s: {value: [1.0, 1.5, 2.1]"}
+  - {name: "max target range 200 -> 180 m", file: examples/acc/model.yaml, old: "max_target_range_m: {value: 200", new: "max_target_range_m: {value: 180"}
+  - {name: "jerk decrease 5.0 -> 6.0 m/s3", file: examples/acc/model.yaml, old: "jerk_decrease_max_mps3: {value: 5.0", new: "jerk_decrease_max_mps3: {value: 6.0"}
+  - {name: "speed gain 0.3 -> 0.4 1/s", file: examples/acc/model.yaml, old: "speed_gain_per_s: {value: 0.3", new: "speed_gain_per_s: {value: 0.4", expect: tolerated,
+     note: "control tuning without a requirement of its own; behaviour stays within the requirement-level tolerances (REQ-ACC-010/011/014/015)"}
+  - {name: "gap gain 0.2 -> 0.3 1/s2", file: examples/acc/model.yaml, old: "gap_gain_per_s2: {value: 0.2", new: "gap_gain_per_s2: {value: 0.3"}
+  - {name: "range rate gain 0.6 -> 0.8 1/s", file: examples/acc/model.yaml, old: "range_rate_gain_per_s: {value: 0.6", new: "range_rate_gain_per_s: {value: 0.8", expect: tolerated,
+     note: "control tuning without a requirement of its own; behaviour stays within the requirement-level tolerances (REQ-ACC-010/011/014/015)"}
+  # ---- inputs: DBC ----
+  - {name: "AccelRequest factor 0.01 -> 0.02", file: examples/acc/interfaces/acc.dbc, old: "AccelRequest : 16|10@1+ (0.01,0)", new: "AccelRequest : 16|10@1+ (0.02,0)"}
+  - {name: "ObjRange moved by one bit", file: examples/acc/interfaces/acc.dbc, old: "ObjRange : 16|12@1+", new: "ObjRange : 17|11@1+"}
+  - {name: "SetSpeed overlaps TimeGap", file: examples/acc/interfaces/acc.dbc, old: "SetSpeed : 48|8@1+", new: "SetSpeed : 50|8@1+"}
+  # ---- generator: feature template ----
+  - {name: "gap control min -> max", file: templates/features/acc/logic.cpp.j2, old: "a = (a_gap < a) ? a_gap : a;", new: "a = (a_gap > a) ? a_gap : a;"}
+  - {name: "accel/brake swapped", file: templates/features/acc/logic.cpp.j2, old: "out.accel_request = (accel_raw_ > 0) ? static_cast<double>(accel_raw_)", new: "out.accel_request = (accel_raw_ < 0) ? static_cast<double>(-accel_raw_)"}
+  - {name: "Set as level instead of edge", file: templates/features/acc/logic.cpp.j2, old: "const bool set_edge = set_now && !prev_set_;", new: "const bool set_edge = set_now;"}
+  - {name: "FAULT not latched", file: templates/features/acc/logic.cpp.j2, old: "        return;  // latched until the main switch is turned off", new: "        if (in.all_ok) { state_ = State::kStandby; } return;"}
+  - {name: "jerk limit removed", file: templates/features/acc/logic.cpp.j2, old: "accel_raw_ += (delta > kJerkUpStep) ? kJerkUpStep : ((delta < -kJerkDownStep) ? -kJerkDownStep : delta);", new: "accel_raw_ += delta;"}
+  - {name: "jerk limits swapped", file: templates/features/acc/logic.cpp.j2, old: "accel_raw_ += (delta > kJerkUpStep) ? kJerkUpStep : ((delta < -kJerkDownStep) ? -kJerkDownStep : delta);", new: "accel_raw_ += (delta > kJerkDownStep) ? kJerkDownStep : ((delta < -kJerkUpStep) ? -kJerkUpStep : delta);"}
+  - {name: "lane check removed", file: templates/features/acc/logic.cpp.j2, old: "std::fabs(in.target_lateral) <= kLaneHalfWidthM;", new: "true;"}
+  - {name: "200 m range check removed", file: templates/features/acc/logic.cpp.j2, old: "in.target_range <= kMaxTargetRangeM &&", new: ""}
+  - {name: "range rate sign flipped", file: templates/features/acc/logic.cpp.j2, old: "+ kRangeRateGainPerS * in.target_range_rate", new: "- kRangeRateGainPerS * in.target_range_rate"}
+  - {name: "brake does not end OVERRIDE", file: templates/features/acc/logic.cpp.j2, old: "            if (brake || cancel_edge) {", new: "            if ((brake && state_ == State::kActive) || cancel_edge) {"}
+  - {name: "set speed not cleared on OFF", file: templates/features/acc/logic.cpp.j2, old: "        set_speed_kph_ = 0.0;\n        return;", new: "        return;"}
+  - {name: "Resume without stored speed", file: templates/features/acc/logic.cpp.j2, old: "resume_edge && can_engage && set_speed_kph_ > 0.0", new: "resume_edge && can_engage"}
+  - {name: "Speed Down adds", file: templates/features/acc/logic.cpp.j2, old: "set_speed_kph_ - kSetSpeedStepKph", new: "set_speed_kph_ + kSetSpeedStepKph"}
+  - {name: "steering request not 0", file: templates/features/acc/logic.cpp.j2, old: "out.steering_request = 0.0;", new: "out.steering_request = 0.1;"}
+  - {name: "set speed not rounded internally", file: templates/features/acc/logic.cpp.j2, old: "clamp(static_cast<double>(ea::round_half_away(v_kph)),", new: "clamp(v_kph,", expect: equivalent,
+     note: "SetSpeed has 1 km/h resolution and REQ-ACC-010 allows 1 km/h speed error"}
+  - {name: "disengage check also in OVERRIDE", file: templates/features/acc/logic.cpp.j2, old: "if (state_ == State::kActive && v_kph < kDisengageSpeedKph)", new: "if (v_kph < kDisengageSpeedKph)", expect: equivalent,
+     note: "OVERRIDE starts at >= 25 km/h while the driver accelerates; below 25 km/h is unreachable"}
+  # ---- generator: framework template ----
+  - {name: "timeout off by one", file: templates/can_function/component.cpp.j2, old: "const bool {{ r.snake }}_ok = age_{{ r.snake }}_ < k", new: "const bool {{ r.snake }}_ok = age_{{ r.snake }}_ <= k"}
+  - {name: "E2E check ignored", file: templates/can_function/component.cpp.j2, old: "if (ea::e2e::is_usable(e2e_{{ r.snake }}_.check(frame))) {", new: "if (true) { (void)e2e_{{ r.snake }}_.check(frame);"}

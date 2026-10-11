@@ -1,0 +1,84 @@
+#include <gtest/gtest.h>
+
+#include <array>
+#include <cstdint>
+#include <limits>
+
+#include "ea/codec/bits.hpp"
+#include "{{ inc }}/{{ snake }}_codec.hpp"
+
+// Back-to-back test of the generated codec against the runtime's generic bit codec
+// (ea::codec::extract / insert), with vectors the generator derives from the interface
+// definition: every signal at the low, high and middle raw value of its physical range, values
+// just outside the range, NaN and wrong payload lengths. Complements the closed-loop SIL, which
+// exercises only the messages and values a scenario reaches.
+
+namespace {{ ns }} {
+namespace {
+
+std::uint64_t ref_extract(const std::uint8_t* data, std::size_t size, ea::codec::ByteOrder order, std::uint32_t start,
+                          std::uint32_t length) {
+    const ea::Result<std::uint64_t> r = ea::codec::extract(ea::ConstByteSpan(data, size), order, start, length);
+    EXPECT_TRUE(r.ok());
+    return r.ok() ? *r : 0U;
+}
+{% for m in codec_vectors %}
+{% set L = "k" ~ m.name ~ "PayloadLength" %}
+
+{{ m.name }} {{ m.snake }}_vector(int which) {
+    {{ m.name }} v{};
+{% for s in m.signals %}
+    v.{{ s.name }} = which == 0 ? {{ s.phys.lo | cpp_double }} : (which == 1 ? {{ s.phys.hi | cpp_double }} : {{ s.phys.mid | cpp_double }});
+{% endfor %}
+    return v;
+}
+
+TEST({{ component.name }}CodecTest, {{ m.name }}LayoutMatchesReference) {
+    for (int which = 0; which < 3; ++which) {
+        std::array<std::uint8_t, {{ L }}> buf{};
+        ASSERT_TRUE(encode_{{ m.snake }}({{ m.snake }}_vector(which), ea::ByteSpan(buf.data(), buf.size())).ok());
+{% for s in m.signals %}
+        EXPECT_EQ(ref_extract(buf.data(), buf.size(), ea::codec::ByteOrder::{{ s.order }}, {{ s.start }}U, {{ s.length }}U),
+                  which == 0 ? {{ s.bits.lo }}ULL : (which == 1 ? {{ s.bits.hi }}ULL : {{ s.bits.mid }}ULL)) << "{{ s.name }}";
+{% endfor %}
+        const ea::Result<{{ m.name }}> d = decode_{{ m.snake }}(ea::ConstByteSpan(buf.data(), buf.size()));
+        ASSERT_TRUE(d.ok());
+{% for s in m.signals %}
+        EXPECT_DOUBLE_EQ(d->{{ s.name }}, static_cast<double>(which == 0 ? {{ s.raw.lo }}LL : (which == 1 ? {{ s.raw.hi }}LL : {{ s.raw.mid }}LL)) * {{ s.factor | cpp_double }} + {{ s.offset | cpp_double }});
+{% endfor %}
+    }
+}
+
+TEST({{ component.name }}CodecTest, {{ m.name }}RejectsInvalidData) {
+    std::array<std::uint8_t, {{ L }}> buf{};
+    std::array<std::uint8_t, {{ L }} + 1U> longer{};
+    EXPECT_EQ(encode_{{ m.snake }}({{ m.snake }}_vector(2), ea::ByteSpan(longer.data(), longer.size())).error(), ea::ErrorCode::kLengthMismatch);
+    EXPECT_EQ(decode_{{ m.snake }}(ea::ConstByteSpan(buf.data(), buf.size() - 1U)).error(), ea::ErrorCode::kLengthMismatch);
+{% for s in m.signals %}
+    {
+        {{ m.name }} v = {{ m.snake }}_vector(2);
+        v.{{ s.name }} = {{ s.above | cpp_double }};
+        EXPECT_EQ(encode_{{ m.snake }}(v, ea::ByteSpan(buf.data(), buf.size())).error(), ea::ErrorCode::kOutOfRange);
+        v.{{ s.name }} = {{ s.below | cpp_double }};
+        EXPECT_EQ(encode_{{ m.snake }}(v, ea::ByteSpan(buf.data(), buf.size())).error(), ea::ErrorCode::kOutOfRange);
+        v.{{ s.name }} = std::numeric_limits<double>::quiet_NaN();
+        EXPECT_EQ(encode_{{ m.snake }}(v, ea::ByteSpan(buf.data(), buf.size())).error(), ea::ErrorCode::kOutOfRange);
+    }
+{% if s.raw_above is not none or s.raw_below is not none %}
+    {
+        ASSERT_TRUE(encode_{{ m.snake }}({{ m.snake }}_vector(2), ea::ByteSpan(buf.data(), buf.size())).ok());
+{% for raw in [s.raw_above, s.raw_below] if raw is not none %}
+        {
+            std::array<std::uint8_t, {{ L }}> bad = buf;
+            ASSERT_TRUE(ea::codec::insert(ea::ByteSpan(bad.data(), bad.size()), ea::codec::ByteOrder::{{ s.order }}, {{ s.start }}U, {{ s.length }}U, {{ raw }}ULL).ok());
+            EXPECT_EQ(decode_{{ m.snake }}(ea::ConstByteSpan(bad.data(), bad.size())).error(), ea::ErrorCode::kOutOfRange) << "{{ s.name }}";
+        }
+{% endfor %}
+    }
+{% endif %}
+{% endfor %}
+}
+{% endfor %}
+
+}  // namespace
+}  // namespace {{ ns }}

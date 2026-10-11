@@ -1,0 +1,93 @@
+# Hazard analysis and risk assessment of the AEB item (ISO 26262-3:2018, clause 6).
+# HAZOP guide words on the item's functions: forward collision warning and autonomous braking.
+# S, E and C are assessed by the project. The generator computes each ASIL (GEN-067) and derives
+# the FTTI from the stated situations (GEN-069).
+schema_version: 1
+item: AebSystem
+
+assumptions:
+  - id: A-01
+    text: A driver reacts to an unexpected event, including a takeover request or brake lights ahead, after 1.25 s.
+    source: M. Green, "How long does it take to stop?", Transportation Human Factors 2(3), 2000
+  - id: A-02
+    text: Ordinary drivers brake at 6 m/s2 in an emergency.
+    source: engineering estimate
+  - id: A-03
+    text: A following vehicle keeps a headway of 0.8 s.
+    source: engineering estimate (conservative within observed motorway headways)
+  - id: A-04
+    text: AEB requests at most 8 m/s2 (full braking) or 4 m/s2 (partial braking), as in REQ-AEB-002/003.
+    source: examples/aeb/requirements.yaml
+  - id: A-05
+    text: In its safe state the actuator ECU ramps braking out at 20 m/s3 (AoU-3), within 100 ms of the monitor's verdict (AoU-4).
+    source: system model actuator.reaction_ms and actuator.ramp_out_mps3
+  - id: A-06
+    text: AEB supplements an attentive driver; the driver remains responsible for avoiding collisions (UN R152 context).
+    source: UN Regulation No. 152
+  - id: A-07
+    text: Severity follows the impact speed of a car-to-car collision. S3 if more than 40 km/h is plausible, S2 for 20-40 km/h, S1 below.
+    source: ISO 26262-3 Annex B examples, engineering estimate
+
+ftti_defaults:
+  reaction_s: 1.25
+  follower_decel_mps2: 6.0
+  driver_decel_mps2: 6.0
+  ramp_out_mps3: 20.0
+
+hazards:
+  - {id: H-AEB-01, guide_word: unintended, function: emergency braking, malfunction: "full braking without a collision threat"}
+  - {id: H-AEB-02, guide_word: unintended, function: emergency braking, malfunction: "partial braking without a collision threat"}
+  - {id: H-AEB-03, guide_word: stuck, function: emergency braking, malfunction: "braking continues after the threat has gone or the command freezes"}
+  - {id: H-AEB-04, guide_word: "no", function: emergency braking, malfunction: "no braking when a collision is imminent"}
+  - {id: H-AEB-05, guide_word: unintended, function: forward collision warning, malfunction: "warning without a collision threat"}
+
+hazardous_events:
+  - id: HE-AEB-01
+    hazard: H-AEB-01
+    situation: Free road at 50-130 km/h with a following vehicle at 0.8 s headway.
+    severity: {class: S3, rationale: "A rear-end collision by the following car can exceed 40 km/h after unexpected full braking."}
+    exposure: {class: E4, rationale: "Driving with a following vehicle at a short headway takes more than 10 % of the driving time; AEB is active whenever the car moves."}
+    controllability: {class: C3, rationale: "With 0.8 s headway and a 1.25 s reaction, the follower cannot avoid an unexpected 8 m/s2 braking; the ego driver has no means to cancel it in time."}
+    safety_goal: REQ-AEBS-001
+    ftti:
+      model: rear_end_by_follower
+      situations:
+        - {speed_kph: 50, headway_s: 0.8, fault_decel_mps2: 8.0}
+        - {speed_kph: 80, headway_s: 0.8, fault_decel_mps2: 8.0}
+        - {speed_kph: 130, headway_s: 0.8, fault_decel_mps2: 8.0}
+  - id: HE-AEB-02
+    hazard: H-AEB-02
+    situation: Free road at 50-130 km/h with a following vehicle at 0.8 s headway.
+    severity: {class: S2, rationale: "The follower brakes harder (6 m/s2) than the partial 4 m/s2, so the impact speed of any collision stays moderate."}
+    exposure: {class: E4, rationale: "As HE-AEB-01: a following vehicle at short headway."}
+    controllability: {class: C2, rationale: "Most followers avoid the collision once they react. The kinematic FTTI shows no collision for any duration at 0.8 s headway."}
+    safety_goal: REQ-AEBS-001
+    ftti:
+      model: rear_end_by_follower
+      situations:
+        - {speed_kph: 50, headway_s: 0.8, fault_decel_mps2: 4.0}
+        - {speed_kph: 130, headway_s: 0.8, fault_decel_mps2: 4.0}
+  - id: HE-AEB-03
+    hazard: H-AEB-03
+    situation: After an AEB intervention, the obstacle has left the lane; a following vehicle at 0.8 s headway, 50-80 km/h.
+    severity: {class: S3, rationale: "Full braking that continues needlessly can lead to a rear-end collision above 40 km/h."}
+    exposure: {class: E2, rationale: "Needs an AEB intervention first, and AEB interventions are rare (well below 1 % of the driving time)."}
+    controllability: {class: C3, rationale: "As HE-AEB-01: the follower cannot avoid it."}
+    safety_goal: REQ-AEBS-002
+    ftti:
+      model: rear_end_by_follower
+      situations:
+        - {speed_kph: 50, headway_s: 0.8, fault_decel_mps2: 8.0}
+        - {speed_kph: 80, headway_s: 0.8, fault_decel_mps2: 8.0}
+  - id: HE-AEB-04
+    hazard: H-AEB-04
+    situation: A stationary or slower vehicle ahead and the driver does not react.
+    severity: {class: S3, rationale: "A collision with the vehicle ahead at more than 40 km/h is plausible."}
+    exposure: {class: E2, rationale: "Situations where AEB must intervene because the driver does not are rare."}
+    controllability: {class: C1, rationale: "AEB supplements an attentive driver (A-06). Losing it leaves the driver in the situation of a car without AEB, which is controllable in general."}
+  - id: HE-AEB-05
+    hazard: H-AEB-05
+    situation: Any driving situation; the warning sounds without a threat.
+    severity: {class: S0, rationale: "A warning alone causes no injury."}
+    exposure: {class: E4, rationale: "AEB is active whenever the car moves."}
+    controllability: {class: C0, rationale: "A false warning does not affect vehicle motion."}

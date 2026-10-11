@@ -1,0 +1,36 @@
+#pragma once
+
+#include <cstdint>
+
+#include "{{ inc }}/{{ snake }}_types.hpp"
+
+namespace {{ ns }} {
+
+// Feature 'aeb' logic: forward collision warning and two-stage emergency braking based on the
+// time to collision (TTC = range / closing speed) of the relevant radar target.
+class {{ component.name }}Logic {
+public:
+    static constexpr double kMinSpeedKph = {{ cal.min_speed_kph | cpp_double }};
+    static constexpr double kMaxSpeedKph = {{ cal.max_speed_kph | cpp_double }};
+    static constexpr double kMaxTargetRangeM = {{ cal.max_target_range_m | cpp_double }};
+    static constexpr double kLaneHalfWidthM = {{ cal.lane_half_width_m | cpp_double }};
+    static constexpr double kMinClosingSpeedMps = {{ cal.min_closing_speed_mps | cpp_double }};
+    static constexpr double kFcwTtcS = {{ cal.fcw_ttc_s | cpp_double }};
+    static constexpr double kWarningReleaseTtcS = {{ cal.warning_release_ttc_s | cpp_double }};
+    static constexpr double kPartialBrakeTtcS = {{ cal.partial_brake_ttc_s | cpp_double }};
+    static constexpr double kFullBrakeTtcS = {{ cal.full_brake_ttc_s | cpp_double }};
+    static constexpr std::uint32_t kMinWarningCycles = {{ min_warning_cycles }}U;
+    static constexpr double kPartialDecelMps2 = {{ cal.partial_decel_mps2 | cpp_double }};
+    static constexpr double kFullDecelMps2 = {{ cal.full_decel_mps2 | cpp_double }};
+    static constexpr double kKickdownPedalPct = {{ cal.kickdown_pedal_pct | cpp_double }};
+    static constexpr double kStandstillSpeedKph = {{ cal.standstill_speed_kph | cpp_double }};
+
+    void step(const Inputs& in, Outputs& out) noexcept;
+    State state() const noexcept { return state_; }
+
+private:
+    State state_ = State::kStandby;
+    std::uint32_t warning_cycles_ = 0U;
+};
+
+}  // namespace {{ ns }}

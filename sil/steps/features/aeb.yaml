@@ -1,0 +1,76 @@
+# Step vocabulary of feature 'aeb' (observations of AebCommand via ea::plant::AebObserver,
+# reached as sil_.feature()). Combined with sil/steps/can_function.yaml.
+# TTC values are measured by the plant from its own world state.
+schema_version: 1
+pattern: aeb
+steps:
+  - id: AEB-S01
+    keywords: [then]
+    pattern: '^the AEB state is (?P<s>STANDBY|WARNING|PARTIAL_BRAKE|FULL_BRAKE|FAULT)$'
+    types: {s: 'enum:[STANDBY, WARNING, PARTIAL_BRAKE, FULL_BRAKE, FAULT]'}
+    cpp: 'EXPECT_EQ(sil_.feature().last_command().status, ea::plant::AebStatus::k{{ s | camel }});'
+  - id: AEB-S02
+    keywords: [then]
+    pattern: '^a forward collision warning was issued at a time to collision between (?P<lo>[0-9]+(?:\.[0-9]+)?) s and (?P<hi>[0-9]+(?:\.[0-9]+)?) s$'
+    types: {lo: number, hi: number}
+    cpp: 'ASSERT_TRUE(sil_.feature().metrics().warned); EXPECT_GE(sil_.feature().metrics().ttc_at_warning_s, {{ lo }}); EXPECT_LE(sil_.feature().metrics().ttc_at_warning_s, {{ hi }});'
+  - id: AEB-S03
+    keywords: [then]
+    pattern: '^no forward collision warning was issued$'
+    cpp: 'EXPECT_FALSE(sil_.feature().metrics().warned);'
+  - id: AEB-S04
+    keywords: [then]
+    pattern: '^the warning preceded braking by at least (?P<t>[0-9]+(?:\.[0-9]+)?) s$'
+    types: {t: number}
+    cpp: 'ASSERT_TRUE(sil_.feature().metrics().braked); EXPECT_GE(sil_.feature().metrics().first_brake_s - sil_.feature().metrics().first_warning_s, {{ t }} - 1e-9);'
+  - id: AEB-S05
+    keywords: [then]
+    pattern: '^emergency braking started at a time to collision between (?P<lo>[0-9]+(?:\.[0-9]+)?) s and (?P<hi>[0-9]+(?:\.[0-9]+)?) s$'
+    types: {lo: number, hi: number}
+    cpp: 'ASSERT_TRUE(sil_.feature().metrics().braked); EXPECT_GE(sil_.feature().metrics().ttc_at_brake_s, {{ lo }}); EXPECT_LE(sil_.feature().metrics().ttc_at_brake_s, {{ hi }});'
+  - id: AEB-S06
+    keywords: [then]
+    pattern: '^emergency braking was never requested$'
+    cpp: 'EXPECT_FALSE(sil_.feature().metrics().braked);'
+  - id: AEB-S07
+    keywords: [then]
+    pattern: '^a deceleration of (?P<a>[0-9]+(?:\.[0-9]+)?) m/s2 is requested$'
+    types: {a: number}
+    cpp: 'EXPECT_EQ(sil_.feature().last_command().brake_raw, ea::plant::Plant::accel_raw({{ a }}));'
+  - id: AEB-S08
+    keywords: [then]
+    pattern: '^the requested deceleration reached (?P<a>[0-9]+(?:\.[0-9]+)?) m/s2$'
+    types: {a: number}
+    cpp: 'EXPECT_EQ(sil_.feature().metrics().max_brake_raw, ea::plant::Plant::accel_raw({{ a }}));'
+  - id: AEB-S09
+    keywords: [then]
+    pattern: '^the warning is (?P<w>on|off)$'
+    types: {w: 'enum:[on, off]'}
+    cpp: 'EXPECT_EQ(sil_.feature().last_command().warning, {{ "true" if w == "on" else "false" }});'
+  - id: AEB-S10
+    keywords: [then]
+    pattern: '^every command frame passed the E2E check$'
+    cpp: 'EXPECT_GT(sil_.feature().metrics().command_frames, 0U); EXPECT_EQ(sil_.feature().metrics().command_e2e_errors, 0U);'
+  - id: AEB-S11
+    keywords: [then]
+    pattern: '^one command frame was sent per 20 ms$'
+    cpp: 'EXPECT_EQ(sil_.feature().metrics().command_frames, sil_.plant().metrics().ticks);'
+  - id: AEB-S12
+    keywords: [then]
+    pattern: '^emergency braking is requested$'
+    cpp: 'EXPECT_GT(sil_.feature().last_command().brake_raw, 0);'
+  - id: AEB-S13
+    keywords: [then]
+    pattern: '^emergency braking started with (?P<a>[0-9]+(?:\.[0-9]+)?) m/s2$'
+    types: {a: number}
+    cpp: 'ASSERT_TRUE(sil_.feature().metrics().braked); EXPECT_EQ(sil_.feature().metrics().first_brake_raw, ea::plant::Plant::accel_raw({{ a }}));'
+  - id: AEB-S14
+    keywords: [then]
+    pattern: '^full braking started at a time to collision between (?P<lo>[0-9]+(?:\.[0-9]+)?) s and (?P<hi>[0-9]+(?:\.[0-9]+)?) s$'
+    types: {lo: number, hi: number}
+    cpp: 'ASSERT_TRUE(sil_.feature().metrics().full_braked); EXPECT_GE(sil_.feature().metrics().ttc_at_full_brake_s, {{ lo }}); EXPECT_LE(sil_.feature().metrics().ttc_at_full_brake_s, {{ hi }});'
+  - id: AEB-S15
+    keywords: [then]
+    pattern: '^the warning ended at a time to collision between (?P<lo>[0-9]+(?:\.[0-9]+)?) s and (?P<hi>[0-9]+(?:\.[0-9]+)?) s$'
+    types: {lo: number, hi: number}
+    cpp: 'EXPECT_GE(sil_.feature().metrics().ttc_at_warning_end_s, {{ lo }}); EXPECT_LE(sil_.feature().metrics().ttc_at_warning_end_s, {{ hi }});'

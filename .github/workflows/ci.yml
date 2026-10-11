@@ -1,0 +1,151 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  # The qualified generator: rules, determinism, and "generated/ was not edited by hand".
+  generator:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r tools/requirements.txt
+      - name: Qualification suite
+        run: python3 -m unittest discover -s tools/gen/tests -t . -v
+      - name: Lint requirements, Gherkin, models
+        run: python3 -m tools.lint
+      - name: generated/ is exactly the generator output
+        run: python3 -m tools.gen --check
+
+  # Extensibility gate: a freshly scaffolded feature must generate, build, pass its SIL and its
+  # starter mutation check without any manual edit.
+  scaffold:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r tools/requirements.txt
+      - run: sudo apt-get update && sudo apt-get install -y ninja-build
+      - run: python3 -m tools.scaffold feature demo_lka --can-id 816
+      - run: python3 -m tools.gen
+      - run: cmake --preset linux-host
+      - run: cmake --build --preset linux-host
+      - run: ctest --preset linux-host -R DemoLka
+      - run: python3 -m tools.mutate demo_lka
+
+  build-test:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        preset: [linux-host, linux-host-asan, linux-host-tsan]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r tools/requirements.txt
+      - run: sudo apt-get update && sudo apt-get install -y ninja-build
+      - run: cmake --preset ${{ matrix.preset }}
+      - run: cmake --build --preset ${{ matrix.preset }}
+      - run: ctest --preset ${{ matrix.preset }}
+      - name: Requirements trace matrix
+        if: matrix.preset == 'linux-host'
+        run: python3 -m tools.trace --results build/linux-host/test-results --out reports
+      - uses: actions/upload-artifact@v4
+        if: always() && matrix.preset == 'linux-host'
+        with:
+          name: trace-and-test-results
+          path: |
+            reports/
+            build/linux-host/test-results/
+
+  coverage:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r tools/requirements.txt
+      - run: sudo apt-get update && sudo apt-get install -y ninja-build clang-18 llvm-18 libclang-rt-18-dev
+      - run: cmake --preset linux-host-coverage -DCMAKE_C_COMPILER=clang-18 -DCMAKE_CXX_COMPILER=clang++-18
+      - run: cmake --build --preset linux-host-coverage
+      - run: LLVM_PROFILE_FILE="$PWD/build/cov/%p-%m.profraw" ctest --preset linux-host-coverage
+      - name: Statement / branch / MC/DC gate (ASIL D-derived files 100 % MC/DC or justified; ratchet)
+        run: python3 -m tools.coverage --build-dir build/linux-host-coverage --profiles build/cov --report coverage.md
+        env:
+          LLVM_COV: llvm-cov-18
+          LLVM_PROFDATA: llvm-profdata-18
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage
+          path: coverage.md
+
+  # Every non-equivalent deliberate defect must be detected (generator rule, codec test or SIL),
+  # and every calibration value of the model must have a mutant.
+  mutation:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [acc, aeb, acc_monitor, aeb_monitor, acc_system]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r tools/requirements.txt
+      - run: sudo apt-get update && sudo apt-get install -y ninja-build
+      - run: cmake --preset linux-host
+      - run: cmake --build --preset linux-host
+      - run: python3 -m tools.mutate ${{ matrix.project }} --report mutation_${{ matrix.project }}.md
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mutation-${{ matrix.project }}
+          path: mutation_${{ matrix.project }}.md
+
+  # Keeps the benchmarks compiling and gives a (noisy, informational) number per commit.
+  benchmarks:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r tools/requirements.txt
+      - run: sudo apt-get update && sudo apt-get install -y ninja-build
+      - run: cmake --preset linux-host-bench
+      - run: cmake --build --preset linux-host-bench --target ea_bench
+      - run: ./build/linux-host-bench/bench/ea_bench --benchmark_min_time=0.1s --benchmark_out=bench.json --benchmark_out_format=json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: benchmarks
+          path: bench.json
+
+  clang-tidy:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r tools/requirements.txt
+      - run: sudo apt-get update && sudo apt-get install -y ninja-build clang-tidy
+      - run: cmake --preset linux-host -DEA_BUILD_TESTS=OFF
+      - name: clang-tidy on runtime and generated production code
+        run: |
+          files=$(find runtime/src generated -name '*.cpp' -not -path '*/sil/*')
+          clang-tidy -p build/linux-host --quiet $files | tee clang-tidy.txt

@@ -1,0 +1,83 @@
+# Controlled step vocabulary for the input_gate pattern.
+# Part of the qualified tool configuration: humans only (see CLAUDE.md).
+#
+# Each step: id, keywords it may follow (given/when/then), an anchored regex with named groups,
+# a type per group, and the C++ it expands to (Jinja2, rendered with StrictUndefined).
+# Group types:
+#   int            decimal integer 0..9999
+#   number         decimal number (rendered as a C++ double literal)
+#   ref:<kind>     must name an element of the model (signal, state, status_signal)
+#   enum:[a, b]    one of the listed literals
+schema_version: 1
+pattern: input_gate
+steps:
+  - id: GATE-S01
+    keywords: [given]
+    pattern: '^a freshly started component$'
+    cpp: '// freshly constructed component (test fixture)'
+
+  - id: GATE-S02
+    keywords: [given, when]
+    pattern: '^the component (?:has received|receives) (?P<n>[0-9]{1,4}) valid frames?$'
+    types: {n: int}
+    cpp: 'sil_.receive_valid({{ n }});'
+
+  - id: GATE-S03
+    keywords: [given, when]
+    pattern: '^the component receives (?P<n>[0-9]{1,4}) frames? with corrupted CRC$'
+    types: {n: int}
+    cpp: 'sil_.receive_corrupted_crc({{ n }});'
+
+  - id: GATE-S04
+    keywords: [given, when]
+    pattern: '^the component receives (?P<n>[0-9]{1,4}) frames? with repeated counter$'
+    types: {n: int}
+    cpp: 'sil_.receive_repeated_counter({{ n }});'
+
+  - id: GATE-S05
+    keywords: [given, when]
+    pattern: '^the component receives a frame with (?P<signal>[a-z][a-z0-9_]*) set to (?P<value>-?[0-9]+(?:\.[0-9]+)?)$'
+    types: {signal: 'ref:signal', value: number}
+    cpp: 'sil_.receive_with({{ signal }}, {{ value }});'
+
+  - id: GATE-S06
+    keywords: [given, when]
+    pattern: '^(?P<n>[0-9]{1,4}) cycles? pass(?:es)? without a frame$'
+    types: {n: int}
+    cpp: 'sil_.miss({{ n }});'
+
+  - id: GATE-S07
+    keywords: [then]
+    pattern: '^the state is (?P<state>[A-Z][A-Z0-9_]*)$'
+    types: {state: 'ref:state'}
+    cpp: 'EXPECT_EQ(sil_.state(), {{ state }});'
+
+  - id: GATE-S08
+    keywords: [then]
+    pattern: '^the output qualifier is (?P<q>VALID|INVALID)$'
+    types: {q: 'enum:[VALID, INVALID]'}
+    cpp: 'EXPECT_EQ(sil_.qualifier(), Qualifier::k{{ q | camel }});'
+
+  - id: GATE-S09
+    keywords: [then]
+    pattern: '^the output signal (?P<signal>[a-z][a-z0-9_]*) equals (?P<value>-?[0-9]+(?:\.[0-9]+)?) within (?P<tol>[0-9]+(?:\.[0-9]+)?)$'
+    types: {signal: 'ref:signal', value: number, tol: number}
+    cpp: 'EXPECT_NEAR(sil_.output_signal({{ signal }}), {{ value }}, {{ tol }});'
+
+  - id: GATE-S10
+    keywords: [then]
+    pattern: '^the heartbeat count is (?P<n>[0-9]{1,6})$'
+    types: {n: int}
+    cpp: 'EXPECT_EQ(sil_.heartbeat(), {{ n }}U);'
+
+  - id: GATE-S11
+    keywords: [then]
+    pattern: '^the status message reports state (?P<state>[A-Z][A-Z0-9_]*)$'
+    types: {state: 'ref:state'}
+    cpp: 'EXPECT_EQ(sil_.status_state(), {{ state }});'
+
+  - id: GATE-S12
+    keywords: [then]
+    pattern: '^the status message signal (?P<sig>[A-Za-z][A-Za-z0-9_]*) is (?P<value>-?[0-9]+(?:\.[0-9]+)?)$'
+    types: {sig: 'ref:status_signal', value: number}
+    cpp: 'EXPECT_NEAR(sil_.status_signal({{ sig }}), {{ value }}, 1e-6);'

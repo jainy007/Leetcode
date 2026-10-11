@@ -1,0 +1,27 @@
+#pragma once
+
+#include "ea/osal/clock.hpp"
+#include "{{ inc }}/{{ snake }}_types.hpp"
+
+namespace {{ ns }} {
+
+// {{ monitor.name }} (ASIL {{ monitor.asil }}): runs in its own process (MP-001) and sees the
+// producer's outputs only through the shared-memory channel {{ monitor.channel }}.
+// It does not link the producer; the plausibility checks are generated a second time here.
+class {{ monitor.name }} {
+public:
+    static constexpr ea::osal::Nanoseconds kTimeout = {{ monitor.timeout_ms }} * ea::osal::kNsPerMs;
+    static constexpr const char* kChannelName = "{{ monitor.channel }}";
+
+    explicit {{ monitor.name }}(const ea::osal::IClock& clock) noexcept : clock_(clock) {}
+
+    // `latest` is the newest output read from the channel, nullptr while nothing was published.
+    MonitorVerdict check(const Output* latest) noexcept;
+
+    static bool plausible(const Scores& s) noexcept;
+
+private:
+    const ea::osal::IClock& clock_;
+};
+
+}  // namespace {{ ns }}
