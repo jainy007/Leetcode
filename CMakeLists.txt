@@ -47,4 +47,5 @@ add_subdirectory(generated)
 
 if(EA_BUILD_TESTS)
     add_subdirectory(tests)
+    add_subdirectory(examples/gpu_inference_stage/deploy)
 endif()

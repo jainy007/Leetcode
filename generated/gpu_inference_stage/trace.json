@@ -1,0 +1,1043 @@
+{
+  "component": {
+    "asil": "QM",
+    "name": "ObstacleScoreStage",
+    "namespace": "adas::obstacle_score",
+    "profile": "asil"
+  },
+  "generated_files": [
+    "generated/gpu_inference_stage/CMakeLists.txt",
+    "generated/gpu_inference_stage/include/gpu_inference_stage/obstacle_score_monitor.hpp",
+    "generated/gpu_inference_stage/include/gpu_inference_stage/obstacle_score_stage.hpp",
+    "generated/gpu_inference_stage/include/gpu_inference_stage/obstacle_score_stage_types.hpp",
+    "generated/gpu_inference_stage/sil/obstacle_score_stage_sil.hpp",
+    "generated/gpu_inference_stage/sil/obstacle_score_stage_sil_test.cpp",
+    "generated/gpu_inference_stage/src/obstacle_score_monitor.cpp",
+    "generated/gpu_inference_stage/src/obstacle_score_stage.cpp"
+  ],
+  "generator": "ea-gen 0.1.0",
+  "inputs_sha256": "dba8099d3d048e00e6065ef9d014a96b61ec230c8a485f40da046c2b8e79e124",
+  "pattern": "gpu_stage",
+  "project": "gpu_inference_stage",
+  "requirements": [
+    {
+      "asil": "QM",
+      "ears": "ubiquitous",
+      "id": "REQ-OBS-001",
+      "satisfied_by": [
+        "graph"
+      ],
+      "tests": [
+        "S05_NoAllocationWhileRunning"
+      ],
+      "text": "The ObstacleScoreStage shall allocate all tensor memory during initialization and shall not allocate memory while processing frames.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "QM",
+      "ears": "unwanted",
+      "id": "REQ-OBS-002",
+      "satisfied_by": [
+        "tensor:fc1_b",
+        "tensor:fc1_w"
+      ],
+      "tests": [
+        "S06_TamperedWeightsAreRejected_Ex1",
+        "S07_TamperedWeightsAreRejected_Ex2",
+        "S08_UntamperedWeightsAreAccepted"
+      ],
+      "text": "If a weight file does not match the SHA-256 digest recorded in the model, then the ObstacleScoreStage shall refuse to initialize with an integrity error.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "QM",
+      "ears": "ubiquitous",
+      "id": "REQ-OBS-003",
+      "satisfied_by": [
+        "graph"
+      ],
+      "tests": [
+        "S01_ScoresMatchTheReferenceModel_Ex1",
+        "S02_ScoresMatchTheReferenceModel_Ex2",
+        "S03_ScoresMatchTheReferenceModel_Ex3",
+        "S04_ScoresMatchTheReferenceModel_Ex4"
+      ],
+      "text": "The ObstacleScoreStage shall compute the obstacle class scores within 1e-4 of the reference model.",
+      "verification": [
+        "sil",
+        "hil"
+      ]
+    },
+    {
+      "asil": "QM",
+      "ears": "unwanted",
+      "id": "REQ-OBS-004",
+      "satisfied_by": [
+        "graph"
+      ],
+      "tests": [
+        "S09_ASlowBackendProducesDEADLINEMISS",
+        "S10_ABackendJustInsideTheDeadlineIsAccepted"
+      ],
+      "text": "If processing a frame takes longer than the 33 ms deadline, then the ObstacleScoreStage shall mark the output DEADLINE_MISS.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "QM",
+      "ears": "unwanted",
+      "id": "REQ-OBS-005",
+      "satisfied_by": [
+        "plausibility:finite",
+        "plausibility:range",
+        "plausibility:sum"
+      ],
+      "tests": [
+        "S11_ImplausibleScoresAreFlaggedByTheStage_Ex1",
+        "S12_ImplausibleScoresAreFlaggedByTheStage_Ex2",
+        "S13_ImplausibleScoresAreFlaggedByTheStage_Ex3",
+        "S14_ImplausibleScoresAreFlaggedByTheStage_Ex4",
+        "S20_MonitorPropagatesAStageDetectedFault"
+      ],
+      "text": "If the scores contain a non-finite value, a value outside [0, 1], or do not sum to 1 within 1e-3, then the ObstacleScoreStage shall mark the output IMPLAUSIBLE.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "B",
+      "ears": "unwanted",
+      "id": "REQ-OBS-006",
+      "satisfied_by": [
+        "monitor:ObstacleScoreMonitor"
+      ],
+      "tests": [
+        "S16_MonitorDetectsAStalledStage"
+      ],
+      "text": "If no new output has been published for more than 66 ms, then the ObstacleScoreMonitor shall report TIMEOUT.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "B",
+      "ears": "event",
+      "id": "REQ-OBS-007",
+      "satisfied_by": [
+        "monitor:ObstacleScoreMonitor"
+      ],
+      "tests": [
+        "S17_MonitorRepeatsPlausibilityChecksIndependently_Ex1",
+        "S18_MonitorRepeatsPlausibilityChecksIndependently_Ex2",
+        "S19_MonitorRepeatsPlausibilityChecksIndependently_Ex3",
+        "S20_MonitorPropagatesAStageDetectedFault"
+      ],
+      "text": "When the ObstacleScoreMonitor reads an output, the ObstacleScoreMonitor shall independently repeat the plausibility checks and report IMPLAUSIBLE if any check fails.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "B",
+      "ears": "ubiquitous",
+      "id": "REQ-OBS-008",
+      "satisfied_by": [
+        "monitor:ObstacleScoreMonitor"
+      ],
+      "tests": [
+        "S15_MonitorReportsNODATABeforeTheFirstOutput"
+      ],
+      "text": "The ObstacleScoreMonitor shall receive stage outputs only through the shared-memory channel and shall report NO_DATA until the first output is published.",
+      "verification": [
+        "sil",
+        "review"
+      ]
+    }
+  ],
+  "sil_suite": "ObstacleScoreStageSilTest",
+  "tests": [
+    {
+      "example": [
+        [
+          "input",
+          "ramp"
+        ],
+        [
+          "car",
+          "0.279046"
+        ],
+        [
+          "pedestrian",
+          "0.240318"
+        ],
+        [
+          "cyclist",
+          "0.240318"
+        ],
+        [
+          "background",
+          "0.240318"
+        ]
+      ],
+      "feature": "examples/gpu_inference_stage/features/stage.feature",
+      "line": 5,
+      "name": "S01_ScoresMatchTheReferenceModel_Ex1",
+      "requirements": [
+        "REQ-OBS-003"
+      ],
+      "scenario": "Scores match the reference model #1",
+      "steps": [
+        {
+          "catalogue": "GPU-S01",
+          "cpp": "ASSERT_TRUE(sil_.init().ok());",
+          "text": "Given an initialized stage"
+        },
+        {
+          "catalogue": "GPU-S06",
+          "cpp": "sil_.process_ramp(1);",
+          "text": "When the stage processes a ramp input"
+        },
+        {
+          "catalogue": "GPU-S10",
+          "cpp": "EXPECT_EQ(sil_.last_output().status, OutputStatus::kValid);",
+          "text": "Then the output status is VALID"
+        },
+        {
+          "catalogue": "GPU-S11",
+          "cpp": "EXPECT_NEAR(sil_.last_output().scores[kClassCar], 0.279046, 0.0001);",
+          "text": "And score car equals 0.279046 within 0.0001"
+        },
+        {
+          "catalogue": "GPU-S11",
+          "cpp": "EXPECT_NEAR(sil_.last_output().scores[kClassPedestrian], 0.240318, 0.0001);",
+          "text": "And score pedestrian equals 0.240318 within 0.0001"
+        },
+        {
+          "catalogue": "GPU-S11",
+          "cpp": "EXPECT_NEAR(sil_.last_output().scores[kClassCyclist], 0.240318, 0.0001);",
+          "text": "And score cyclist equals 0.240318 within 0.0001"
+        },
+        {
+          "catalogue": "GPU-S11",
+          "cpp": "EXPECT_NEAR(sil_.last_output().scores[kClassBackground], 0.240318, 0.0001);",
+          "text": "And score background equals 0.240318 within 0.0001"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "input",
+          "zero"
+        ],
+        [
+          "car",
+          "0.265894"
+        ],
+        [
+          "pedestrian",
+          "0.240590"
+        ],
+        [
+          "cyclist",
+          "0.252926"
+        ],
+        [
+          "background",
+          "0.240590"
+        ]
+      ],
+      "feature": "examples/gpu_inference_stage/features/stage.feature",
+      "line": 5,
+      "name": "S02_ScoresMatchTheReferenceModel_Ex2",
+      "requirements": [
+        "REQ-OBS-003"
+      ],
+      "scenario": "Scores match the reference model #2",
+      "steps": [
+        {
+          "catalogue": "GPU-S01",
+          "cpp": "ASSERT_TRUE(sil_.init().ok());",
+          "text": "Given an initialized stage"
+        },
+        {
+          "catalogue": "GPU-S08",
+          "cpp": "sil_.process_constant(0U);",
+          "text": "When the stage processes a zero input"
+        },
+        {
+          "catalogue": "GPU-S10",
+          "cpp": "EXPECT_EQ(sil_.last_output().status, OutputStatus::kValid);",
+          "text": "Then the output status is VALID"
+        },
+        {
+          "catalogue": "GPU-S11",
+          "cpp": "EXPECT_NEAR(sil_.last_output().scores[kClassCar], 0.265894, 0.0001);",
+          "text": "And score car equals 0.265894 within 0.0001"
+        },
+        {
+          "catalogue": "GPU-S11",
+          "cpp": "EXPECT_NEAR(sil_.last_output().scores[kClassPedestrian], 0.240590, 0.0001);",
+          "text": "And score pedestrian equals 0.240590 within 0.0001"
+        },
+        {
+          "catalogue": "GPU-S11",
+          "cpp": "EXPECT_NEAR(sil_.last_output().scores[kClassCyclist], 0.252926, 0.0001);",
+          "text": "And score cyclist equals 0.252926 within 0.0001"
+        },
+        {
+          "catalogue": "GPU-S11",
+          "cpp": "EXPECT_NEAR(sil_.last_output().scores[kClassBackground], 0.240590, 0.0001);",
+          "text": "And score background equals 0.240590 within 0.0001"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "input",
+          "constant 128"
+        ],
+        [
+          "car",
+          "0.254661"
+        ],
+        [
+          "pedestrian",
+          "0.248446"
+        ],
+        [
+          "cyclist",
+          "0.248446"
+        ],
+        [
+          "background",
+          "0.248446"
+        ]
+      ],
+      "feature": "examples/gpu_inference_stage/features/stage.feature",
+      "line": 5,
+      "name": "S03_ScoresMatchTheReferenceModel_Ex3",
+      "requirements": [
+        "REQ-OBS-003"
+      ],
+      "scenario": "Scores match the reference model #3",
+      "steps": [
+        {
+          "catalogue": "GPU-S01",
+          "cpp": "ASSERT_TRUE(sil_.init().ok());",
+          "text": "Given an initialized stage"
+        },
+        {
+          "catalogue": "GPU-S09",
+          "cpp": "sil_.process_constant(128U);",
+          "text": "When the stage processes a constant 128 input"
+        },
+        {
+          "catalogue": "GPU-S10",
+          "cpp": "EXPECT_EQ(sil_.last_output().status, OutputStatus::kValid);",
+          "text": "Then the output status is VALID"
+        },
+        {
+          "catalogue": "GPU-S11",
+          "cpp": "EXPECT_NEAR(sil_.last_output().scores[kClassCar], 0.254661, 0.0001);",
+          "text": "And score car equals 0.254661 within 0.0001"
+        },
+        {
+          "catalogue": "GPU-S11",
+          "cpp": "EXPECT_NEAR(sil_.last_output().scores[kClassPedestrian], 0.248446, 0.0001);",
+          "text": "And score pedestrian equals 0.248446 within 0.0001"
+        },
+        {
+          "catalogue": "GPU-S11",
+          "cpp": "EXPECT_NEAR(sil_.last_output().scores[kClassCyclist], 0.248446, 0.0001);",
+          "text": "And score cyclist equals 0.248446 within 0.0001"
+        },
+        {
+          "catalogue": "GPU-S11",
+          "cpp": "EXPECT_NEAR(sil_.last_output().scores[kClassBackground], 0.248446, 0.0001);",
+          "text": "And score background equals 0.248446 within 0.0001"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "input",
+          "constant 255"
+        ],
+        [
+          "car",
+          "0.250000"
+        ],
+        [
+          "pedestrian",
+          "0.250000"
+        ],
+        [
+          "cyclist",
+          "0.250000"
+        ],
+        [
+          "background",
+          "0.250000"
+        ]
+      ],
+      "feature": "examples/gpu_inference_stage/features/stage.feature",
+      "line": 5,
+      "name": "S04_ScoresMatchTheReferenceModel_Ex4",
+      "requirements": [
+        "REQ-OBS-003"
+      ],
+      "scenario": "Scores match the reference model #4",
+      "steps": [
+        {
+          "catalogue": "GPU-S01",
+          "cpp": "ASSERT_TRUE(sil_.init().ok());",
+          "text": "Given an initialized stage"
+        },
+        {
+          "catalogue": "GPU-S09",
+          "cpp": "sil_.process_constant(255U);",
+          "text": "When the stage processes a constant 255 input"
+        },
+        {
+          "catalogue": "GPU-S10",
+          "cpp": "EXPECT_EQ(sil_.last_output().status, OutputStatus::kValid);",
+          "text": "Then the output status is VALID"
+        },
+        {
+          "catalogue": "GPU-S11",
+          "cpp": "EXPECT_NEAR(sil_.last_output().scores[kClassCar], 0.250000, 0.0001);",
+          "text": "And score car equals 0.250000 within 0.0001"
+        },
+        {
+          "catalogue": "GPU-S11",
+          "cpp": "EXPECT_NEAR(sil_.last_output().scores[kClassPedestrian], 0.250000, 0.0001);",
+          "text": "And score pedestrian equals 0.250000 within 0.0001"
+        },
+        {
+          "catalogue": "GPU-S11",
+          "cpp": "EXPECT_NEAR(sil_.last_output().scores[kClassCyclist], 0.250000, 0.0001);",
+          "text": "And score cyclist equals 0.250000 within 0.0001"
+        },
+        {
+          "catalogue": "GPU-S11",
+          "cpp": "EXPECT_NEAR(sil_.last_output().scores[kClassBackground], 0.250000, 0.0001);",
+          "text": "And score background equals 0.250000 within 0.0001"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/gpu_inference_stage/features/stage.feature",
+      "line": 22,
+      "name": "S05_NoAllocationWhileRunning",
+      "requirements": [
+        "REQ-OBS-001"
+      ],
+      "scenario": "No allocation while running",
+      "steps": [
+        {
+          "catalogue": "GPU-S01",
+          "cpp": "ASSERT_TRUE(sil_.init().ok());",
+          "text": "Given an initialized stage"
+        },
+        {
+          "catalogue": "GPU-S07",
+          "cpp": "sil_.process_ramp(100);",
+          "text": "When the stage processes 100 ramp inputs"
+        },
+        {
+          "catalogue": "GPU-S12",
+          "cpp": "EXPECT_EQ(sil_.allocations_since_init(), 0U);",
+          "text": "Then no memory was allocated after initialization"
+        },
+        {
+          "catalogue": "GPU-S10",
+          "cpp": "EXPECT_EQ(sil_.last_output().status, OutputStatus::kValid);",
+          "text": "And the output status is VALID"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "tensor",
+          "fc1_w"
+        ]
+      ],
+      "feature": "examples/gpu_inference_stage/features/stage.feature",
+      "line": 29,
+      "name": "S06_TamperedWeightsAreRejected_Ex1",
+      "requirements": [
+        "REQ-OBS-002"
+      ],
+      "scenario": "Tampered weights are rejected #1",
+      "steps": [
+        {
+          "catalogue": "GPU-S02",
+          "cpp": "sil_.corrupt_weight_file(Weight::kFc1W);",
+          "text": "Given the weight file fc1_w is corrupted"
+        },
+        {
+          "catalogue": "GPU-S03",
+          "cpp": "const ea::Result<void> init_result = sil_.init();",
+          "text": "When the stage is initialized"
+        },
+        {
+          "catalogue": "GPU-S04",
+          "cpp": "EXPECT_EQ(init_result.error(), ea::ErrorCode::kIntegrityError);",
+          "text": "Then initialization fails with IntegrityError"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "tensor",
+          "fc1_b"
+        ]
+      ],
+      "feature": "examples/gpu_inference_stage/features/stage.feature",
+      "line": 29,
+      "name": "S07_TamperedWeightsAreRejected_Ex2",
+      "requirements": [
+        "REQ-OBS-002"
+      ],
+      "scenario": "Tampered weights are rejected #2",
+      "steps": [
+        {
+          "catalogue": "GPU-S02",
+          "cpp": "sil_.corrupt_weight_file(Weight::kFc1B);",
+          "text": "Given the weight file fc1_b is corrupted"
+        },
+        {
+          "catalogue": "GPU-S03",
+          "cpp": "const ea::Result<void> init_result = sil_.init();",
+          "text": "When the stage is initialized"
+        },
+        {
+          "catalogue": "GPU-S04",
+          "cpp": "EXPECT_EQ(init_result.error(), ea::ErrorCode::kIntegrityError);",
+          "text": "Then initialization fails with IntegrityError"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/gpu_inference_stage/features/stage.feature",
+      "line": 40,
+      "name": "S08_UntamperedWeightsAreAccepted",
+      "requirements": [
+        "REQ-OBS-002"
+      ],
+      "scenario": "Untampered weights are accepted",
+      "steps": [
+        {
+          "catalogue": "GPU-S03",
+          "cpp": "const ea::Result<void> init_result = sil_.init();",
+          "text": "When the stage is initialized"
+        },
+        {
+          "catalogue": "GPU-S05",
+          "cpp": "EXPECT_TRUE(init_result.ok());",
+          "text": "Then initialization succeeds"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/gpu_inference_stage/features/stage.feature",
+      "line": 45,
+      "name": "S09_ASlowBackendProducesDEADLINEMISS",
+      "requirements": [
+        "REQ-OBS-004"
+      ],
+      "scenario": "A slow backend produces DEADLINE_MISS",
+      "steps": [
+        {
+          "catalogue": "GPU-S01",
+          "cpp": "ASSERT_TRUE(sil_.init().ok());",
+          "text": "Given an initialized stage"
+        },
+        {
+          "catalogue": "GPU-S13",
+          "cpp": "sil_.backend().set_execution_delay_ms(34);",
+          "text": "And the backend takes 34 ms per execution"
+        },
+        {
+          "catalogue": "GPU-S06",
+          "cpp": "sil_.process_ramp(1);",
+          "text": "When the stage processes a ramp input"
+        },
+        {
+          "catalogue": "GPU-S10",
+          "cpp": "EXPECT_EQ(sil_.last_output().status, OutputStatus::kDeadlineMiss);",
+          "text": "Then the output status is DEADLINE_MISS"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/gpu_inference_stage/features/stage.feature",
+      "line": 52,
+      "name": "S10_ABackendJustInsideTheDeadlineIsAccepted",
+      "requirements": [
+        "REQ-OBS-004"
+      ],
+      "scenario": "A backend just inside the deadline is accepted",
+      "steps": [
+        {
+          "catalogue": "GPU-S01",
+          "cpp": "ASSERT_TRUE(sil_.init().ok());",
+          "text": "Given an initialized stage"
+        },
+        {
+          "catalogue": "GPU-S13",
+          "cpp": "sil_.backend().set_execution_delay_ms(33);",
+          "text": "And the backend takes 33 ms per execution"
+        },
+        {
+          "catalogue": "GPU-S06",
+          "cpp": "sil_.process_ramp(1);",
+          "text": "When the stage processes a ramp input"
+        },
+        {
+          "catalogue": "GPU-S10",
+          "cpp": "EXPECT_EQ(sil_.last_output().status, OutputStatus::kValid);",
+          "text": "Then the output status is VALID"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "class",
+          "car"
+        ],
+        [
+          "value",
+          "NaN"
+        ]
+      ],
+      "feature": "examples/gpu_inference_stage/features/stage.feature",
+      "line": 59,
+      "name": "S11_ImplausibleScoresAreFlaggedByTheStage_Ex1",
+      "requirements": [
+        "REQ-OBS-005"
+      ],
+      "scenario": "Implausible scores are flagged by the stage #1",
+      "steps": [
+        {
+          "catalogue": "GPU-S01",
+          "cpp": "ASSERT_TRUE(sil_.init().ok());",
+          "text": "Given an initialized stage"
+        },
+        {
+          "catalogue": "GPU-S14",
+          "cpp": "sil_.backend().overwrite_output(kClassCar, std::numeric_limits<float>::quiet_NaN());",
+          "text": "And the backend overwrites score car with NaN"
+        },
+        {
+          "catalogue": "GPU-S06",
+          "cpp": "sil_.process_ramp(1);",
+          "text": "When the stage processes a ramp input"
+        },
+        {
+          "catalogue": "GPU-S10",
+          "cpp": "EXPECT_EQ(sil_.last_output().status, OutputStatus::kImplausible);",
+          "text": "Then the output status is IMPLAUSIBLE"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "class",
+          "pedestrian"
+        ],
+        [
+          "value",
+          "1.5"
+        ]
+      ],
+      "feature": "examples/gpu_inference_stage/features/stage.feature",
+      "line": 59,
+      "name": "S12_ImplausibleScoresAreFlaggedByTheStage_Ex2",
+      "requirements": [
+        "REQ-OBS-005"
+      ],
+      "scenario": "Implausible scores are flagged by the stage #2",
+      "steps": [
+        {
+          "catalogue": "GPU-S01",
+          "cpp": "ASSERT_TRUE(sil_.init().ok());",
+          "text": "Given an initialized stage"
+        },
+        {
+          "catalogue": "GPU-S14",
+          "cpp": "sil_.backend().overwrite_output(kClassPedestrian, 1.5F);",
+          "text": "And the backend overwrites score pedestrian with 1.5"
+        },
+        {
+          "catalogue": "GPU-S06",
+          "cpp": "sil_.process_ramp(1);",
+          "text": "When the stage processes a ramp input"
+        },
+        {
+          "catalogue": "GPU-S10",
+          "cpp": "EXPECT_EQ(sil_.last_output().status, OutputStatus::kImplausible);",
+          "text": "Then the output status is IMPLAUSIBLE"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "class",
+          "cyclist"
+        ],
+        [
+          "value",
+          "-0.1"
+        ]
+      ],
+      "feature": "examples/gpu_inference_stage/features/stage.feature",
+      "line": 59,
+      "name": "S13_ImplausibleScoresAreFlaggedByTheStage_Ex3",
+      "requirements": [
+        "REQ-OBS-005"
+      ],
+      "scenario": "Implausible scores are flagged by the stage #3",
+      "steps": [
+        {
+          "catalogue": "GPU-S01",
+          "cpp": "ASSERT_TRUE(sil_.init().ok());",
+          "text": "Given an initialized stage"
+        },
+        {
+          "catalogue": "GPU-S14",
+          "cpp": "sil_.backend().overwrite_output(kClassCyclist, -0.1F);",
+          "text": "And the backend overwrites score cyclist with -0.1"
+        },
+        {
+          "catalogue": "GPU-S06",
+          "cpp": "sil_.process_ramp(1);",
+          "text": "When the stage processes a ramp input"
+        },
+        {
+          "catalogue": "GPU-S10",
+          "cpp": "EXPECT_EQ(sil_.last_output().status, OutputStatus::kImplausible);",
+          "text": "Then the output status is IMPLAUSIBLE"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "class",
+          "background"
+        ],
+        [
+          "value",
+          "0.5"
+        ]
+      ],
+      "feature": "examples/gpu_inference_stage/features/stage.feature",
+      "line": 59,
+      "name": "S14_ImplausibleScoresAreFlaggedByTheStage_Ex4",
+      "requirements": [
+        "REQ-OBS-005"
+      ],
+      "scenario": "Implausible scores are flagged by the stage #4",
+      "steps": [
+        {
+          "catalogue": "GPU-S01",
+          "cpp": "ASSERT_TRUE(sil_.init().ok());",
+          "text": "Given an initialized stage"
+        },
+        {
+          "catalogue": "GPU-S14",
+          "cpp": "sil_.backend().overwrite_output(kClassBackground, 0.5F);",
+          "text": "And the backend overwrites score background with 0.5"
+        },
+        {
+          "catalogue": "GPU-S06",
+          "cpp": "sil_.process_ramp(1);",
+          "text": "When the stage processes a ramp input"
+        },
+        {
+          "catalogue": "GPU-S10",
+          "cpp": "EXPECT_EQ(sil_.last_output().status, OutputStatus::kImplausible);",
+          "text": "Then the output status is IMPLAUSIBLE"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/gpu_inference_stage/features/stage.feature",
+      "line": 73,
+      "name": "S15_MonitorReportsNODATABeforeTheFirstOutput",
+      "requirements": [
+        "REQ-OBS-008"
+      ],
+      "scenario": "Monitor reports NO_DATA before the first output",
+      "steps": [
+        {
+          "catalogue": "GPU-S01",
+          "cpp": "ASSERT_TRUE(sil_.init().ok());",
+          "text": "Given an initialized stage"
+        },
+        {
+          "catalogue": "GPU-S16",
+          "cpp": "sil_.monitor_check(0);",
+          "text": "When the monitor checks the latest output"
+        },
+        {
+          "catalogue": "GPU-S18",
+          "cpp": "EXPECT_EQ(sil_.last_verdict(), MonitorVerdict::kNoData);",
+          "text": "Then the monitor reports NO_DATA"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/gpu_inference_stage/features/stage.feature",
+      "line": 79,
+      "name": "S16_MonitorDetectsAStalledStage",
+      "requirements": [
+        "REQ-OBS-006"
+      ],
+      "scenario": "Monitor detects a stalled stage",
+      "steps": [
+        {
+          "catalogue": "GPU-S01",
+          "cpp": "ASSERT_TRUE(sil_.init().ok());",
+          "text": "Given an initialized stage"
+        },
+        {
+          "catalogue": "GPU-S06",
+          "cpp": "sil_.process_ramp(1);",
+          "text": "When the stage processes a ramp input"
+        },
+        {
+          "catalogue": "GPU-S17",
+          "cpp": "sil_.monitor_check(66);",
+          "text": "And the monitor checks the latest output after 66 ms"
+        },
+        {
+          "catalogue": "GPU-S18",
+          "cpp": "EXPECT_EQ(sil_.last_verdict(), MonitorVerdict::kOk);",
+          "text": "Then the monitor reports OK"
+        },
+        {
+          "catalogue": "GPU-S17",
+          "cpp": "sil_.monitor_check(1);",
+          "text": "When the monitor checks the latest output after 1 ms"
+        },
+        {
+          "catalogue": "GPU-S18",
+          "cpp": "EXPECT_EQ(sil_.last_verdict(), MonitorVerdict::kTimeout);",
+          "text": "Then the monitor reports TIMEOUT"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "class",
+          "car"
+        ],
+        [
+          "value",
+          "NaN"
+        ]
+      ],
+      "feature": "examples/gpu_inference_stage/features/stage.feature",
+      "line": 88,
+      "name": "S17_MonitorRepeatsPlausibilityChecksIndependently_Ex1",
+      "requirements": [
+        "REQ-OBS-007"
+      ],
+      "scenario": "Monitor repeats plausibility checks independently #1",
+      "steps": [
+        {
+          "catalogue": "GPU-S01",
+          "cpp": "ASSERT_TRUE(sil_.init().ok());",
+          "text": "Given an initialized stage"
+        },
+        {
+          "catalogue": "GPU-S15",
+          "cpp": "sil_.corrupt_channel(kClassCar, std::numeric_limits<float>::quiet_NaN());",
+          "text": "And the channel overwrites score car with NaN"
+        },
+        {
+          "catalogue": "GPU-S06",
+          "cpp": "sil_.process_ramp(1);",
+          "text": "When the stage processes a ramp input"
+        },
+        {
+          "catalogue": "GPU-S10",
+          "cpp": "EXPECT_EQ(sil_.last_output().status, OutputStatus::kValid);",
+          "text": "Then the output status is VALID"
+        },
+        {
+          "catalogue": "GPU-S16",
+          "cpp": "sil_.monitor_check(0);",
+          "text": "When the monitor checks the latest output"
+        },
+        {
+          "catalogue": "GPU-S18",
+          "cpp": "EXPECT_EQ(sil_.last_verdict(), MonitorVerdict::kImplausible);",
+          "text": "Then the monitor reports IMPLAUSIBLE"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "class",
+          "pedestrian"
+        ],
+        [
+          "value",
+          "2.0"
+        ]
+      ],
+      "feature": "examples/gpu_inference_stage/features/stage.feature",
+      "line": 88,
+      "name": "S18_MonitorRepeatsPlausibilityChecksIndependently_Ex2",
+      "requirements": [
+        "REQ-OBS-007"
+      ],
+      "scenario": "Monitor repeats plausibility checks independently #2",
+      "steps": [
+        {
+          "catalogue": "GPU-S01",
+          "cpp": "ASSERT_TRUE(sil_.init().ok());",
+          "text": "Given an initialized stage"
+        },
+        {
+          "catalogue": "GPU-S15",
+          "cpp": "sil_.corrupt_channel(kClassPedestrian, 2.0F);",
+          "text": "And the channel overwrites score pedestrian with 2.0"
+        },
+        {
+          "catalogue": "GPU-S06",
+          "cpp": "sil_.process_ramp(1);",
+          "text": "When the stage processes a ramp input"
+        },
+        {
+          "catalogue": "GPU-S10",
+          "cpp": "EXPECT_EQ(sil_.last_output().status, OutputStatus::kValid);",
+          "text": "Then the output status is VALID"
+        },
+        {
+          "catalogue": "GPU-S16",
+          "cpp": "sil_.monitor_check(0);",
+          "text": "When the monitor checks the latest output"
+        },
+        {
+          "catalogue": "GPU-S18",
+          "cpp": "EXPECT_EQ(sil_.last_verdict(), MonitorVerdict::kImplausible);",
+          "text": "Then the monitor reports IMPLAUSIBLE"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "class",
+          "background"
+        ],
+        [
+          "value",
+          "0.9"
+        ]
+      ],
+      "feature": "examples/gpu_inference_stage/features/stage.feature",
+      "line": 88,
+      "name": "S19_MonitorRepeatsPlausibilityChecksIndependently_Ex3",
+      "requirements": [
+        "REQ-OBS-007"
+      ],
+      "scenario": "Monitor repeats plausibility checks independently #3",
+      "steps": [
+        {
+          "catalogue": "GPU-S01",
+          "cpp": "ASSERT_TRUE(sil_.init().ok());",
+          "text": "Given an initialized stage"
+        },
+        {
+          "catalogue": "GPU-S15",
+          "cpp": "sil_.corrupt_channel(kClassBackground, 0.9F);",
+          "text": "And the channel overwrites score background with 0.9"
+        },
+        {
+          "catalogue": "GPU-S06",
+          "cpp": "sil_.process_ramp(1);",
+          "text": "When the stage processes a ramp input"
+        },
+        {
+          "catalogue": "GPU-S10",
+          "cpp": "EXPECT_EQ(sil_.last_output().status, OutputStatus::kValid);",
+          "text": "Then the output status is VALID"
+        },
+        {
+          "catalogue": "GPU-S16",
+          "cpp": "sil_.monitor_check(0);",
+          "text": "When the monitor checks the latest output"
+        },
+        {
+          "catalogue": "GPU-S18",
+          "cpp": "EXPECT_EQ(sil_.last_verdict(), MonitorVerdict::kImplausible);",
+          "text": "Then the monitor reports IMPLAUSIBLE"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/gpu_inference_stage/features/stage.feature",
+      "line": 103,
+      "name": "S20_MonitorPropagatesAStageDetectedFault",
+      "requirements": [
+        "REQ-OBS-007",
+        "REQ-OBS-005"
+      ],
+      "scenario": "Monitor propagates a stage-detected fault",
+      "steps": [
+        {
+          "catalogue": "GPU-S01",
+          "cpp": "ASSERT_TRUE(sil_.init().ok());",
+          "text": "Given an initialized stage"
+        },
+        {
+          "catalogue": "GPU-S14",
+          "cpp": "sil_.backend().overwrite_output(kClassCar, std::numeric_limits<float>::quiet_NaN());",
+          "text": "And the backend overwrites score car with NaN"
+        },
+        {
+          "catalogue": "GPU-S06",
+          "cpp": "sil_.process_ramp(1);",
+          "text": "When the stage processes a ramp input"
+        },
+        {
+          "catalogue": "GPU-S16",
+          "cpp": "sil_.monitor_check(0);",
+          "text": "And the monitor checks the latest output"
+        },
+        {
+          "catalogue": "GPU-S18",
+          "cpp": "EXPECT_EQ(sil_.last_verdict(), MonitorVerdict::kImplausible);",
+          "text": "Then the monitor reports IMPLAUSIBLE"
+        }
+      ]
+    }
+  ]
+}

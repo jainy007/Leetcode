@@ -1,0 +1,47 @@
+# Model for an inference stage with an independent ASIL monitor (pattern: gpu_stage).
+schema_version: 1
+pattern: gpu_stage
+
+component:
+  name: ObstacleScoreStage
+  namespace: adas::obstacle_score
+  asil: QM
+  profile: asil
+
+inputs:
+  requirements: requirements.yaml
+  features: [features/stage.feature]
+
+graph:
+  deadline_ms: 33
+  reference_tolerance: 1.0e-4
+  backends: [cpu_ref, cuda, qnn]
+  satisfies: [REQ-OBS-001, REQ-OBS-003, REQ-OBS-004]
+  tensors:
+    - {name: image_patch, dtype: u8, shape: [1, 64], role: input}
+    - {name: normalized, dtype: f32, shape: [1, 64], role: intermediate}
+    - {name: fc1_w, dtype: f32, shape: [64, 4], role: weight, file: weights/fc1_w.bin,
+       sha256: 2cf67aaf1a1f52ba8a92b5900b18efcb0ed176a4b93e2bf9bd1431dd5bf66d00, satisfies: [REQ-OBS-002]}
+    - {name: fc1_b, dtype: f32, shape: [4], role: weight, file: weights/fc1_b.bin,
+       sha256: a358de81303a615972df7e660e0649b000e20ae5d3f56b27550950a3f4b1eceb, satisfies: [REQ-OBS-002]}
+    - {name: logits, dtype: f32, shape: [1, 4], role: intermediate}
+    - {name: activated, dtype: f32, shape: [1, 4], role: intermediate}
+    - {name: scores, dtype: f32, shape: [1, 4], role: output}
+  nodes:
+    - {name: preprocess, op: normalize, input: image_patch, output: normalized,
+       scale: 0.00392156862745098, shift: 0.0}
+    - {name: fc1, op: dense, input: normalized, output: logits, weights: fc1_w, bias: fc1_b}
+    - {name: relu1, op: relu, input: logits, output: activated}
+    - {name: head, op: softmax, input: activated, output: scores}
+  classes: [car, pedestrian, cyclist, background]
+  plausibility:
+    - {check: finite, tensor: scores, satisfies: [REQ-OBS-005]}
+    - {check: range, tensor: scores, min: 0.0, max: 1.0, satisfies: [REQ-OBS-005]}
+    - {check: sum, tensor: scores, value: 1.0, tolerance: 1.0e-3, satisfies: [REQ-OBS-005]}
+
+monitor:
+  name: ObstacleScoreMonitor
+  asil: B
+  timeout_ms: 66
+  channel: /ea_obstacle_score
+  satisfies: [REQ-OBS-006, REQ-OBS-007, REQ-OBS-008]

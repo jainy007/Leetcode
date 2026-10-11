@@ -39,9 +39,9 @@ Result<void> CpuRefBackend::configure(Span<const TensorDesc> tensors, Span<const
     tensors_ = tensors;
     ops_ = ops;
     std::size_t offset = 0U;
-    for (std::uint16_t i = 0U; i < tensors.size(); ++i) {
+    for (std::size_t i = 0U; i < tensors.size(); ++i) {
         offsets_[i] = offset;
-        offset = align_up(offset + tensor_bytes(i), kAlignment);
+        offset = align_up(offset + tensor_bytes(static_cast<std::uint16_t>(i)), kAlignment);
         if (offset > arena_.size()) {
             return ErrorCode::kResourceExhausted;
         }
@@ -77,7 +77,7 @@ Result<void> CpuRefBackend::seal() noexcept {
     if (sealed_) {
         return ErrorCode::kAlreadyInitialized;
     }
-    for (std::uint16_t i = 0U; i < tensors_.size(); ++i) {
+    for (std::size_t i = 0U; i < tensors_.size(); ++i) {
         if (tensors_[i].is_const && !uploaded_[i]) {
             return ErrorCode::kNotInitialized;  // every constant must be loaded before RUN
         }

@@ -9,8 +9,8 @@ namespace ea::osal {
 using Nanoseconds = std::int64_t;
 
 inline constexpr Nanoseconds kNsPerUs = 1000;
-inline constexpr Nanoseconds kNsPerMs = 1000 * 1000;
-inline constexpr Nanoseconds kNsPerSec = 1000 * 1000 * 1000;
+inline constexpr Nanoseconds kNsPerMs = Nanoseconds{1000} * 1000;
+inline constexpr Nanoseconds kNsPerSec = Nanoseconds{1000} * 1000 * 1000;
 
 class IClock {
 public:

@@ -14,7 +14,7 @@ Result<void> lock_memory() noexcept {
 }
 
 void prefault_stack(std::size_t bytes) noexcept {
-    constexpr std::size_t kMaxPrefault = 512U * 1024U;
+    constexpr std::size_t kMaxPrefault = std::size_t{512U} * 1024U;
     constexpr std::size_t kChunk = 4096U;
     volatile unsigned char page[kChunk];
     const std::size_t todo = bytes < kMaxPrefault ? bytes : kMaxPrefault;

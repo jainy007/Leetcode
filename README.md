@@ -27,7 +27,7 @@ write generated code, the generator, or its templates. See [CLAUDE.md](CLAUDE.md
 ## Layout
 | Path | Content |
 |---|---|
-| `runtime/` | Hand-written ASIL runtime: `Result`, `Span`, `StaticVector`, CRC8/16/32-P4, SHA-256, DBC bit codec, SOME/IP, E2E P4, POSIX/QNX OSAL (periodic task, real-time setup, shared memory), SPSC ring, seqlock, shm channel, supervision, GPU backend API with `cpu_ref`, `cuda` and `qnn` backends |
+| `runtime/` | Hand-written ASIL runtime: `Result`, `Span`, `StaticVector`, CRC8/16/32-P4, SHA-256, DBC bit codec, SOME/IP, E2E P4, POSIX/QNX OSAL (periodic task, real-time setup, shared memory), SPSC ring, seqlock, shm channel, supervision, GPU backend API with `cpu_ref`, `cuda` and `qnn` backends (see Status) |
 | `tools/gen/` | The generator (Python + Jinja2): loader → schema → semantic rules (GEN-xxx) → patterns → templates |
 | `templates/`, `schemas/`, `sil/steps/` | Generator configuration (qualified with the tool) |
 | `tools/lint/`, `tools/trace/` | Requirements, Gherkin and model consistency checks; trace report |
@@ -49,3 +49,16 @@ python3 -m tools.trace --results build/linux-host/test-results
 
 Target builds: `cmake --preset linux-aarch64-rt`, `--preset driveos` (CUDA backend) and
 `--preset qnx-aarch64`. Each needs its vendor SDK.
+
+## Status
+| Area | State |
+|---|---|
+| Runtime (core, codecs, E2E P4, OSAL POSIX, IPC, supervision, `cpu_ref`) | Implemented. Unit-tested on the Linux host under ASan/UBSan and TSan. |
+| Generator, 37 rules, qualification suite | Implemented. Every rule has at least one negative test; output is byte-deterministic. |
+| Slice 1: `adas_input_gate` (ASIL B) | 9 requirements, 16 generated SIL tests, all passing. Trace matrix: 9/9 PASSED. |
+| Slice 2: `gpu_inference_stage` + monitor | 8 requirements, 20 generated SIL tests plus a two-process integration test, all passing. Trace matrix: 8/8 PASSED. |
+| `cuda` backend | Written (device memory allocated at init, CUDA Graph, bounded event wait). **Not compiled or run in CI yet**: needs a CUDA toolkit or DRIVE target. |
+| `qnn` backend | Interface and lifecycle contract only; `execute()` returns `kNotSupported`. Needs the QNN SDK. |
+| QNX | Toolchain file and QNX affinity implementation. **Not built yet**: needs the QNX SDP. |
+| HMI telltale monitor and IVI patterns | Planned (Phase 5). Rules are in `docs/rules/domains.md`. |
+| Coverage | Statement, branch and MC/DC reports via the `linux-host-coverage` preset. Generated codecs are not yet fully covered by the SIL scenarios. |
