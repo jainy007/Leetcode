@@ -1,0 +1,846 @@
+{
+  "component": {
+    "asil": "B",
+    "name": "AdasInputGate",
+    "namespace": "adas::input_gate",
+    "profile": "asil"
+  },
+  "generated_files": [
+    "generated/adas_input_gate/CMakeLists.txt",
+    "generated/adas_input_gate/include/adas_input_gate/adas_input_gate.hpp",
+    "generated/adas_input_gate/include/adas_input_gate/adas_input_gate_codec.hpp",
+    "generated/adas_input_gate/include/adas_input_gate/adas_input_gate_task.hpp",
+    "generated/adas_input_gate/include/adas_input_gate/adas_input_gate_types.hpp",
+    "generated/adas_input_gate/sil/adas_input_gate_sil.hpp",
+    "generated/adas_input_gate/sil/adas_input_gate_sil_test.cpp",
+    "generated/adas_input_gate/src/adas_input_gate.cpp",
+    "generated/adas_input_gate/src/adas_input_gate_codec.cpp",
+    "generated/adas_input_gate/src/adas_input_gate_task.cpp"
+  ],
+  "generator": "ea-gen 0.1.0",
+  "inputs_sha256": "c2ae8363c4d06ee0cb2ee9ec885959083cf8629b1d677189a6ad2542626ab1f5",
+  "pattern": "input_gate",
+  "project": "adas_input_gate",
+  "requirements": [
+    {
+      "asil": "B",
+      "ears": "event",
+      "id": "REQ-GATE-001",
+      "satisfied_by": [
+        "debounce:first_valid",
+        "message:ObjectSummary",
+        "transition:INIT->RUN"
+      ],
+      "tests": [
+        "S01_FirstValidFrameBringsTheGateIntoRUNWithValidOutput",
+        "S02_CorruptedFramesDoNotStartTheGate"
+      ],
+      "text": "When a received ObjectSummary frame passes the E2E check and the plausibility check while the gate is in INIT, the AdasInputGate shall enter RUN in the same cycle.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "B",
+      "ears": "state",
+      "id": "REQ-GATE-002",
+      "satisfied_by": [
+        "state_machine"
+      ],
+      "tests": [
+        "S01_FirstValidFrameBringsTheGateIntoRUNWithValidOutput"
+      ],
+      "text": "While the gate is in RUN, the AdasInputGate shall output the decoded ObjectSummary signals with qualifier VALID for every cycle in which a valid frame was received.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "B",
+      "ears": "unwanted",
+      "id": "REQ-GATE-003",
+      "satisfied_by": [
+        "debounce:e2e_fault",
+        "message:ObjectSummary",
+        "transition:RUN->DEGRADED"
+      ],
+      "tests": [
+        "S03_ThreeConsecutiveE2EErrorsDegradeTheGate",
+        "S04_RepeatedCountersCountAsE2EErrors",
+        "S05_NonConsecutiveE2EErrorsAreTolerated"
+      ],
+      "text": "If 3 consecutive cycles contain frames that fail the E2E check while the gate is in RUN, then the AdasInputGate shall enter DEGRADED and set the output qualifier to INVALID.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "B",
+      "ears": "unwanted",
+      "id": "REQ-GATE-004",
+      "satisfied_by": [
+        "debounce:range_fault",
+        "signal:ObjectSummary.nearest_confidence",
+        "signal:ObjectSummary.nearest_distance",
+        "signal:ObjectSummary.nearest_rel_speed",
+        "signal:ObjectSummary.object_count",
+        "transition:RUN->DEGRADED"
+      ],
+      "tests": [
+        "S06_OutOfRangeSignalValuesAreNotForwarded_Ex1",
+        "S07_OutOfRangeSignalValuesAreNotForwarded_Ex2",
+        "S08_OutOfRangeSignalValuesAreNotForwarded_Ex3",
+        "S09_OutOfRangeSignalValuesAreNotForwarded_Ex4",
+        "S10_BoundaryValuesAreAccepted"
+      ],
+      "text": "If a decoded signal lies outside its specified physical range, then the AdasInputGate shall not forward the value and shall enter DEGRADED.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "B",
+      "ears": "unwanted",
+      "id": "REQ-GATE-005",
+      "satisfied_by": [
+        "debounce:timeout",
+        "transition:DEGRADED->SAFE",
+        "transition:INIT->SAFE",
+        "transition:RUN->SAFE"
+      ],
+      "tests": [
+        "S11_FiveMissingCyclesInRUNLeadToSAFE",
+        "S12_NoFrameAtAllAfterStartLeadsToSAFE"
+      ],
+      "text": "If no frame is received for 5 consecutive cycles (100 ms), then the AdasInputGate shall enter SAFE.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "B",
+      "ears": "event",
+      "id": "REQ-GATE-006",
+      "satisfied_by": [
+        "debounce:recovered",
+        "transition:DEGRADED->RUN"
+      ],
+      "tests": [
+        "S13_TenConsecutiveValidFramesRecoverFromDEGRADED"
+      ],
+      "text": "When 10 consecutive valid frames are received while the gate is in DEGRADED, the AdasInputGate shall return to RUN.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "B",
+      "ears": "state",
+      "id": "REQ-GATE-007",
+      "satisfied_by": [
+        "state_machine"
+      ],
+      "tests": [
+        "S14_SAFEIsLatched"
+      ],
+      "text": "While the gate is in SAFE, the AdasInputGate shall remain in SAFE until the component is restarted.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "B",
+      "ears": "ubiquitous",
+      "id": "REQ-GATE-008",
+      "satisfied_by": [
+        "status_output:GateStatus"
+      ],
+      "tests": [
+        "S15_StatusMessageReflectsTheGateEveryCycle",
+        "S16_AliveCounterAndHeartbeatAdvanceOncePerCycle"
+      ],
+      "text": "The AdasInputGate shall publish its state, output qualifier and nearest distance in the GateStatus CAN message every cycle.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "B",
+      "ears": "ubiquitous",
+      "id": "REQ-GATE-009",
+      "satisfied_by": [
+        "task:gate_task"
+      ],
+      "tests": [
+        "S16_AliveCounterAndHeartbeatAdvanceOncePerCycle"
+      ],
+      "text": "The AdasInputGate shall report one alive indication to health supervision per cycle.",
+      "verification": [
+        "sil"
+      ]
+    }
+  ],
+  "sil_suite": "AdasInputGateSilTest",
+  "tests": [
+    {
+      "example": [],
+      "feature": "examples/adas_input_gate/features/gate.feature",
+      "line": 6,
+      "name": "S01_FirstValidFrameBringsTheGateIntoRUNWithValidOutput",
+      "requirements": [
+        "REQ-GATE-001",
+        "REQ-GATE-002"
+      ],
+      "scenario": "First valid frame brings the gate into RUN with valid output",
+      "steps": [
+        {
+          "catalogue": "GATE-S01",
+          "cpp": "// freshly constructed component (test fixture)",
+          "text": "Given a freshly started component"
+        },
+        {
+          "catalogue": "GATE-S07",
+          "cpp": "EXPECT_EQ(sil_.state(), State::kInit);",
+          "text": "Then the state is INIT"
+        },
+        {
+          "catalogue": "GATE-S02",
+          "cpp": "sil_.receive_valid(1);",
+          "text": "When the component receives 1 valid frame"
+        },
+        {
+          "catalogue": "GATE-S07",
+          "cpp": "EXPECT_EQ(sil_.state(), State::kRun);",
+          "text": "Then the state is RUN"
+        },
+        {
+          "catalogue": "GATE-S08",
+          "cpp": "EXPECT_EQ(sil_.qualifier(), Qualifier::kValid);",
+          "text": "And the output qualifier is VALID"
+        },
+        {
+          "catalogue": "GATE-S09",
+          "cpp": "EXPECT_NEAR(sil_.output_signal(Signal::kNearestDistance), 42.5, 0.01);",
+          "text": "And the output signal nearest_distance equals 42.5 within 0.01"
+        },
+        {
+          "catalogue": "GATE-S09",
+          "cpp": "EXPECT_NEAR(sil_.output_signal(Signal::kNearestRelSpeed), -3.25, 0.01);",
+          "text": "And the output signal nearest_rel_speed equals -3.25 within 0.01"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/adas_input_gate/features/gate.feature",
+      "line": 16,
+      "name": "S02_CorruptedFramesDoNotStartTheGate",
+      "requirements": [
+        "REQ-GATE-001"
+      ],
+      "scenario": "Corrupted frames do not start the gate",
+      "steps": [
+        {
+          "catalogue": "GATE-S01",
+          "cpp": "// freshly constructed component (test fixture)",
+          "text": "Given a freshly started component"
+        },
+        {
+          "catalogue": "GATE-S03",
+          "cpp": "sil_.receive_corrupted_crc(2);",
+          "text": "When the component receives 2 frames with corrupted CRC"
+        },
+        {
+          "catalogue": "GATE-S07",
+          "cpp": "EXPECT_EQ(sil_.state(), State::kInit);",
+          "text": "Then the state is INIT"
+        },
+        {
+          "catalogue": "GATE-S08",
+          "cpp": "EXPECT_EQ(sil_.qualifier(), Qualifier::kInvalid);",
+          "text": "And the output qualifier is INVALID"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/adas_input_gate/features/gate.feature",
+      "line": 23,
+      "name": "S03_ThreeConsecutiveE2EErrorsDegradeTheGate",
+      "requirements": [
+        "REQ-GATE-003"
+      ],
+      "scenario": "Three consecutive E2E errors degrade the gate",
+      "steps": [
+        {
+          "catalogue": "GATE-S02",
+          "cpp": "sil_.receive_valid(5);",
+          "text": "Given the component has received 5 valid frames"
+        },
+        {
+          "catalogue": "GATE-S03",
+          "cpp": "sil_.receive_corrupted_crc(2);",
+          "text": "When the component receives 2 frames with corrupted CRC"
+        },
+        {
+          "catalogue": "GATE-S07",
+          "cpp": "EXPECT_EQ(sil_.state(), State::kRun);",
+          "text": "Then the state is RUN"
+        },
+        {
+          "catalogue": "GATE-S03",
+          "cpp": "sil_.receive_corrupted_crc(1);",
+          "text": "When the component receives 1 frame with corrupted CRC"
+        },
+        {
+          "catalogue": "GATE-S07",
+          "cpp": "EXPECT_EQ(sil_.state(), State::kDegraded);",
+          "text": "Then the state is DEGRADED"
+        },
+        {
+          "catalogue": "GATE-S08",
+          "cpp": "EXPECT_EQ(sil_.qualifier(), Qualifier::kInvalid);",
+          "text": "And the output qualifier is INVALID"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/adas_input_gate/features/gate.feature",
+      "line": 32,
+      "name": "S04_RepeatedCountersCountAsE2EErrors",
+      "requirements": [
+        "REQ-GATE-003"
+      ],
+      "scenario": "Repeated counters count as E2E errors",
+      "steps": [
+        {
+          "catalogue": "GATE-S02",
+          "cpp": "sil_.receive_valid(5);",
+          "text": "Given the component has received 5 valid frames"
+        },
+        {
+          "catalogue": "GATE-S04",
+          "cpp": "sil_.receive_repeated_counter(3);",
+          "text": "When the component receives 3 frames with repeated counter"
+        },
+        {
+          "catalogue": "GATE-S07",
+          "cpp": "EXPECT_EQ(sil_.state(), State::kDegraded);",
+          "text": "Then the state is DEGRADED"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/adas_input_gate/features/gate.feature",
+      "line": 38,
+      "name": "S05_NonConsecutiveE2EErrorsAreTolerated",
+      "requirements": [
+        "REQ-GATE-003"
+      ],
+      "scenario": "Non-consecutive E2E errors are tolerated",
+      "steps": [
+        {
+          "catalogue": "GATE-S02",
+          "cpp": "sil_.receive_valid(5);",
+          "text": "Given the component has received 5 valid frames"
+        },
+        {
+          "catalogue": "GATE-S03",
+          "cpp": "sil_.receive_corrupted_crc(2);",
+          "text": "When the component receives 2 frames with corrupted CRC"
+        },
+        {
+          "catalogue": "GATE-S02",
+          "cpp": "sil_.receive_valid(1);",
+          "text": "And the component receives 1 valid frame"
+        },
+        {
+          "catalogue": "GATE-S03",
+          "cpp": "sil_.receive_corrupted_crc(2);",
+          "text": "And the component receives 2 frames with corrupted CRC"
+        },
+        {
+          "catalogue": "GATE-S07",
+          "cpp": "EXPECT_EQ(sil_.state(), State::kRun);",
+          "text": "Then the state is RUN"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "signal",
+          "object_count"
+        ],
+        [
+          "value",
+          "65"
+        ]
+      ],
+      "feature": "examples/adas_input_gate/features/gate.feature",
+      "line": 46,
+      "name": "S06_OutOfRangeSignalValuesAreNotForwarded_Ex1",
+      "requirements": [
+        "REQ-GATE-004"
+      ],
+      "scenario": "Out-of-range signal values are not forwarded #1",
+      "steps": [
+        {
+          "catalogue": "GATE-S02",
+          "cpp": "sil_.receive_valid(3);",
+          "text": "Given the component has received 3 valid frames"
+        },
+        {
+          "catalogue": "GATE-S05",
+          "cpp": "sil_.receive_with(Signal::kObjectCount, 65.0);",
+          "text": "When the component receives a frame with object_count set to 65"
+        },
+        {
+          "catalogue": "GATE-S07",
+          "cpp": "EXPECT_EQ(sil_.state(), State::kDegraded);",
+          "text": "Then the state is DEGRADED"
+        },
+        {
+          "catalogue": "GATE-S08",
+          "cpp": "EXPECT_EQ(sil_.qualifier(), Qualifier::kInvalid);",
+          "text": "And the output qualifier is INVALID"
+        },
+        {
+          "catalogue": "GATE-S09",
+          "cpp": "EXPECT_NEAR(sil_.output_signal(Signal::kNearestDistance), 42.5, 0.01);",
+          "text": "And the output signal nearest_distance equals 42.5 within 0.01"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "signal",
+          "nearest_distance"
+        ],
+        [
+          "value",
+          "250.5"
+        ]
+      ],
+      "feature": "examples/adas_input_gate/features/gate.feature",
+      "line": 46,
+      "name": "S07_OutOfRangeSignalValuesAreNotForwarded_Ex2",
+      "requirements": [
+        "REQ-GATE-004"
+      ],
+      "scenario": "Out-of-range signal values are not forwarded #2",
+      "steps": [
+        {
+          "catalogue": "GATE-S02",
+          "cpp": "sil_.receive_valid(3);",
+          "text": "Given the component has received 3 valid frames"
+        },
+        {
+          "catalogue": "GATE-S05",
+          "cpp": "sil_.receive_with(Signal::kNearestDistance, 250.5);",
+          "text": "When the component receives a frame with nearest_distance set to 250.5"
+        },
+        {
+          "catalogue": "GATE-S07",
+          "cpp": "EXPECT_EQ(sil_.state(), State::kDegraded);",
+          "text": "Then the state is DEGRADED"
+        },
+        {
+          "catalogue": "GATE-S08",
+          "cpp": "EXPECT_EQ(sil_.qualifier(), Qualifier::kInvalid);",
+          "text": "And the output qualifier is INVALID"
+        },
+        {
+          "catalogue": "GATE-S09",
+          "cpp": "EXPECT_NEAR(sil_.output_signal(Signal::kNearestDistance), 42.5, 0.01);",
+          "text": "And the output signal nearest_distance equals 42.5 within 0.01"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "signal",
+          "nearest_rel_speed"
+        ],
+        [
+          "value",
+          "-80.5"
+        ]
+      ],
+      "feature": "examples/adas_input_gate/features/gate.feature",
+      "line": 46,
+      "name": "S08_OutOfRangeSignalValuesAreNotForwarded_Ex3",
+      "requirements": [
+        "REQ-GATE-004"
+      ],
+      "scenario": "Out-of-range signal values are not forwarded #3",
+      "steps": [
+        {
+          "catalogue": "GATE-S02",
+          "cpp": "sil_.receive_valid(3);",
+          "text": "Given the component has received 3 valid frames"
+        },
+        {
+          "catalogue": "GATE-S05",
+          "cpp": "sil_.receive_with(Signal::kNearestRelSpeed, -80.5);",
+          "text": "When the component receives a frame with nearest_rel_speed set to -80.5"
+        },
+        {
+          "catalogue": "GATE-S07",
+          "cpp": "EXPECT_EQ(sil_.state(), State::kDegraded);",
+          "text": "Then the state is DEGRADED"
+        },
+        {
+          "catalogue": "GATE-S08",
+          "cpp": "EXPECT_EQ(sil_.qualifier(), Qualifier::kInvalid);",
+          "text": "And the output qualifier is INVALID"
+        },
+        {
+          "catalogue": "GATE-S09",
+          "cpp": "EXPECT_NEAR(sil_.output_signal(Signal::kNearestDistance), 42.5, 0.01);",
+          "text": "And the output signal nearest_distance equals 42.5 within 0.01"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "signal",
+          "nearest_confidence"
+        ],
+        [
+          "value",
+          "100.5"
+        ]
+      ],
+      "feature": "examples/adas_input_gate/features/gate.feature",
+      "line": 46,
+      "name": "S09_OutOfRangeSignalValuesAreNotForwarded_Ex4",
+      "requirements": [
+        "REQ-GATE-004"
+      ],
+      "scenario": "Out-of-range signal values are not forwarded #4",
+      "steps": [
+        {
+          "catalogue": "GATE-S02",
+          "cpp": "sil_.receive_valid(3);",
+          "text": "Given the component has received 3 valid frames"
+        },
+        {
+          "catalogue": "GATE-S05",
+          "cpp": "sil_.receive_with(Signal::kNearestConfidence, 100.5);",
+          "text": "When the component receives a frame with nearest_confidence set to 100.5"
+        },
+        {
+          "catalogue": "GATE-S07",
+          "cpp": "EXPECT_EQ(sil_.state(), State::kDegraded);",
+          "text": "Then the state is DEGRADED"
+        },
+        {
+          "catalogue": "GATE-S08",
+          "cpp": "EXPECT_EQ(sil_.qualifier(), Qualifier::kInvalid);",
+          "text": "And the output qualifier is INVALID"
+        },
+        {
+          "catalogue": "GATE-S09",
+          "cpp": "EXPECT_NEAR(sil_.output_signal(Signal::kNearestDistance), 42.5, 0.01);",
+          "text": "And the output signal nearest_distance equals 42.5 within 0.01"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/adas_input_gate/features/gate.feature",
+      "line": 61,
+      "name": "S10_BoundaryValuesAreAccepted",
+      "requirements": [
+        "REQ-GATE-004"
+      ],
+      "scenario": "Boundary values are accepted",
+      "steps": [
+        {
+          "catalogue": "GATE-S02",
+          "cpp": "sil_.receive_valid(1);",
+          "text": "Given the component has received 1 valid frame"
+        },
+        {
+          "catalogue": "GATE-S05",
+          "cpp": "sil_.receive_with(Signal::kNearestDistance, 250.0);",
+          "text": "When the component receives a frame with nearest_distance set to 250"
+        },
+        {
+          "catalogue": "GATE-S07",
+          "cpp": "EXPECT_EQ(sil_.state(), State::kRun);",
+          "text": "Then the state is RUN"
+        },
+        {
+          "catalogue": "GATE-S09",
+          "cpp": "EXPECT_NEAR(sil_.output_signal(Signal::kNearestDistance), 250.0, 0.01);",
+          "text": "And the output signal nearest_distance equals 250 within 0.01"
+        },
+        {
+          "catalogue": "GATE-S05",
+          "cpp": "sil_.receive_with(Signal::kNearestRelSpeed, -80.0);",
+          "text": "When the component receives a frame with nearest_rel_speed set to -80"
+        },
+        {
+          "catalogue": "GATE-S07",
+          "cpp": "EXPECT_EQ(sil_.state(), State::kRun);",
+          "text": "Then the state is RUN"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/adas_input_gate/features/gate.feature",
+      "line": 70,
+      "name": "S11_FiveMissingCyclesInRUNLeadToSAFE",
+      "requirements": [
+        "REQ-GATE-005"
+      ],
+      "scenario": "Five missing cycles in RUN lead to SAFE",
+      "steps": [
+        {
+          "catalogue": "GATE-S02",
+          "cpp": "sil_.receive_valid(2);",
+          "text": "Given the component has received 2 valid frames"
+        },
+        {
+          "catalogue": "GATE-S06",
+          "cpp": "sil_.miss(4);",
+          "text": "When 4 cycles pass without a frame"
+        },
+        {
+          "catalogue": "GATE-S07",
+          "cpp": "EXPECT_EQ(sil_.state(), State::kRun);",
+          "text": "Then the state is RUN"
+        },
+        {
+          "catalogue": "GATE-S08",
+          "cpp": "EXPECT_EQ(sil_.qualifier(), Qualifier::kInvalid);",
+          "text": "And the output qualifier is INVALID"
+        },
+        {
+          "catalogue": "GATE-S06",
+          "cpp": "sil_.miss(1);",
+          "text": "When 1 cycle passes without a frame"
+        },
+        {
+          "catalogue": "GATE-S07",
+          "cpp": "EXPECT_EQ(sil_.state(), State::kSafe);",
+          "text": "Then the state is SAFE"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/adas_input_gate/features/gate.feature",
+      "line": 79,
+      "name": "S12_NoFrameAtAllAfterStartLeadsToSAFE",
+      "requirements": [
+        "REQ-GATE-005"
+      ],
+      "scenario": "No frame at all after start leads to SAFE",
+      "steps": [
+        {
+          "catalogue": "GATE-S01",
+          "cpp": "// freshly constructed component (test fixture)",
+          "text": "Given a freshly started component"
+        },
+        {
+          "catalogue": "GATE-S06",
+          "cpp": "sil_.miss(5);",
+          "text": "When 5 cycles pass without a frame"
+        },
+        {
+          "catalogue": "GATE-S07",
+          "cpp": "EXPECT_EQ(sil_.state(), State::kSafe);",
+          "text": "Then the state is SAFE"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/adas_input_gate/features/gate.feature",
+      "line": 85,
+      "name": "S13_TenConsecutiveValidFramesRecoverFromDEGRADED",
+      "requirements": [
+        "REQ-GATE-006"
+      ],
+      "scenario": "Ten consecutive valid frames recover from DEGRADED",
+      "steps": [
+        {
+          "catalogue": "GATE-S02",
+          "cpp": "sil_.receive_valid(3);",
+          "text": "Given the component has received 3 valid frames"
+        },
+        {
+          "catalogue": "GATE-S05",
+          "cpp": "sil_.receive_with(Signal::kNearestDistance, 300.0);",
+          "text": "And the component receives a frame with nearest_distance set to 300"
+        },
+        {
+          "catalogue": "GATE-S07",
+          "cpp": "EXPECT_EQ(sil_.state(), State::kDegraded);",
+          "text": "Then the state is DEGRADED"
+        },
+        {
+          "catalogue": "GATE-S02",
+          "cpp": "sil_.receive_valid(9);",
+          "text": "When the component receives 9 valid frames"
+        },
+        {
+          "catalogue": "GATE-S07",
+          "cpp": "EXPECT_EQ(sil_.state(), State::kDegraded);",
+          "text": "Then the state is DEGRADED"
+        },
+        {
+          "catalogue": "GATE-S08",
+          "cpp": "EXPECT_EQ(sil_.qualifier(), Qualifier::kInvalid);",
+          "text": "And the output qualifier is INVALID"
+        },
+        {
+          "catalogue": "GATE-S02",
+          "cpp": "sil_.receive_valid(1);",
+          "text": "When the component receives 1 valid frame"
+        },
+        {
+          "catalogue": "GATE-S07",
+          "cpp": "EXPECT_EQ(sil_.state(), State::kRun);",
+          "text": "Then the state is RUN"
+        },
+        {
+          "catalogue": "GATE-S08",
+          "cpp": "EXPECT_EQ(sil_.qualifier(), Qualifier::kValid);",
+          "text": "And the output qualifier is VALID"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/adas_input_gate/features/gate.feature",
+      "line": 97,
+      "name": "S14_SAFEIsLatched",
+      "requirements": [
+        "REQ-GATE-007"
+      ],
+      "scenario": "SAFE is latched",
+      "steps": [
+        {
+          "catalogue": "GATE-S01",
+          "cpp": "// freshly constructed component (test fixture)",
+          "text": "Given a freshly started component"
+        },
+        {
+          "catalogue": "GATE-S06",
+          "cpp": "sil_.miss(5);",
+          "text": "When 5 cycles pass without a frame"
+        },
+        {
+          "catalogue": "GATE-S02",
+          "cpp": "sil_.receive_valid(20);",
+          "text": "And the component receives 20 valid frames"
+        },
+        {
+          "catalogue": "GATE-S07",
+          "cpp": "EXPECT_EQ(sil_.state(), State::kSafe);",
+          "text": "Then the state is SAFE"
+        },
+        {
+          "catalogue": "GATE-S08",
+          "cpp": "EXPECT_EQ(sil_.qualifier(), Qualifier::kInvalid);",
+          "text": "And the output qualifier is INVALID"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/adas_input_gate/features/gate.feature",
+      "line": 105,
+      "name": "S15_StatusMessageReflectsTheGateEveryCycle",
+      "requirements": [
+        "REQ-GATE-008"
+      ],
+      "scenario": "Status message reflects the gate every cycle",
+      "steps": [
+        {
+          "catalogue": "GATE-S02",
+          "cpp": "sil_.receive_valid(1);",
+          "text": "Given the component has received 1 valid frame"
+        },
+        {
+          "catalogue": "GATE-S11",
+          "cpp": "EXPECT_EQ(sil_.status_state(), State::kRun);",
+          "text": "Then the status message reports state RUN"
+        },
+        {
+          "catalogue": "GATE-S12",
+          "cpp": "EXPECT_NEAR(sil_.status_signal(StatusSignal::kQualifier), 1.0, 1e-6);",
+          "text": "And the status message signal Qualifier is 1"
+        },
+        {
+          "catalogue": "GATE-S12",
+          "cpp": "EXPECT_NEAR(sil_.status_signal(StatusSignal::kNearestDistance), 42.5, 1e-6);",
+          "text": "And the status message signal NearestDistance is 42.5"
+        },
+        {
+          "catalogue": "GATE-S03",
+          "cpp": "sil_.receive_corrupted_crc(3);",
+          "text": "When the component receives 3 frames with corrupted CRC"
+        },
+        {
+          "catalogue": "GATE-S11",
+          "cpp": "EXPECT_EQ(sil_.status_state(), State::kDegraded);",
+          "text": "Then the status message reports state DEGRADED"
+        },
+        {
+          "catalogue": "GATE-S12",
+          "cpp": "EXPECT_NEAR(sil_.status_signal(StatusSignal::kQualifier), 0.0, 1e-6);",
+          "text": "And the status message signal Qualifier is 0"
+        },
+        {
+          "catalogue": "GATE-S12",
+          "cpp": "EXPECT_NEAR(sil_.status_signal(StatusSignal::kE2eErrorCount), 3.0, 1e-6);",
+          "text": "And the status message signal E2eErrorCount is 3"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/adas_input_gate/features/gate.feature",
+      "line": 116,
+      "name": "S16_AliveCounterAndHeartbeatAdvanceOncePerCycle",
+      "requirements": [
+        "REQ-GATE-008",
+        "REQ-GATE-009"
+      ],
+      "scenario": "Alive counter and heartbeat advance once per cycle",
+      "steps": [
+        {
+          "catalogue": "GATE-S01",
+          "cpp": "// freshly constructed component (test fixture)",
+          "text": "Given a freshly started component"
+        },
+        {
+          "catalogue": "GATE-S02",
+          "cpp": "sil_.receive_valid(9);",
+          "text": "When the component receives 9 valid frames"
+        },
+        {
+          "catalogue": "GATE-S10",
+          "cpp": "EXPECT_EQ(sil_.heartbeat(), 9U);",
+          "text": "Then the heartbeat count is 9"
+        },
+        {
+          "catalogue": "GATE-S12",
+          "cpp": "EXPECT_NEAR(sil_.status_signal(StatusSignal::kAliveCounter), 1.0, 1e-6);",
+          "text": "And the status message signal AliveCounter is 1"
+        }
+      ]
+    }
+  ]
+}

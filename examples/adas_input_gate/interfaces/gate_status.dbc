@@ -1,0 +1,16 @@
+VERSION ""
+
+NS_ :
+
+BS_:
+
+BU_: ADAS_GATE VEHICLE
+
+BO_ 399 GateStatus: 8 ADAS_GATE
+ SG_ State : 7|4@0+ (1,0) [0|3] "" VEHICLE
+ SG_ Qualifier : 3|1@0+ (1,0) [0|1] "" VEHICLE
+ SG_ AliveCounter : 2|3@0+ (1,0) [0|7] "" VEHICLE
+ SG_ NearestDistance : 15|16@0+ (0.01,0) [0|250] "m" VEHICLE
+ SG_ E2eErrorCount : 31|8@0+ (1,0) [0|255] "" VEHICLE
+
+CM_ SG_ 399 State "0=INIT 1=RUN 2=DEGRADED 3=SAFE";
