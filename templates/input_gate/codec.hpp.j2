@@ -1,0 +1,35 @@
+#pragma once
+
+#include <cstddef>
+#include <cstdint>
+
+#include "ea/codec/someip.hpp"
+#include "ea/core/result.hpp"
+#include "ea/core/span.hpp"
+#include "ea/e2e/p4.hpp"
+#include "{{ inc }}/{{ snake }}_types.hpp"
+
+namespace {{ ns }} {
+{% for m in messages %}
+
+// ---- {{ m.name }} ----
+inline constexpr std::size_t k{{ m.name }}PayloadLength = {{ m.payload_length }}U;
+{% if m.transport == 'someip' %}
+inline constexpr ea::someip::Expected k{{ m.name }}SomeIp{ {{- m.someip.service_id | cpp_hex(4) }}, {{ m.someip.event_id | cpp_hex(4) }}, {{ m.someip.interface_version }}U, ea::someip::MessageType::kNotification};
+{% else %}
+inline constexpr std::uint32_t k{{ m.name }}CanId = {{ m.can_id | cpp_hex }};
+{% endif %}
+{% if m.e2e %}
+inline constexpr ea::e2e::P4Config k{{ m.name }}E2e{ {{- m.e2e.data_id | cpp_hex(8) }}, {{ m.e2e.offset }}U, {{ m.payload_length }}U, {{ m.payload_length }}U, {{ m.e2e.max_delta_counter }}U};
+{% endif %}
+
+// Decodes the payload (after transport header, including the E2E header if any).
+// Fails with kLengthMismatch or kOutOfRange (physical range violated).
+ea::Result<{{ m.name }}> decode_{{ m.snake }}(ea::ConstByteSpan payload) noexcept;
+
+// Encodes signals into `payload`; E2E and transport headers are not touched.
+// Fails with kLengthMismatch or kOutOfRange (value outside the physical range).
+ea::Result<void> encode_{{ m.snake }}(const {{ m.name }}& in, ea::ByteSpan payload) noexcept;
+{% endfor %}
+
+}  // namespace {{ ns }}

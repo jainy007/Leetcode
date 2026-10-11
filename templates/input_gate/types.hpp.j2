@@ -1,0 +1,54 @@
+#pragma once
+
+#include <cstddef>
+#include <cstdint>
+
+namespace {{ ns }} {
+
+// Gate states. The numeric codes are part of the status message interface.
+enum class State : std::uint8_t {
+{% for s in states %}
+    k{{ s | camel }} = {{ loop.index0 }}U,
+{% endfor %}
+};
+inline constexpr std::size_t kStateCount = {{ states | length }}U;
+const char* to_string(State s) noexcept;
+
+enum class Qualifier : std::uint8_t {
+    kInvalid = 0U,
+    kValid = 1U,
+};
+
+// Classification of one cycle; exactly one applies.
+enum class CycleCondition : std::uint8_t {
+{% for c in conditions %}
+    k{{ c | camel }},
+{% endfor %}
+};
+
+// Signals of the input message {{ input.name }}.
+enum class Signal : std::uint8_t {
+{% for s in input.signals %}
+    k{{ s.cname }},
+{% endfor %}
+};
+{% if status %}
+
+// Signals of the status message {{ status.message.name }}.
+enum class StatusSignal : std::uint8_t {
+{% for f in status.fields %}
+    k{{ f.cname }},
+{% endfor %}
+};
+{% endif %}
+{% for m in messages %}
+
+// Message {{ m.name }} ({{ m.transport }}{% if m.transport == 'someip' %}, service {{ m.someip.service_id | cpp_hex(4) }}, event {{ m.someip.event_id | cpp_hex(4) }}{% else %}, CAN id {{ m.can_id | cpp_hex }}{% endif %}). Source: {{ m.source }}
+struct {{ m.name }} {
+{% for s in m.signals %}
+    double {{ s.name }};  // [{{ s.min }}, {{ s.max }}] {{ s.unit }}
+{% endfor %}
+};
+{% endfor %}
+
+}  // namespace {{ ns }}

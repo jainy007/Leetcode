@@ -1,0 +1,109 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  # The qualified generator: rules, determinism, and "generated/ was not edited by hand".
+  generator:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r tools/requirements.txt
+      - name: Qualification suite
+        run: python3 -m unittest discover -s tools/gen/tests -t . -v
+      - name: Lint requirements, Gherkin, models
+        run: python3 -m tools.lint
+      - name: generated/ is exactly the generator output
+        run: python3 -m tools.gen --check
+
+  # AI-proposed changes may only touch inputs (requirements, Gherkin, models, docs). See CLAUDE.md.
+  protected-paths:
+    if: github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'ai-proposed')
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Reject changes to the qualified tool chain and safety artefacts
+        run: |
+          changed=$(git diff --name-only "origin/${{ github.base_ref }}...HEAD")
+          echo "$changed"
+          if echo "$changed" | grep -E '^(generated|tools/gen|templates|schemas|sil/steps|runtime|docs/safety)/'; then
+            echo "::error::ai-proposed PRs must not modify the paths above (CLAUDE.md)"
+            exit 1
+          fi
+
+  build-test:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        preset: [linux-host, linux-host-asan, linux-host-tsan]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r tools/requirements.txt
+      - run: sudo apt-get update && sudo apt-get install -y ninja-build
+      - run: cmake --preset ${{ matrix.preset }}
+      - run: cmake --build --preset ${{ matrix.preset }}
+      - run: ctest --preset ${{ matrix.preset }}
+      - name: Requirements trace matrix
+        if: matrix.preset == 'linux-host'
+        run: python3 -m tools.trace --results build/linux-host/test-results --out reports
+      - uses: actions/upload-artifact@v4
+        if: always() && matrix.preset == 'linux-host'
+        with:
+          name: trace-and-test-results
+          path: |
+            reports/
+            build/linux-host/test-results/
+
+  coverage:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r tools/requirements.txt
+      - run: sudo apt-get update && sudo apt-get install -y ninja-build clang-18 llvm-18 libclang-rt-18-dev
+      - run: cmake --preset linux-host-coverage -DCMAKE_C_COMPILER=clang-18 -DCMAKE_CXX_COMPILER=clang++-18
+      - run: cmake --build --preset linux-host-coverage
+      - run: LLVM_PROFILE_FILE="$PWD/build/cov/%p-%m.profraw" ctest --preset linux-host-coverage
+      - name: Statement / branch / MC-DC report
+        run: |
+          llvm-profdata-18 merge -sparse build/cov/*.profraw -o build/cov/merged.profdata
+          bins=$(find build/linux-host-coverage -name '*_sil' -type f -executable -o -name 'runtime_unit_tests' -type f -executable)
+          args=""; for b in $bins; do args="$args -object $b"; done
+          llvm-cov-18 report $args -instr-profile build/cov/merged.profdata --show-mcdc-summary \
+            -ignore-filename-regex='(_deps|tests/|sil/)' | tee coverage.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage.txt
+
+  clang-tidy:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r tools/requirements.txt
+      - run: sudo apt-get update && sudo apt-get install -y ninja-build clang-tidy
+      - run: cmake --preset linux-host -DEA_BUILD_TESTS=OFF
+      - name: clang-tidy on runtime and generated production code
+        run: |
+          files=$(find runtime/src generated -name '*.cpp' -not -path '*/sil/*')
+          clang-tidy -p build/linux-host --quiet $files | tee clang-tidy.txt

@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ea/model_gpu_stage.schema.json",
+  "title": "Model for pattern gpu_stage",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "pattern", "component", "inputs", "graph", "monitor"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "pattern": {"const": "gpu_stage"},
+    "component": {"$ref": "common.schema.json#/$defs/component"},
+    "inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requirements", "features"],
+      "properties": {
+        "requirements": {"$ref": "common.schema.json#/$defs/relpath"},
+        "features": {"type": "array", "minItems": 1, "items": {"$ref": "common.schema.json#/$defs/relpath"}}
+      }
+    },
+    "graph": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["deadline_ms", "reference_tolerance", "backends", "tensors", "nodes", "classes", "plausibility"],
+      "properties": {
+        "deadline_ms": {"type": "integer", "minimum": 1, "maximum": 10000},
+        "reference_tolerance": {"type": "number", "exclusiveMinimum": 0, "maximum": 0.1},
+        "backends": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"enum": ["cpu_ref", "cuda", "qnn"]}},
+        "satisfies": {"$ref": "common.schema.json#/$defs/req_refs"},
+        "tensors": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 32,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "dtype", "shape", "role"],
+            "properties": {
+              "name": {"$ref": "common.schema.json#/$defs/identifier"},
+              "dtype": {"enum": ["u8", "f32"]},
+              "shape": {"type": "array", "minItems": 1, "maxItems": 4, "items": {"type": "integer", "minimum": 1, "maximum": 1048576}},
+              "role": {"enum": ["input", "output", "intermediate", "weight"]},
+              "file": {"$ref": "common.schema.json#/$defs/relpath"},
+              "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+              "satisfies": {"$ref": "common.schema.json#/$defs/req_refs"}
+            }
+          }
+        },
+        "nodes": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 64,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "op", "input", "output"],
+            "properties": {
+              "name": {"$ref": "common.schema.json#/$defs/identifier"},
+              "op": {"enum": ["normalize", "dense", "relu", "softmax"]},
+              "input": {"$ref": "common.schema.json#/$defs/identifier"},
+              "output": {"$ref": "common.schema.json#/$defs/identifier"},
+              "weights": {"$ref": "common.schema.json#/$defs/identifier"},
+              "bias": {"$ref": "common.schema.json#/$defs/identifier"},
+              "scale": {"type": "number"},
+              "shift": {"type": "number"}
+            }
+          }
+        },
+        "classes": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/identifier"}},
+        "plausibility": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["check", "tensor"],
+            "properties": {
+              "check": {"enum": ["finite", "range", "sum"]},
+              "tensor": {"$ref": "common.schema.json#/$defs/identifier"},
+              "min": {"type": "number"},
+              "max": {"type": "number"},
+              "value": {"type": "number"},
+              "tolerance": {"type": "number", "exclusiveMinimum": 0},
+              "satisfies": {"$ref": "common.schema.json#/$defs/req_refs"}
+            }
+          }
+        }
+      }
+    },
+    "monitor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "asil", "timeout_ms", "channel"],
+      "properties": {
+        "name": {"$ref": "common.schema.json#/$defs/type_name"},
+        "asil": {"enum": ["QM", "A", "B", "C", "D"]},
+        "timeout_ms": {"type": "integer", "minimum": 1},
+        "channel": {"type": "string", "pattern": "^/[a-z][a-z0-9_]{0,40}$"},
+        "satisfies": {"$ref": "common.schema.json#/$defs/req_refs"}
+      }
+    }
+  }
+}

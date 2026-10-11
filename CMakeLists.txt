@@ -34,15 +34,17 @@ find_package(Python3 3.10 REQUIRED COMPONENTS Interpreter)
 # ---------------------------------------------------------------------------
 add_subdirectory(runtime)
 
+if(EA_BUILD_TESTS)
+    enable_testing()
+    include(EaGoogleTest)
+    add_subdirectory(sil)
+endif()
+
 # ---------------------------------------------------------------------------
 # Generated code (committed; CI regenerates and fails on any diff)
 # ---------------------------------------------------------------------------
 add_subdirectory(generated)
 
 if(EA_BUILD_TESTS)
-    enable_testing()
-    include(EaGoogleTest)
-    add_subdirectory(sil)
     add_subdirectory(tests)
-    add_subdirectory(examples)
 endif()

@@ -1,0 +1,144 @@
+{% import "input_gate/_macros.j2" as m %}
+#pragma once
+
+#include <array>
+#include <cmath>
+#include <cstdint>
+
+#include "ea/codec/bits.hpp"
+#include "ea/codec/someip.hpp"
+#include "ea/core/assert.hpp"
+#include "ea/e2e/p4.hpp"
+#include "{{ inc }}/{{ snake }}.hpp"
+
+namespace {{ ns }} {
+
+// Test-only encoder: accepts values outside the physical range (to inject range faults) but
+// never outside what the raw signal can carry. Not part of the production library.
+inline ea::Result<void> encode_{{ input.snake }}_unchecked(const {{ input.name }}& in, ea::ByteSpan payload) noexcept {
+    if (payload.size() != k{{ input.name }}PayloadLength) {
+        return ea::ErrorCode::kLengthMismatch;
+    }
+{% for s in input.signals %}
+{{ m.encode_signal(s, 'in', s.raw_type_min, s.raw_type_max) }}
+{%- endfor %}
+    return ea::ok_result();
+}
+
+// SIL harness for {{ component.name }}: builds SOME/IP + E2E frames from the model and drives one
+// step() per simulated cycle.
+class {{ component.name }}Sil {
+public:
+    static constexpr std::size_t kFrameSize = ea::someip::kHeaderSize + k{{ input.name }}PayloadLength;
+    using Frame = std::array<std::uint8_t, kFrameSize>;
+    // First byte of the E2E CRC field inside the frame.
+    static constexpr std::size_t kCrcByte = ea::someip::kHeaderSize + {{ input.e2e.offset }}U + 8U;
+
+    {{ component.name }}Sil() noexcept : protector_(k{{ input.name }}E2e) {}
+
+    void receive_valid(int n) noexcept {
+        for (int i = 0; i < n; ++i) {
+            send(build(defaults()));
+        }
+    }
+    void receive_corrupted_crc(int n) noexcept {
+        for (int i = 0; i < n; ++i) {
+            Frame f = build(defaults());
+            f[kCrcByte] = static_cast<std::uint8_t>(f[kCrcByte] ^ 0x01U);
+            send(f);
+        }
+    }
+    void receive_repeated_counter(int n) noexcept {
+        if (!has_last_) {
+            send(build(defaults()));
+        }
+        const Frame repeated = last_;
+        for (int i = 0; i < n; ++i) {
+            send(repeated);
+        }
+    }
+    void receive_with(Signal s, double value) noexcept {
+        {{ input.name }} v = defaults();
+        set(v, s, value);
+        send(build(v));
+    }
+    void miss(int n) noexcept {
+        for (int i = 0; i < n; ++i) {
+            component_.step(ea::ConstByteSpan());
+        }
+    }
+
+    State state() const noexcept { return component_.state(); }
+    Qualifier qualifier() const noexcept { return component_.output().qualifier; }
+    double output_signal(Signal s) const noexcept { return get(component_.output().data, s); }
+    std::uint64_t heartbeat() const noexcept { return component_.heartbeat().count(); }
+{% if status %}
+{% for f in status.fields if f.source == 'state' %}
+    State status_state() const noexcept {
+        return static_cast<State>(static_cast<std::uint8_t>(status_signal(StatusSignal::k{{ f.cname }})));
+    }
+{% endfor %}
+    double status_signal(StatusSignal s) const noexcept {
+        const ea::Result<{{ status.message.name }}> msg = decode_{{ status.message.snake }}(component_.status_payload());
+        EA_ASSERT(msg.ok());
+        switch (s) {
+{% for f in status.fields %}
+            case StatusSignal::k{{ f.cname }}:
+                return msg->{{ f.signal.name }};
+{% endfor %}
+        }
+        return 0.0;
+    }
+{% endif %}
+    const {{ component.name }}& component() const noexcept { return component_; }
+
+private:
+    static {{ input.name }} defaults() noexcept {
+        {{ input.name }} v{};
+{% for s in input.signals %}
+        v.{{ s.name }} = {{ s.sil_default | cpp_double }};
+{% endfor %}
+        return v;
+    }
+    static void set({{ input.name }}& v, Signal s, double value) noexcept {
+        switch (s) {
+{% for s in input.signals %}
+            case Signal::k{{ s.cname }}:
+                v.{{ s.name }} = value;
+                break;
+{% endfor %}
+        }
+    }
+    static double get(const {{ input.name }}& v, Signal s) noexcept {
+        switch (s) {
+{% for s in input.signals %}
+            case Signal::k{{ s.cname }}:
+                return v.{{ s.name }};
+{% endfor %}
+        }
+        return 0.0;
+    }
+    Frame build(const {{ input.name }}& v) noexcept {
+        Frame f{};
+        const ea::ByteSpan payload(f.data() + ea::someip::kHeaderSize, k{{ input.name }}PayloadLength);
+        const ea::Result<void> encoded = encode_{{ input.snake }}_unchecked(v, payload);
+        EA_ASSERT(encoded.ok());
+        const ea::Result<void> protected_ok = protector_.protect(payload);
+        EA_ASSERT(protected_ok.ok());
+        const ea::Result<void> header = ea::someip::write_header(f, k{{ input.name }}SomeIp, session_, payload.size());
+        EA_ASSERT(header.ok());
+        session_ = static_cast<std::uint16_t>(session_ + 1U);
+        last_ = f;
+        has_last_ = true;
+        return f;
+    }
+    void send(const Frame& f) noexcept { component_.step(ea::ConstByteSpan(f.data(), f.size())); }
+
+    {{ component.name }} component_;
+    ea::e2e::P4Protector protector_;
+    std::uint16_t session_ = 1U;
+    Frame last_{};
+    bool has_last_ = false;
+};
+
+}  // namespace {{ ns }}

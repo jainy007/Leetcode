@@ -1,0 +1,46 @@
+{% macro order(s) %}ea::codec::ByteOrder::{{ 'kBigEndian' if s.big_endian else 'kLittleEndian' }}{% endmacro %}
+
+{% macro describe(s) %}{{ s.name }}: start bit {{ s.start_bit }}, {{ s.length }} bit, {{ 'big' if s.big_endian else 'little' }} endian, {{ 'signed' if s.signed else 'unsigned' }}, factor {{ s.factor }}, offset {{ s.offset }}, range [{{ s.min }}, {{ s.max }}] {{ s.unit }}{% endmacro %}
+
+{% macro decode_signal(s, dst) %}
+    {
+        // {{ describe(s) }}
+        const ea::Result<std::uint64_t> raw = ea::codec::extract(payload, {{ order(s) }}, {{ s.start_bit }}U, {{ s.length }}U);
+        if (!raw.ok()) {
+            return raw.error();
+        }
+{% if s.signed %}
+        const std::int64_t value = ea::codec::sign_extend(*raw, {{ s.length }}U);
+{% else %}
+        const std::int64_t value = static_cast<std::int64_t>(*raw);
+{% endif %}
+        // IPC-002: physical range, checked exactly in the raw domain.
+        if (value < {{ s.raw_lo }}LL || value > {{ s.raw_hi }}LL) {
+            return ea::ErrorCode::kOutOfRange;
+        }
+        {{ dst }}.{{ s.name }} = static_cast<double>(value) * {{ s.factor | cpp_double }} + {{ s.offset | cpp_double }};
+    }
+{% endmacro %}
+
+{% macro encode_signal(s, src, lo, hi) %}
+    {
+        // {{ describe(s) }}
+        const double scaled = ({{ src }}.{{ s.name }} - {{ s.offset | cpp_double }}) / {{ s.factor | cpp_double }};
+        if (!(scaled >= {{ (lo - 0.5) | cpp_double }} && scaled <= {{ (hi + 0.5) | cpp_double }})) {  // also rejects NaN
+            return ea::ErrorCode::kOutOfRange;
+        }
+        const std::int64_t value = static_cast<std::int64_t>(std::llround(scaled));  // IPC-005
+        if (value < {{ lo }}LL || value > {{ hi }}LL) {
+            return ea::ErrorCode::kOutOfRange;
+        }
+{% if s.signed %}
+        const ea::Result<std::uint64_t> raw = ea::codec::to_twos_complement(value, {{ s.length }}U);
+        if (!raw.ok()) {
+            return raw.error();
+        }
+        EA_TRY(ea::codec::insert(payload, {{ order(s) }}, {{ s.start_bit }}U, {{ s.length }}U, *raw));
+{% else %}
+        EA_TRY(ea::codec::insert(payload, {{ order(s) }}, {{ s.start_bit }}U, {{ s.length }}U, static_cast<std::uint64_t>(value)));
+{% endif %}
+    }
+{% endmacro %}

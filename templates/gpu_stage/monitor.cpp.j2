@@ -1,0 +1,48 @@
+{% import "gpu_stage/_macros.j2" as m %}
+#include "{{ inc }}/{{ monitor_snake }}.hpp"
+
+#include <cmath>
+
+namespace {{ ns }} {
+
+const char* to_string(MonitorVerdict v) noexcept {
+    switch (v) {
+        case MonitorVerdict::kOk:
+            return "OK";
+        case MonitorVerdict::kNoData:
+            return "NO_DATA";
+        case MonitorVerdict::kTimeout:
+            return "TIMEOUT";
+        case MonitorVerdict::kImplausible:
+            return "IMPLAUSIBLE";
+        case MonitorVerdict::kDeadlineMiss:
+            return "DEADLINE_MISS";
+    }
+    return "UNKNOWN";
+}
+
+MonitorVerdict {{ monitor.name }}::check(const Output* latest) noexcept {
+    if (latest == nullptr) {
+        return MonitorVerdict::kNoData;
+    }
+    const ea::osal::Nanoseconds age = clock_.now() - latest->timestamp_ns;
+    if (age < 0 || age > kTimeout) {
+        return MonitorVerdict::kTimeout;
+    }
+    switch (latest->status) {
+        case OutputStatus::kValid:
+            break;
+        case OutputStatus::kDeadlineMiss:
+            return MonitorVerdict::kDeadlineMiss;
+        case OutputStatus::kImplausible:
+        case OutputStatus::kBackendError:
+            return MonitorVerdict::kImplausible;
+    }
+    return plausible(latest->scores) ? MonitorVerdict::kOk : MonitorVerdict::kImplausible;
+}
+
+bool {{ monitor.name }}::plausible(const Scores& s) noexcept {
+{{ m.plausibility_body(checks) }}
+}
+
+}  // namespace {{ ns }}

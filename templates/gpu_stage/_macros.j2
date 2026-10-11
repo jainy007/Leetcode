@@ -1,0 +1,33 @@
+{% macro plausibility_body(checks) %}
+{% for c in checks %}
+{% if c.check == 'finite' %}
+    // finite{% if c.satisfies %}  [{{ c.satisfies | join(', ') }}]{% endif %}
+
+    for (const float v : s) {
+        if (!std::isfinite(v)) {
+            return false;
+        }
+    }
+{% elif c.check == 'range' %}
+    // range [{{ c.min }}, {{ c.max }}]{% if c.satisfies %}  [{{ c.satisfies | join(', ') }}]{% endif %}
+
+    for (const float v : s) {
+        if (v < {{ c.min | cpp_float }} || v > {{ c.max | cpp_float }}) {
+            return false;
+        }
+    }
+{% elif c.check == 'sum' %}
+    // sum == {{ c.value }} +/- {{ c.tolerance }}{% if c.satisfies %}  [{{ c.satisfies | join(', ') }}]{% endif %}
+
+    {
+        float sum = 0.0F;
+        for (const float v : s) {
+            sum += v;
+        }
+        if (std::fabs(sum - {{ c.value | cpp_float }}) > {{ c.tolerance | cpp_float }}) {
+            return false;
+        }
+    }
+{% endif %}
+{% endfor %}
+    return true;{% endmacro %}

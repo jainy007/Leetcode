@@ -1,0 +1,52 @@
+#pragma once
+
+#include <array>
+#include <cstddef>
+#include <cstdint>
+
+// Types shared by {{ component.name }} (producer, ASIL {{ component.asil }}) and
+// {{ monitor.name }} (monitor, ASIL {{ monitor.asil }}). Everything here is trivially copyable and
+// address-free so it can cross the shared-memory channel (MP-005).
+
+namespace {{ ns }} {
+
+inline constexpr std::size_t kInputElements = {{ input.elements }}U;
+inline constexpr std::size_t kNumClasses = {{ classes | length }}U;
+{% for c in classes %}
+inline constexpr std::size_t kClass{{ c.cname }} = {{ c.index }}U;  // {{ c.name }}
+{% endfor %}
+
+using Input = std::array<std::uint8_t, kInputElements>;
+using Scores = std::array<float, kNumClasses>;
+
+enum class OutputStatus : std::uint8_t {
+    kValid,
+    kDeadlineMiss,
+    kImplausible,
+    kBackendError,
+};
+const char* to_string(OutputStatus s) noexcept;
+
+struct Output {
+    std::uint64_t sequence;
+    std::int64_t timestamp_ns;  // monotonic clock at the end of processing
+    Scores scores;
+    OutputStatus status;
+};
+
+enum class MonitorVerdict : std::uint8_t {
+    kOk,
+    kNoData,
+    kTimeout,
+    kImplausible,
+    kDeadlineMiss,
+};
+const char* to_string(MonitorVerdict v) noexcept;
+
+enum class Weight : std::uint8_t {
+{% for w in weights %}
+    k{{ w.cname }},
+{% endfor %}
+};
+
+}  // namespace {{ ns }}

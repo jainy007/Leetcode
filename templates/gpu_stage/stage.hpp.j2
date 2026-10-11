@@ -1,0 +1,63 @@
+#pragma once
+
+#include <array>
+#include <cstdint>
+
+#include "ea/core/result.hpp"
+#include "ea/gpu/backend.hpp"
+#include "ea/osal/clock.hpp"
+#include "{{ inc }}/{{ snake }}_types.hpp"
+
+namespace {{ ns }} {
+
+// {{ component.name }}: fixed inference graph on an accelerator backend ({{ backends | join(', ') }}).
+//   init(): verify weight files (GPU-006), allocate everything (GPU-001), seal the graph (GPU-002)
+//   run():  upload input, execute, download scores, check deadline (GPU-009) and plausibility (GPU-008)
+class {{ component.name }} {
+public:
+    // Static memory needed by the cpu_ref backend (64-byte aligned tensor slots).
+    static constexpr std::size_t kArenaBytes = {{ arena_bytes }}U;
+    static constexpr ea::osal::Nanoseconds kDeadline = {{ deadline_ms }} * ea::osal::kNsPerMs;
+    // Accelerator backends must match cpu_ref within this tolerance (GPU-007).
+    static constexpr float kReferenceTolerance = {{ reference_tolerance | cpp_float }};
+    static constexpr std::uint16_t kInputTensor = {{ input.index }}U;
+    static constexpr std::uint16_t kOutputTensor = {{ output.index }}U;
+
+    static constexpr ea::gpu::TensorDesc kTensors[] = {
+{% for t in tensors %}
+        {"{{ t.name }}", ea::gpu::DType::k{{ t.dtype | upper }}, {{ t.elements }}U, {{ 'true' if t.role == 'weight' else 'false' }}},  // {{ t.index }}: {{ t.role }} {{ t.shape }}
+{% endfor %}
+    };
+    static constexpr ea::gpu::OpDesc kOps[] = {
+{% for n in nodes %}
+        {ea::gpu::OpKind::k{{ n.op | camel }}, {{ n.input }}U, {{ n.output }}U, {{ (n.weights ~ 'U') if n.weights is not none else 'ea::gpu::kNoTensor' }}, {{ (n.bias ~ 'U') if n.bias is not none else 'ea::gpu::kNoTensor' }}, {{ n.in_features }}U, {{ n.out_features }}U, {{ n.scale | cpp_float }}, {{ n.shift | cpp_float }}},  // {{ n.name }}
+{% endfor %}
+    };
+
+    // Weight file (relative to the model directory) and its SHA-256 from the model.
+    static const char* weight_file(Weight w) noexcept;
+    static const char* weight_sha256(Weight w) noexcept;
+
+    {{ component.name }}(ea::gpu::IComputeBackend& backend, const ea::osal::IClock& clock) noexcept
+        : backend_(backend), clock_(clock) {}
+
+    ea::Result<void> init(const char* model_dir) noexcept;
+    Output run(const Input& input) noexcept;
+
+    bool initialized() const noexcept { return initialized_; }
+    std::uint32_t allocations_at_init() const noexcept { return allocations_at_init_; }
+
+    static bool plausible(const Scores& s) noexcept;
+
+private:
+    ea::gpu::IComputeBackend& backend_;
+    const ea::osal::IClock& clock_;
+    bool initialized_ = false;
+    std::uint64_t sequence_ = 0U;
+    std::uint32_t allocations_at_init_ = 0U;
+{% for w in weights %}
+    alignas(64) std::array<std::uint8_t, {{ w.bytes }}U> {{ w.name }}_{};  // staging, verified before upload
+{% endfor %}
+};
+
+}  // namespace {{ ns }}

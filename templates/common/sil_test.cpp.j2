@@ -1,0 +1,16 @@
+{% for t in tests %}
+
+// Scenario: {{ t.scenario }}
+// Source:   {{ t.feature }}:{{ t.line }}
+// Verifies: {{ t.requirements | join(', ') }}
+{% if t.example %}
+// Example:  {% for kv in t.example %}{{ kv[0] }}={{ kv[1] }}{% if not loop.last %}, {% endif %}{% endfor %}
+
+{% endif %}
+TEST_F({{ sil_suite }}, {{ t.name }}) {
+{% for s in t.steps %}
+    // {{ s.text }}  [{{ s.catalogue }}]
+    {{ s.cpp }}
+{% endfor %}
+}
+{% endfor %}

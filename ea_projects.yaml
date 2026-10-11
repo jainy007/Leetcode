@@ -1,0 +1,5 @@
+# Projects processed by `python3 -m tools.gen`. Explicit list: nothing is generated implicitly.
+schema_version: 1
+projects:
+  - {name: adas_input_gate, model: examples/adas_input_gate/model.yaml, output: generated/adas_input_gate}
+  - {name: gpu_inference_stage, model: examples/gpu_inference_stage/model.yaml, output: generated/gpu_inference_stage}

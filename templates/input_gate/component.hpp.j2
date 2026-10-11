@@ -1,0 +1,73 @@
+#pragma once
+
+#include <array>
+#include <cstdint>
+
+#include "ea/core/span.hpp"
+#include "ea/e2e/p4.hpp"
+#include "ea/supervision/supervision.hpp"
+#include "{{ inc }}/{{ snake }}_codec.hpp"
+#include "{{ inc }}/{{ snake }}_types.hpp"
+
+namespace {{ ns }} {
+
+// {{ component.name }}: interface gate for {{ input.name }} (ASIL {{ component.asil }}, profile {{ component.profile }}).
+// One call to step() per {{ task.period_ms }} ms cycle:
+//   1. classify the cycle: valid | e2e_error | range_error | missing
+//   2. update the debounce counters
+//   3. take at most one state transition (declared order)
+//   4. publish output and status message, report alive
+class {{ component.name }} {
+public:
+    struct Output {
+        State state;
+        Qualifier qualifier;
+        {{ input.name }} data;  // last value that passed all checks
+        CycleCondition condition;
+        ea::e2e::P4Status e2e_status;
+    };
+
+    {{ component.name }}() noexcept;
+
+    // `frame` is the complete SOME/IP frame received in this cycle; empty if none arrived.
+    void step(ea::ConstByteSpan frame) noexcept;
+
+    const Output& output() const noexcept { return out_; }
+    State state() const noexcept { return state_; }
+{% if status %}
+    ea::ConstByteSpan status_payload() const noexcept { return ea::ConstByteSpan(status_.data(), status_.size()); }
+{% endif %}
+    const ea::sup::Heartbeat& heartbeat() const noexcept { return heartbeat_; }
+
+private:
+    enum DebounceId : std::uint8_t {
+{% for d in debounce %}
+        k{{ d.cname }},
+{% endfor %}
+        kDebounceCount
+    };
+
+    CycleCondition classify(ea::ConstByteSpan frame, {{ input.name }}& decoded) noexcept;
+    void update_debounce(CycleCondition c) noexcept;
+    void transition() noexcept;
+{% if status %}
+    void publish_status() noexcept;
+{% endif %}
+
+    ea::e2e::P4Checker checker_;
+    std::array<std::uint16_t, kDebounceCount> counters_{};
+    State state_;
+    Output out_{};
+{% if status %}
+    std::array<std::uint8_t, k{{ status.message.name }}PayloadLength> status_{};
+{% for f in status.fields if f.source == 'alive_counter' %}
+    std::uint32_t alive_counter_ = 0U;
+{% endfor %}
+{% for f in status.fields if f.source == 'e2e_error_count' %}
+    std::uint32_t e2e_error_count_ = 0U;
+{% endfor %}
+{% endif %}
+    ea::sup::Heartbeat heartbeat_;
+};
+
+}  // namespace {{ ns }}
