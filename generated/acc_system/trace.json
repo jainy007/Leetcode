@@ -1,0 +1,1026 @@
+{
+  "component": {
+    "asil": "D",
+    "name": "AccSystem",
+    "namespace": "adas::acc_system",
+    "profile": "asil"
+  },
+  "generated_files": [
+    "generated/acc_system/CMakeLists.txt",
+    "generated/acc_system/sil/acc_system_sil.hpp",
+    "generated/acc_system/sil/acc_system_sil_test.cpp"
+  ],
+  "generator": "ea-gen 0.1.0",
+  "inputs_sha256": "c5d2a28f16b2524455009b48118706a08a7667a589baeb660e29709991e66f1f",
+  "pattern": "can_system",
+  "project": "acc_system",
+  "requirements": [
+    {
+      "asil": "D",
+      "ears": "unwanted",
+      "id": "REQ-ACCS-001",
+      "satisfied_by": [
+        "safety_goal:REQ-ACCS-001"
+      ],
+      "tests": [
+        "S01_AnAccelerationRequestAboveTheLimitIsNeverApplied",
+        "S02_AnAccelerationStepWithinTheLimitButAboveTheJerkEnvelopeIsNev"
+      ],
+      "text": "If the ACC function requests an acceleration above 2.1 m/s2 or an acceleration step above the jerk envelope, then the AccSystem shall prevent its application and reach the safe state within the FTTI of 200 ms.",
+      "verification": [
+        "sil",
+        "analysis"
+      ]
+    },
+    {
+      "asil": "D",
+      "ears": "unwanted",
+      "id": "REQ-ACCS-002",
+      "satisfied_by": [
+        "safety_goal:REQ-ACCS-002"
+      ],
+      "tests": [
+        "S03_ADecelerationRequestAboveTheLimitIsNeverApplied"
+      ],
+      "text": "If the ACC function requests a deceleration above 3.6 m/s2 or a deceleration step above the jerk envelope, then the AccSystem shall prevent its application and reach the safe state within the FTTI of 200 ms.",
+      "verification": [
+        "sil",
+        "analysis"
+      ]
+    },
+    {
+      "asil": "D",
+      "ears": "unwanted",
+      "id": "REQ-ACCS-003",
+      "satisfied_by": [
+        "safety_goal:REQ-ACCS-003"
+      ],
+      "tests": [
+        "S04_AccelerationKeptUpWhileTheControllerBrakesForACutInIsCaught"
+      ],
+      "text": "If the ACC function keeps requesting acceleration toward an in-lane vehicle with a time to collision below 2 s, or requests acceleration and braking together, then the AccSystem shall reach the safe state within the FTTI of 1000 ms.",
+      "verification": [
+        "sil",
+        "analysis"
+      ]
+    },
+    {
+      "asil": "D",
+      "ears": "unwanted",
+      "id": "REQ-ACCS-004",
+      "satisfied_by": [
+        "safety_goal:REQ-ACCS-004"
+      ],
+      "tests": [
+        "S05_AStoppedOrFrozenControllerWhileBrakingBehindASlowerVehicle_Ex1",
+        "S06_AStoppedOrFrozenControllerWhileBrakingBehindASlowerVehicle_Ex2",
+        "S07_AControllerReportingSTANDBYWhileRequestingBrakingIsCaught"
+      ],
+      "text": "If the ACC commands stop, freeze or come from a non-ACTIVE function, then the AccSystem shall reach the safe state within the FTTI of 200 ms.",
+      "verification": [
+        "sil",
+        "analysis"
+      ]
+    },
+    {
+      "asil": "D",
+      "ears": "ubiquitous",
+      "id": "REQ-ACCS-005",
+      "satisfied_by": [
+        "actuator"
+      ],
+      "tests": [
+        "S05_AStoppedOrFrozenControllerWhileBrakingBehindASlowerVehicle_Ex1",
+        "S06_AStoppedOrFrozenControllerWhileBrakingBehindASlowerVehicle_Ex2",
+        "S08_ALostMonitorMakesTheActuatorRampOutAndRequestATakeover"
+      ],
+      "text": "The AccSystem shall apply a controller command only if the AccMonitor grants the permit and echoes that command's E2E counter; on monitor SAFE_STATE or 60 ms without a valid monitor frame it shall cut acceleration, ramp braking out at 5 m/s3 and request a driver takeover.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "QM",
+      "ears": "unwanted",
+      "id": "REQ-ACCS-006",
+      "satisfied_by": [
+        "allocation"
+      ],
+      "tests": [
+        "S09_TwoCorruptedCommandFramesNeitherStopACCNorTriggerTheMonitor",
+        "S10_AccelerateToAHigherSetSpeed",
+        "S11_FollowASlowerVehicleAtTheDefaultTimeGap",
+        "S12_BrakeForAVehicleCuttingIn",
+        "S13_FollowALeadVehicleBrakingToALowerSpeed",
+        "S14_DriverOverrideCancelAndResume"
+      ],
+      "text": "If no fault is present, then the AccSystem shall not let the AccMonitor intervene and shall apply every command of the AccController.",
+      "verification": [
+        "sil"
+      ]
+    }
+  ],
+  "sil_suite": "AccSystemSilTest",
+  "tests": [
+    {
+      "example": [],
+      "feature": "examples/acc_system/features/safety_goals.feature",
+      "line": 8,
+      "name": "S01_AnAccelerationRequestAboveTheLimitIsNeverApplied",
+      "requirements": [
+        "REQ-ACCS-001"
+      ],
+      "scenario": "An acceleration request above the limit is never applied",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(2.0);",
+          "text": "When 2 s pass"
+        },
+        {
+          "catalogue": "SYS-S01",
+          "cpp": "sil_.override_command(cmd::kAccelRequest, 3.0, 100U);",
+          "text": "And the controller sends AccelRequest = 3.0 with a valid CRC for 100 frames"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(2.0);",
+          "text": "And 2 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kSafeState);",
+          "text": "Then the monitor state is SAFE_STATE"
+        },
+        {
+          "catalogue": "ACCM-S05",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AccMonitorReason::kRequestLimit));",
+          "text": "And the monitor reports the fault reason REQUEST_LIMIT"
+        },
+        {
+          "catalogue": "SYS-S02",
+          "cpp": "ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 100.0 + 1e-6);",
+          "text": "And the actuator entered its safe state within the fault detection budget of REQ-ACCS-001"
+        },
+        {
+          "catalogue": "MON-S11",
+          "cpp": "EXPECT_LE(sil_.actuator().metrics().max_applied_accel_mps2, 2.1 + 1e-9);",
+          "text": "And the applied acceleration never exceeded 2.1 m/s2"
+        },
+        {
+          "catalogue": "MON-S16",
+          "cpp": "EXPECT_LE(sil_.plant().metrics().max_accel_mps2, 2.1 + 1e-9);",
+          "text": "And the actual acceleration of the vehicle never exceeded 2.1 m/s2"
+        },
+        {
+          "catalogue": "MON-S09",
+          "cpp": "EXPECT_EQ(sil_.actuator().takeover_request(), true);",
+          "text": "And the actuator requests a driver takeover"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/acc_system/features/safety_goals.feature",
+      "line": 22,
+      "name": "S02_AnAccelerationStepWithinTheLimitButAboveTheJerkEnvelopeIsNev",
+      "requirements": [
+        "REQ-ACCS-001"
+      ],
+      "scenario": "An acceleration step within the limit but above the jerk envelope is never applied",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(2.0);",
+          "text": "When 2 s pass"
+        },
+        {
+          "catalogue": "SYS-S01",
+          "cpp": "sil_.override_command(cmd::kAccelRequest, 1.0, 100U);",
+          "text": "And the controller sends AccelRequest = 1.0 with a valid CRC for 100 frames"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(2.0);",
+          "text": "And 2 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kSafeState);",
+          "text": "Then the monitor state is SAFE_STATE"
+        },
+        {
+          "catalogue": "ACCM-S05",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AccMonitorReason::kRequestRate));",
+          "text": "And the monitor reports the fault reason REQUEST_RATE"
+        },
+        {
+          "catalogue": "SYS-S02",
+          "cpp": "ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 100.0 + 1e-6);",
+          "text": "And the actuator entered its safe state within the fault detection budget of REQ-ACCS-001"
+        },
+        {
+          "catalogue": "MON-S11",
+          "cpp": "EXPECT_LE(sil_.actuator().metrics().max_applied_accel_mps2, 0.1 + 1e-9);",
+          "text": "And the applied acceleration never exceeded 0.1 m/s2"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/acc_system/features/safety_goals.feature",
+      "line": 34,
+      "name": "S03_ADecelerationRequestAboveTheLimitIsNeverApplied",
+      "requirements": [
+        "REQ-ACCS-002"
+      ],
+      "scenario": "A deceleration request above the limit is never applied",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(2.0);",
+          "text": "When 2 s pass"
+        },
+        {
+          "catalogue": "SYS-S01",
+          "cpp": "sil_.override_command(cmd::kBrakeRequest, 6.0, 100U);",
+          "text": "And the controller sends BrakeRequest = 6.0 with a valid CRC for 100 frames"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(2.0);",
+          "text": "And 2 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kSafeState);",
+          "text": "Then the monitor state is SAFE_STATE"
+        },
+        {
+          "catalogue": "ACCM-S05",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AccMonitorReason::kRequestLimit));",
+          "text": "And the monitor reports the fault reason REQUEST_LIMIT"
+        },
+        {
+          "catalogue": "SYS-S02",
+          "cpp": "ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 100.0 + 1e-6);",
+          "text": "And the actuator entered its safe state within the fault detection budget of REQ-ACCS-002"
+        },
+        {
+          "catalogue": "MON-S12",
+          "cpp": "EXPECT_LE(sil_.actuator().metrics().max_applied_decel_mps2, 3.6 + 1e-9);",
+          "text": "And the applied deceleration never exceeded 3.6 m/s2"
+        },
+        {
+          "catalogue": "MON-S16",
+          "cpp": "EXPECT_LE(sil_.plant().metrics().max_decel_mps2, 3.6 + 1e-9);",
+          "text": "And the actual deceleration of the vehicle never exceeded 3.6 m/s2"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/acc_system/features/safety_goals.feature",
+      "line": 47,
+      "name": "S04_AccelerationKeptUpWhileTheControllerBrakesForACutInIsCaught",
+      "requirements": [
+        "REQ-ACCS-003"
+      ],
+      "scenario": "Acceleration kept up while the controller brakes for a cut-in is caught",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(2.0);",
+          "text": "When 2 s pass"
+        },
+        {
+          "catalogue": "SYS-S01",
+          "cpp": "sil_.override_command(cmd::kAccelRequest, 0.06, 2000U);",
+          "text": "And the controller sends AccelRequest = 0.06 with a valid CRC for 2000 frames"
+        },
+        {
+          "catalogue": "FN-S14",
+          "cpp": "sil_.plant().cut_in(25.0, 70.0);",
+          "text": "And a vehicle cuts in 25 m ahead at 70 km/h"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(3.0);",
+          "text": "And 3 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kSafeState);",
+          "text": "Then the monitor state is SAFE_STATE"
+        },
+        {
+          "catalogue": "SYS-S02",
+          "cpp": "ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 900.0 + 1e-6);",
+          "text": "And the actuator entered its safe state within the fault detection budget of REQ-ACCS-003"
+        },
+        {
+          "catalogue": "MON-S11",
+          "cpp": "EXPECT_LE(sil_.actuator().metrics().max_applied_accel_mps2, 0.06 + 1e-9);",
+          "text": "And the applied acceleration never exceeded 0.06 m/s2"
+        },
+        {
+          "catalogue": "MON-S09",
+          "cpp": "EXPECT_EQ(sil_.actuator().takeover_request(), true);",
+          "text": "And the actuator requests a driver takeover"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "f",
+          "stops"
+        ]
+      ],
+      "feature": "examples/acc_system/features/safety_goals.feature",
+      "line": 60,
+      "name": "S05_AStoppedOrFrozenControllerWhileBrakingBehindASlowerVehicle_Ex1",
+      "requirements": [
+        "REQ-ACCS-004",
+        "REQ-ACCS-005"
+      ],
+      "scenario": "A stopped or frozen controller while braking behind a slower vehicle #1",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "FN-S11",
+          "cpp": "sil_.plant().set_lead(50.0, 100.0, 0.0);",
+          "text": "And a lead vehicle drives 50 m ahead at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(3.0);",
+          "text": "When 3 s pass"
+        },
+        {
+          "catalogue": "FN-S13",
+          "cpp": "sil_.plant().lead_change_speed(70.0, 1.5);",
+          "text": "And the lead vehicle changes speed to 70 km/h at 1.5 m/s2"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(2.0);",
+          "text": "And 2 s pass"
+        },
+        {
+          "catalogue": "ACC-S25",
+          "cpp": "EXPECT_GT(sil_.feature().last_command().brake_raw, 0);",
+          "text": "Then braking is requested"
+        },
+        {
+          "catalogue": "MON-S20",
+          "cpp": "sil_.command_fault(ea::plant::NodeFault::kLose, 1000000U);",
+          "text": "When the command sender stops"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(2.0);",
+          "text": "And 2 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kSafeState);",
+          "text": "Then the monitor state is SAFE_STATE"
+        },
+        {
+          "catalogue": "ACCM-S05",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AccMonitorReason::kCommandTimeout));",
+          "text": "And the monitor reports the fault reason COMMAND_TIMEOUT"
+        },
+        {
+          "catalogue": "SYS-S02",
+          "cpp": "ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 100.0 + 1e-6);",
+          "text": "And the actuator entered its safe state within the fault detection budget of REQ-ACCS-004"
+        },
+        {
+          "catalogue": "MON-S13",
+          "cpp": "ASSERT_GE(sil_.actuator().metrics().ramp_out_done_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().ramp_out_done_s - sil_.plant().metrics().first_fault_s) * 1000.0, 800 + 1e-6);",
+          "text": "And the request was ramped out within 800 ms of the first fault"
+        },
+        {
+          "catalogue": "MON-S09",
+          "cpp": "EXPECT_EQ(sil_.actuator().takeover_request(), true);",
+          "text": "And the actuator requests a driver takeover"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "f",
+          "freezes"
+        ]
+      ],
+      "feature": "examples/acc_system/features/safety_goals.feature",
+      "line": 60,
+      "name": "S06_AStoppedOrFrozenControllerWhileBrakingBehindASlowerVehicle_Ex2",
+      "requirements": [
+        "REQ-ACCS-004",
+        "REQ-ACCS-005"
+      ],
+      "scenario": "A stopped or frozen controller while braking behind a slower vehicle #2",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "FN-S11",
+          "cpp": "sil_.plant().set_lead(50.0, 100.0, 0.0);",
+          "text": "And a lead vehicle drives 50 m ahead at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(3.0);",
+          "text": "When 3 s pass"
+        },
+        {
+          "catalogue": "FN-S13",
+          "cpp": "sil_.plant().lead_change_speed(70.0, 1.5);",
+          "text": "And the lead vehicle changes speed to 70 km/h at 1.5 m/s2"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(2.0);",
+          "text": "And 2 s pass"
+        },
+        {
+          "catalogue": "ACC-S25",
+          "cpp": "EXPECT_GT(sil_.feature().last_command().brake_raw, 0);",
+          "text": "Then braking is requested"
+        },
+        {
+          "catalogue": "MON-S20",
+          "cpp": "sil_.command_fault(ea::plant::NodeFault::kFreeze, 1000000U);",
+          "text": "When the command sender freezes"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(2.0);",
+          "text": "And 2 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kSafeState);",
+          "text": "Then the monitor state is SAFE_STATE"
+        },
+        {
+          "catalogue": "ACCM-S05",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AccMonitorReason::kCommandTimeout));",
+          "text": "And the monitor reports the fault reason COMMAND_TIMEOUT"
+        },
+        {
+          "catalogue": "SYS-S02",
+          "cpp": "ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 100.0 + 1e-6);",
+          "text": "And the actuator entered its safe state within the fault detection budget of REQ-ACCS-004"
+        },
+        {
+          "catalogue": "MON-S13",
+          "cpp": "ASSERT_GE(sil_.actuator().metrics().ramp_out_done_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().ramp_out_done_s - sil_.plant().metrics().first_fault_s) * 1000.0, 800 + 1e-6);",
+          "text": "And the request was ramped out within 800 ms of the first fault"
+        },
+        {
+          "catalogue": "MON-S09",
+          "cpp": "EXPECT_EQ(sil_.actuator().takeover_request(), true);",
+          "text": "And the actuator requests a driver takeover"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/acc_system/features/safety_goals.feature",
+      "line": 82,
+      "name": "S07_AControllerReportingSTANDBYWhileRequestingBrakingIsCaught",
+      "requirements": [
+        "REQ-ACCS-004"
+      ],
+      "scenario": "A controller reporting STANDBY while requesting braking is caught",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "FN-S11",
+          "cpp": "sil_.plant().set_lead(50.0, 100.0, 0.0);",
+          "text": "And a lead vehicle drives 50 m ahead at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(3.0);",
+          "text": "When 3 s pass"
+        },
+        {
+          "catalogue": "FN-S13",
+          "cpp": "sil_.plant().lead_change_speed(70.0, 1.5);",
+          "text": "And the lead vehicle changes speed to 70 km/h at 1.5 m/s2"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(2.0);",
+          "text": "And 2 s pass"
+        },
+        {
+          "catalogue": "SYS-S01",
+          "cpp": "sil_.override_command(cmd::kAccStatus, 1.0, 100U);",
+          "text": "And the controller sends AccStatus = 1 with a valid CRC for 100 frames"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(1.0);",
+          "text": "And 1 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kSafeState);",
+          "text": "Then the monitor state is SAFE_STATE"
+        },
+        {
+          "catalogue": "ACCM-S05",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AccMonitorReason::kRequestOutsideActive));",
+          "text": "And the monitor reports the fault reason REQUEST_OUTSIDE_ACTIVE"
+        },
+        {
+          "catalogue": "SYS-S02",
+          "cpp": "ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 100.0 + 1e-6);",
+          "text": "And the actuator entered its safe state within the fault detection budget of REQ-ACCS-004"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/acc_system/features/safety_goals.feature",
+      "line": 96,
+      "name": "S08_ALostMonitorMakesTheActuatorRampOutAndRequestATakeover",
+      "requirements": [
+        "REQ-ACCS-005"
+      ],
+      "scenario": "A lost monitor makes the actuator ramp out and request a takeover",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "FN-S11",
+          "cpp": "sil_.plant().set_lead(50.0, 100.0, 0.0);",
+          "text": "And a lead vehicle drives 50 m ahead at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(3.0);",
+          "text": "When 3 s pass"
+        },
+        {
+          "catalogue": "FN-S13",
+          "cpp": "sil_.plant().lead_change_speed(70.0, 1.5);",
+          "text": "And the lead vehicle changes speed to 70 km/h at 1.5 m/s2"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(2.0);",
+          "text": "And 2 s pass"
+        },
+        {
+          "catalogue": "MON-S22",
+          "cpp": "sil_.monitor_fault(ea::plant::NodeFault::kLose, 1000000U);",
+          "text": "And the monitor sender stops"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(2.0);",
+          "text": "And 2 s pass"
+        },
+        {
+          "catalogue": "MON-S09",
+          "cpp": "EXPECT_EQ(sil_.actuator().takeover_request(), true);",
+          "text": "Then the actuator requests a driver takeover"
+        },
+        {
+          "catalogue": "MON-S10",
+          "cpp": "ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 40 + 1e-6);",
+          "text": "And the actuator entered its safe state within 40 ms of the first fault"
+        },
+        {
+          "catalogue": "MON-S08",
+          "cpp": "EXPECT_FALSE(sil_.actuator().applying());",
+          "text": "And the actuator applies no request"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/acc_system/features/safety_goals.feature",
+      "line": 110,
+      "name": "S09_TwoCorruptedCommandFramesNeitherStopACCNorTriggerTheMonitor",
+      "requirements": [
+        "REQ-ACCS-006"
+      ],
+      "scenario": "Two corrupted command frames neither stop ACC nor trigger the monitor",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "FN-S11",
+          "cpp": "sil_.plant().set_lead(50.0, 100.0, 0.0);",
+          "text": "And a lead vehicle drives 50 m ahead at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(3.0);",
+          "text": "When 3 s pass"
+        },
+        {
+          "catalogue": "MON-S21",
+          "cpp": "sil_.command_fault(ea::plant::NodeFault::kCorrupt, 2U);",
+          "text": "And the next 2 command frames are corrupted"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(2.0);",
+          "text": "And 2 s pass"
+        },
+        {
+          "catalogue": "MON-S05",
+          "cpp": "EXPECT_LT(sil_.actuator().metrics().monitor_safe_state_s, 0.0);",
+          "text": "Then the monitor never entered SAFE_STATE"
+        },
+        {
+          "catalogue": "ACC-S20",
+          "cpp": "EXPECT_EQ(sil_.feature().last_command().status, ea::plant::AccStatus::kActive);",
+          "text": "And the ACC state is ACTIVE"
+        },
+        {
+          "catalogue": "MON-S09",
+          "cpp": "EXPECT_EQ(sil_.actuator().takeover_request(), false);",
+          "text": "And the actuator does not request a driver takeover"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/acc_system/features/availability.feature",
+      "line": 6,
+      "name": "S10_AccelerateToAHigherSetSpeed",
+      "requirements": [
+        "REQ-ACCS-006"
+      ],
+      "scenario": "Accelerate to a higher set speed",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(80.0);",
+          "text": "Given the ego vehicle drives at 80 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "FN-S05",
+          "cpp": "sil_.press(ea::plant::Button::kSpeedUp, 8);",
+          "text": "When the driver presses the speed up button 8 times"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(40.0);",
+          "text": "And 40 s pass"
+        },
+        {
+          "catalogue": "FN-S40",
+          "cpp": "EXPECT_NEAR(sil_.plant().ego_speed_kph(), 120.0, 1.0);",
+          "text": "Then the ego speed is 120 km/h within 1 km/h"
+        },
+        {
+          "catalogue": "MON-S05",
+          "cpp": "EXPECT_LT(sil_.actuator().metrics().monitor_safe_state_s, 0.0);",
+          "text": "And the monitor never entered SAFE_STATE"
+        },
+        {
+          "catalogue": "MON-S06",
+          "cpp": "EXPECT_GT(sil_.actuator().metrics().applied_commands, 0U); EXPECT_EQ(sil_.actuator().metrics().rejected_commands, 0U);",
+          "text": "And the actuator applied every command"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/acc_system/features/availability.feature",
+      "line": 16,
+      "name": "S11_FollowASlowerVehicleAtTheDefaultTimeGap",
+      "requirements": [
+        "REQ-ACCS-006"
+      ],
+      "scenario": "Follow a slower vehicle at the default time gap",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(120.0);",
+          "text": "Given the ego vehicle drives at 120 km/h"
+        },
+        {
+          "catalogue": "FN-S11",
+          "cpp": "sil_.plant().set_lead(80.0, 100.0, 0.0);",
+          "text": "And a lead vehicle drives 80 m ahead at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(60.0);",
+          "text": "When 60 s pass"
+        },
+        {
+          "catalogue": "FN-S43",
+          "cpp": "ASSERT_TRUE(sil_.plant().lead_present()); EXPECT_NEAR(sil_.plant().distance_m(), 46.7, 2.0);",
+          "text": "Then the distance to the lead vehicle is 46.7 m within 2 m"
+        },
+        {
+          "catalogue": "MON-S05",
+          "cpp": "EXPECT_LT(sil_.actuator().metrics().monitor_safe_state_s, 0.0);",
+          "text": "And the monitor never entered SAFE_STATE"
+        },
+        {
+          "catalogue": "MON-S06",
+          "cpp": "EXPECT_GT(sil_.actuator().metrics().applied_commands, 0U); EXPECT_EQ(sil_.actuator().metrics().rejected_commands, 0U);",
+          "text": "And the actuator applied every command"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/acc_system/features/availability.feature",
+      "line": 26,
+      "name": "S12_BrakeForAVehicleCuttingIn",
+      "requirements": [
+        "REQ-ACCS-006"
+      ],
+      "scenario": "Brake for a vehicle cutting in",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(2.0);",
+          "text": "When 2 s pass"
+        },
+        {
+          "catalogue": "FN-S14",
+          "cpp": "sil_.plant().cut_in(25.0, 70.0);",
+          "text": "And a vehicle cuts in 25 m ahead at 70 km/h"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(20.0);",
+          "text": "And 20 s pass"
+        },
+        {
+          "catalogue": "FN-S45",
+          "cpp": "EXPECT_FALSE(sil_.plant().metrics().collision);",
+          "text": "Then no collision occurred"
+        },
+        {
+          "catalogue": "MON-S05",
+          "cpp": "EXPECT_LT(sil_.actuator().metrics().monitor_safe_state_s, 0.0);",
+          "text": "And the monitor never entered SAFE_STATE"
+        },
+        {
+          "catalogue": "MON-S06",
+          "cpp": "EXPECT_GT(sil_.actuator().metrics().applied_commands, 0U); EXPECT_EQ(sil_.actuator().metrics().rejected_commands, 0U);",
+          "text": "And the actuator applied every command"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/acc_system/features/availability.feature",
+      "line": 37,
+      "name": "S13_FollowALeadVehicleBrakingToALowerSpeed",
+      "requirements": [
+        "REQ-ACCS-006"
+      ],
+      "scenario": "Follow a lead vehicle braking to a lower speed",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "FN-S11",
+          "cpp": "sil_.plant().set_lead(50.0, 100.0, 0.0);",
+          "text": "And a lead vehicle drives 50 m ahead at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(3.0);",
+          "text": "When 3 s pass"
+        },
+        {
+          "catalogue": "FN-S13",
+          "cpp": "sil_.plant().lead_change_speed(40.0, 3.0);",
+          "text": "And the lead vehicle changes speed to 40 km/h at 3 m/s2"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(30.0);",
+          "text": "And 30 s pass"
+        },
+        {
+          "catalogue": "FN-S45",
+          "cpp": "EXPECT_FALSE(sil_.plant().metrics().collision);",
+          "text": "Then no collision occurred"
+        },
+        {
+          "catalogue": "FN-S40",
+          "cpp": "EXPECT_NEAR(sil_.plant().ego_speed_kph(), 40.0, 1.0);",
+          "text": "And the ego speed is 40 km/h within 1 km/h"
+        },
+        {
+          "catalogue": "MON-S05",
+          "cpp": "EXPECT_LT(sil_.actuator().metrics().monitor_safe_state_s, 0.0);",
+          "text": "And the monitor never entered SAFE_STATE"
+        },
+        {
+          "catalogue": "MON-S06",
+          "cpp": "EXPECT_GT(sil_.actuator().metrics().applied_commands, 0U); EXPECT_EQ(sil_.actuator().metrics().rejected_commands, 0U);",
+          "text": "And the actuator applied every command"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/acc_system/features/availability.feature",
+      "line": 50,
+      "name": "S14_DriverOverrideCancelAndResume",
+      "requirements": [
+        "REQ-ACCS-006"
+      ],
+      "scenario": "Driver override, cancel and resume",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "FN-S07",
+          "cpp": "sil_.accelerator(30.0);",
+          "text": "When the driver presses the accelerator pedal to 30 %"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(2.0);",
+          "text": "And 2 s pass"
+        },
+        {
+          "catalogue": "FN-S08",
+          "cpp": "sil_.accelerator(0.0);",
+          "text": "And the driver releases the accelerator pedal"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(5.0);",
+          "text": "And 5 s pass"
+        },
+        {
+          "catalogue": "FN-S06",
+          "cpp": "sil_.brake(true);",
+          "text": "And the driver presses the brake pedal"
+        },
+        {
+          "catalogue": "FN-S06",
+          "cpp": "sil_.brake(false);",
+          "text": "And the driver releases the brake pedal"
+        },
+        {
+          "catalogue": "FN-S04",
+          "cpp": "sil_.press(ea::plant::Button::kResume, 1);",
+          "text": "And the driver presses the resume button"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(10.0);",
+          "text": "And 10 s pass"
+        },
+        {
+          "catalogue": "ACC-S20",
+          "cpp": "EXPECT_EQ(sil_.feature().last_command().status, ea::plant::AccStatus::kActive);",
+          "text": "Then the ACC state is ACTIVE"
+        },
+        {
+          "catalogue": "MON-S05",
+          "cpp": "EXPECT_LT(sil_.actuator().metrics().monitor_safe_state_s, 0.0);",
+          "text": "And the monitor never entered SAFE_STATE"
+        },
+        {
+          "catalogue": "MON-S06",
+          "cpp": "EXPECT_GT(sil_.actuator().metrics().applied_commands, 0U); EXPECT_EQ(sil_.actuator().metrics().rejected_commands, 0U);",
+          "text": "And the actuator applied every command"
+        }
+      ]
+    }
+  ]
+}

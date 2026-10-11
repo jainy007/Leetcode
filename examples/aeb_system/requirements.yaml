@@ -1,0 +1,36 @@
+# AEB as an ASIL D system: safety goals, their FTTI and the allocation to AebController B(D) +
+# AebMonitor B(D) + actuator ECU (assumption of use). Safety goals, ASIL and FTTI values are
+# ASSUMPTIONS pending the vehicle-level HARA; see docs/safety/acc_aeb_safety_concept.md.
+schema_version: 1
+component: AebSystem
+requirements:
+  - id: REQ-AEBS-001
+    asil: D
+    ears: unwanted
+    text: >-
+      If the AEB function requests braking that is not justified by an in-lane target, outside a
+      braking state or above the braking levels, then the AebSystem shall prevent its application
+      and reach the safe state within the FTTI of 200 ms.
+    verification: [sil, analysis]
+  - id: REQ-AEBS-002
+    asil: D
+    ears: unwanted
+    text: >-
+      If the AEB commands stop or freeze, then the AebSystem shall reach the safe state within the
+      FTTI of 200 ms.
+    verification: [sil, analysis]
+  - id: REQ-AEBS-003
+    asil: D
+    ears: ubiquitous
+    text: >-
+      The AebSystem shall apply an AEB command only if the AebMonitor grants the permit and echoes
+      that command's E2E counter; on monitor SAFE_STATE or 60 ms without a valid monitor frame it
+      shall ramp braking out at 10 m/s3 and request a driver takeover.
+    verification: [sil]
+  - id: REQ-AEBS-004
+    asil: QM
+    ears: unwanted
+    text: >-
+      If no fault is present, then the AebSystem shall not let the AebMonitor intervene and shall
+      keep the collision avoidance performance of REQ-AEB-010 to REQ-AEB-012.
+    verification: [sil]

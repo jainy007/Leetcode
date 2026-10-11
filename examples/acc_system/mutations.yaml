@@ -1,0 +1,12 @@
+# Deliberate defects the chain must detect (python3 -m tools.mutate acc_system).
+mutations:
+  # ---- inputs: system and node models (FTTI budget, GEN-065 / GEN-066) ----
+  - {name: "actuator reaction 100 -> 150 ms", file: examples/acc_system/model.yaml, old: "reaction_ms: 100", new: "reaction_ms: 150"}
+  - {name: "FTTI of REQ-ACCS-001 200 -> 100 ms", file: examples/acc_system/model.yaml, old: "{requirement: REQ-ACCS-001, ftti_ms: 200", new: "{requirement: REQ-ACCS-001, ftti_ms: 100"}
+  - {name: "monitor debounce 0.5 -> 0.9 s", file: examples/acc_monitor/model.yaml, old: "unintended_accel_debounce_s: {value: 0.5", new: "unintended_accel_debounce_s: {value: 0.9"}
+  - {name: "monitor expects another command E2E data id", file: examples/acc_monitor/model.yaml, old: "data_id: 0x0300", new: "data_id: 0x0302"}
+  - {name: "monitor DBC: AccelRequest moved", file: examples/acc_monitor/interfaces/acc_monitor.dbc, old: "AccelRequest : 16|10@1+", new: "AccelRequest : 17|10@1+"}
+  # ---- generator: system template ----
+  - {name: "monitor steps before the controller", file: templates/can_system/sil_harness.hpp.j2, old: "nodes[] = {&controller_, &monitor_};", new: "nodes[] = {&monitor_, &controller_};"}
+  - {name: "controller observer drives the vehicle", file: templates/can_system/sil_harness.hpp.j2, old: "                   1U, seconds);", new: "                   0U, seconds);"}
+  - {name: "override fault hits the monitor message", file: templates/can_system/sil_harness.hpp.j2, old: "        plant_.inject_node_fault({{ controller.tables[2] }}, ea::plant::NodeFault::kOverride", new: "        plant_.inject_node_fault({{ monitor.tables[2] }}, ea::plant::NodeFault::kOverride"}

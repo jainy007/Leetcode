@@ -1,7 +1,7 @@
 // GENERATED FILE - DO NOT EDIT. Changes are overwritten and rejected by CI.
 // Generator: ea-gen 0.1.0 (rule-based, deterministic; no AI in this path)
 // Project:   acc_monitor (pattern: can_function)
-// Inputs:    sha256:aaed2b82deaf8ac2890ea08cf061dfa671e7be14789da61b08e9a29f91792b3a
+// Inputs:    sha256:fd01fad24aac30e6912b9e2458a96cc1c9827a4af69c82078bba92de97606ff7
 // Regenerate: python3 -m tools.gen
 
 #include "acc_monitor/acc_monitor_codec.hpp"

@@ -90,6 +90,13 @@ and the file it applies to.
 | GEN-063 | Calibration must be complete, consistent and representable in the command resolution |
 | GEN-064 | Receive timing must be consistent: multiples of the cycle, timeout >= 2 periods, E2E max delta >= timeout/period |
 
+## Pattern can_system (decomposed ASIL D function)
+
+| ID | Rule |
+|---|---|
+| GEN-065 | Every diagnostic mechanism of a safety goal must detect within the FTTI minus the actuator's reaction time |
+| GEN-066 | System nodes must be valid can_function projects with one cycle, identical message definitions and matching E2E on the command |
+
 ## Notes on selected rules
 
 - **GEN-001** uses YAML 1.2 boolean semantics: only `true`/`false` are booleans. Under YAML 1.1,
@@ -105,5 +112,11 @@ and the file it applies to.
   3 periods, the first frame after 2 lost frames failed the E2E sequence check. That made the real
   timeout longer than the requirement, so a configuration contradicting the requirement now fails
   before any code is generated.
+- **GEN-065** computes each mechanism's fault detection time (FDTI) from the monitor model, not from
+  a number typed into the system model: a command timeout is the rx timeout of the command message,
+  a debounced check is its debounce plus one cycle, a per-command check is one cycle. Changing a
+  monitor timeout or debounce therefore re-checks every safety goal that relies on it.
+- **GEN-066** exists because each node has its own DBC extract of the vehicle bus. Two extracts that
+  disagree on a shared message would each pass on their own and fail only in the vehicle.
 - **GEN-055** requires the `finite` check to come first, because NaN compares false and would
   pass any range check.

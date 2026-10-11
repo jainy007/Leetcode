@@ -18,7 +18,7 @@
     "generated/acc/src/acc_controller_logic.cpp"
   ],
   "generator": "ea-gen 0.1.0",
-  "inputs_sha256": "6a5ccedef5c819b3983b9921989e0f2931536fb8d0b7f04299ea068c2c7eb440",
+  "inputs_sha256": "7daf72a7ff67fdde3af69c03ce9ff58b4ecdb3b7244d701c28de0793bc835631",
   "pattern": "can_function",
   "project": "acc",
   "requirements": [

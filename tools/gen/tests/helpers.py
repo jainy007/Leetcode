@@ -16,6 +16,8 @@ EXAMPLES = {
     "aeb": REPO_ROOT / "examples" / "aeb",
     "acc_monitor": REPO_ROOT / "examples" / "acc_monitor",
     "aeb_monitor": REPO_ROOT / "examples" / "aeb_monitor",
+    "acc_system": REPO_ROOT / "examples" / "acc_system",
+    "aeb_system": REPO_ROOT / "examples" / "aeb_system",
 }
 
 

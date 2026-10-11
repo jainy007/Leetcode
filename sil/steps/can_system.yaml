@@ -1,0 +1,17 @@
+# Step vocabulary of pattern can_system: faults inside a node (wrong command value behind a valid
+# CRC) and the fault detection budget of a safety goal (FTTI minus the actuator's reaction time,
+# resolved from the system model). Used with can_function.yaml, monitored_actuator.yaml and the
+# feature catalogues of both nodes.
+schema_version: 1
+pattern: can_system
+steps:
+  - id: SYS-S01
+    keywords: [when]
+    pattern: '^the controller sends (?P<sig>AccelRequest|BrakeRequest|AccStatus|AebBrakeRequest|AebStatus) = (?P<v>[0-9]+(?:\.[0-9]+)?) with a valid CRC for (?P<n>[0-9]{1,4}) frames$'
+    types: {sig: 'enum:[AccelRequest, BrakeRequest, AccStatus, AebBrakeRequest, AebStatus]', v: number, n: int}
+    cpp: 'sil_.override_command(cmd::k{{ sig }}, {{ v }}, {{ n }}U);'
+  - id: SYS-S02
+    keywords: [then]
+    pattern: '^the actuator entered its safe state within the fault detection budget of (?P<sg>REQ-[A-Z0-9]+-[0-9]{3})$'
+    types: {sg: 'ref:safety_goal'}
+    cpp: 'ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, {{ sg }} + 1e-6);'

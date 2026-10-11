@@ -54,4 +54,7 @@ RULES: dict[str, str] = {
     "GEN-062": "E2E protection needs a CRC byte and a counter nibble; no interface signal may use the CRC, only rx signals may read the counter",
     "GEN-063": "Calibration must be complete, consistent and representable in the command resolution",
     "GEN-064": "Receive timing must be consistent: multiples of the cycle, timeout >= 2 periods, E2E max delta >= timeout/period",
+    # can_system (decomposed ASIL D function: controller + monitor + actuator AoU)
+    "GEN-065": "Every diagnostic mechanism of a safety goal must detect within the FTTI minus the actuator's reaction time",
+    "GEN-066": "System nodes must be valid can_function projects with one cycle, identical message definitions and matching E2E on the command",
 }

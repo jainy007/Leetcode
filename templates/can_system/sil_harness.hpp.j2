@@ -1,0 +1,95 @@
+#pragma once
+
+#include <cstddef>
+#include <cstdint>
+
+#include "ea/plant/plant.hpp"
+#include "{{ controller.observer_header }}"
+#include "{{ monitor.observer_header }}"
+#include "{{ controller.tables[0] }}"
+#include "{{ monitor.tables[0] }}"
+#include "{{ controller.inc }}/{{ controller.snake }}.hpp"
+#include "{{ monitor.inc }}/{{ monitor.snake }}.hpp"
+
+namespace {{ ns }} {
+
+// A generated node on the plant's bus.
+template <typename Node>
+class NodePort final : public ea::plant::ControllerPort {
+public:
+    void on_frame(std::uint32_t can_id, ea::ConstByteSpan payload) noexcept override { node_.on_frame(can_id, payload); }
+    void step() noexcept override { node_.step(); }
+    std::size_t tx_count() const noexcept override { return Node::kTxCount; }
+    std::uint32_t tx_can_id(std::size_t i) const noexcept override { return node_.tx_can_id(i); }
+    ea::ConstByteSpan tx_frame(std::size_t i) const noexcept override { return node_.tx_frame(i); }
+    const Node& node() const noexcept { return node_; }
+
+private:
+    Node node_;
+};
+
+// System SIL of {{ component.name }} (ASIL {{ component.asil }}): {{ controller.cls }} (ASIL {{ controller.asil }}) and
+// {{ monitor.cls }} (ASIL {{ monitor.asil }}) step in this order every cycle on one bus. The controller observer
+// decodes the controller's command; the actuator ECU model (AoU) applies only approved commands
+// and drives the vehicle. Faults are injected on the nodes' output frames with the plant's own
+// message tables.
+class {{ component.name }}Sil {
+public:
+    static constexpr double kDriverActionS = 0.2;
+    static constexpr double kActuatorReactionMs = {{ reaction_ms }}.0;  // FRTI assumed for the actuator ECU
+
+    void run(double seconds) noexcept {
+        ea::plant::ControllerPort* const nodes[] = {&controller_, &monitor_};
+        ea::plant::FeatureObserver* const observers[] = {&observer_, &actuator_};
+        plant_.run(ea::Span<ea::plant::ControllerPort* const>(nodes), ea::Span<ea::plant::FeatureObserver* const>(observers),
+                   1U, seconds);
+    }
+    ea::plant::Plant& plant() noexcept { return plant_; }
+    {{ controller.observer_type }}& feature() noexcept { return observer_; }
+    {{ monitor.observer_type }}& actuator() noexcept { return actuator_; }
+    const ::{{ controller.ns }}::{{ controller.cls }}& controller() const noexcept { return controller_.node(); }
+    const ::{{ monitor.ns }}::{{ monitor.cls }}& monitor() const noexcept { return monitor_.node(); }
+
+    // Faults on the next n output frames of a node.
+    void command_fault(ea::plant::NodeFault kind, std::uint32_t n) noexcept {
+        plant_.inject_node_fault({{ controller.tables[2] }}, kind, n, {{ controller.tables[3] }});
+    }
+    void monitor_fault(ea::plant::NodeFault kind, std::uint32_t n) noexcept {
+        plant_.inject_node_fault({{ monitor.tables[2] }}, kind, n, {{ monitor.tables[3] }});
+    }
+    // A wrong value of one command signal behind a valid CRC (a logic fault in the controller).
+    void override_command(const ea::plant::can::Sig& sig, double value, std::uint32_t n) noexcept {
+        plant_.inject_node_fault({{ controller.tables[2] }}, ea::plant::NodeFault::kOverride, n, {{ controller.tables[3] }},
+                                 sig.start, sig.length, sig.is_signed, sig.factor, value);
+    }
+
+    // Driver actions (each followed by kDriverActionS of simulation).
+    void switch_main(bool on_state) noexcept {
+        plant_.set_main_switch(on_state);
+        run(kDriverActionS);
+    }
+    void press(ea::plant::Button b, int times) noexcept {
+        for (int i = 0; i < times; ++i) {
+            plant_.press(b);
+            run(kDriverActionS);
+        }
+    }
+    void brake(bool pressed) noexcept {
+        plant_.set_brake_pedal(pressed);
+        run(kDriverActionS);
+    }
+    void accelerator(double pct) noexcept {
+        plant_.set_accel_pedal(pct);
+        run(kDriverActionS);
+    }
+{% include "features/" ~ feature ~ "/harness.hpp.j2" ignore missing %}
+
+private:
+    NodePort<::{{ controller.ns }}::{{ controller.cls }}> controller_;
+    NodePort<::{{ monitor.ns }}::{{ monitor.cls }}> monitor_;
+    ea::plant::Plant plant_;
+    {{ controller.observer_type }} observer_;
+    {{ monitor.observer_type }} actuator_;
+};
+
+}  // namespace {{ ns }}

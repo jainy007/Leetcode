@@ -18,7 +18,7 @@
     "generated/aeb_monitor/src/aeb_monitor_logic.cpp"
   ],
   "generator": "ea-gen 0.1.0",
-  "inputs_sha256": "4c2c50398135b7072ac31e6b5ee98281a3ac11962a726a5375f5b4a9eb38232c",
+  "inputs_sha256": "4edac0782e43a3effd02948398696bdcee44fdc1992b83dad1769ef283390f0c",
   "pattern": "can_function",
   "project": "aeb_monitor",
   "requirements": [

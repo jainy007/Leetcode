@@ -107,6 +107,11 @@ CASES: dict[str, list[tuple]] = {
                 ("acc", [("replace", M, "period_ms: 40, timeout_ms: 120", "period_ms: 40, timeout_ms: 60")]),
                 ("acc", [("replace", M, "data_id: 0x0210, crc: Crc, counter: Counter, max_delta_counter: 3",
                           "data_id: 0x0210, crc: Crc, counter: Counter, max_delta_counter: 2")])],
+    "GEN-065": [("acc_system", [("replace", M, "ftti_ms: 1000, mechanisms: [unintended_accel", "ftti_ms: 600, mechanisms: [unintended_accel")]),
+                ("aeb_system", [("replace", M, "ftti_ms: 200, mechanisms: [command_timeout]", "ftti_ms: 150, mechanisms: [command_timeout]")]),
+                ("acc_system", [("replace", M, "mechanisms: [command_timeout, request_outside_active]", "mechanisms: [command_timeout, telepathy]")])],
+    "GEN-066": [("acc_system", [("replace", M, "  monitor: acc_monitor", "  monitor: aeb_monitor")]),
+                ("acc_system", [("replace", M, "  controller: acc", "  controller: warp_drive")])],
 }
 
 

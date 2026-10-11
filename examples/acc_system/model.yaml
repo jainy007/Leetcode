@@ -1,0 +1,33 @@
+# System model of ACC (pattern can_system): ASIL D by decomposition into two can_function nodes.
+schema_version: 1
+pattern: can_system
+
+component:
+  name: AccSystem
+  namespace: adas::acc_system
+  asil: D
+  profile: asil
+
+inputs:
+  requirements: requirements.yaml
+  features: [features/safety_goals.feature, features/availability.feature]
+
+nodes:
+  controller: acc
+  monitor: acc_monitor
+
+# Actuator ECU (powertrain / brake), assumption of use: reacts within 100 ms of the monitor's
+# verdict (bus transfer + arbitration + start of the ramp-out).
+actuator:
+  reaction_ms: 100
+  satisfies: [REQ-ACCS-005]
+
+allocation:
+  satisfies: [REQ-ACCS-006]
+
+# FTTI values are assumptions pending the HARA (docs/safety/acc_aeb_safety_concept.md).
+safety_goals:
+  - {requirement: REQ-ACCS-001, ftti_ms: 200, mechanisms: [request_limit, request_rate]}
+  - {requirement: REQ-ACCS-002, ftti_ms: 200, mechanisms: [request_limit, request_rate]}
+  - {requirement: REQ-ACCS-003, ftti_ms: 1000, mechanisms: [unintended_accel, accel_and_brake]}
+  - {requirement: REQ-ACCS-004, ftti_ms: 200, mechanisms: [command_timeout, request_outside_active]}
