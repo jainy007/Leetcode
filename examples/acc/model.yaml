@@ -1,8 +1,9 @@
-# Model for the ACC controller (pattern: acc_controller).
-# The pattern fixes the architecture (modes, control law, E2E, timeouts); this model supplies the
-# CAN interface (from the DBC), the signal bindings and the calibration.
+# Model for the ACC controller (pattern can_function, feature acc).
+# The framework supplies receive/E2E/timeouts/send; feature 'acc' supplies modes and the control law.
+# This model supplies the CAN interface (from the DBC), the signal bindings and the calibration.
 schema_version: 1
-pattern: acc_controller
+pattern: can_function
+feature: acc
 
 component:
   name: AccController
@@ -26,9 +27,8 @@ rx:
      e2e: {data_id: 0x0220, crc: Crc, counter: Counter, max_delta_counter: 3}}
 
 tx:
-  message: AccCommand
-  e2e: {data_id: 0x0300, crc: Crc, counter: Counter, max_delta_counter: 2}
-  satisfies: [REQ-ACC-020]
+  - {message: AccCommand, satisfies: [REQ-ACC-020],
+     e2e: {data_id: 0x0300, crc: Crc, counter: Counter, max_delta_counter: 2}}
 
 # Pattern interface -> DBC signal (Message.Signal).
 bindings:
@@ -53,12 +53,10 @@ bindings:
   set_speed: AccCommand.SetSpeed
   time_gap_setting: AccCommand.TimeGapSetting
 
-modes:
+logic:
   satisfies: [REQ-ACC-001, REQ-ACC-002, REQ-ACC-003, REQ-ACC-004, REQ-ACC-005, REQ-ACC-006,
-              REQ-ACC-007, REQ-ACC-008, REQ-ACC-009, REQ-ACC-019, REQ-ACC-022]
-
-control:
-  satisfies: [REQ-ACC-010, REQ-ACC-011, REQ-ACC-016, REQ-ACC-017, REQ-ACC-018]
+              REQ-ACC-007, REQ-ACC-008, REQ-ACC-009, REQ-ACC-010, REQ-ACC-011, REQ-ACC-016,
+              REQ-ACC-017, REQ-ACC-018, REQ-ACC-019, REQ-ACC-022]
 
 calibration:
   min_activation_speed_kph: {value: 30, satisfies: [REQ-ACC-002, REQ-ACC-003]}

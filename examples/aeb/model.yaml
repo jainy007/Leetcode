@@ -1,0 +1,61 @@
+# Model for FCW + AEB (pattern can_function, feature aeb). Same vehicle bus as examples/acc.
+schema_version: 1
+pattern: can_function
+feature: aeb
+
+component:
+  name: AebController
+  namespace: adas::aeb
+  asil: B
+  profile: asil
+
+inputs:
+  requirements: requirements.yaml
+  features: [features/cascade.feature, features/performance.feature, features/robustness.feature]
+  dbc: [interfaces/aeb.dbc]
+
+cycle_ms: 20
+
+rx:
+  - {message: RadarObject, period_ms: 40, timeout_ms: 120, satisfies: [REQ-AEB-013],
+     e2e: {data_id: 0x0200, crc: Crc, counter: Counter, max_delta_counter: 3}}
+  - {message: EgoState, period_ms: 20, timeout_ms: 60, satisfies: [REQ-AEB-013],
+     e2e: {data_id: 0x0210, crc: Crc, counter: Counter, max_delta_counter: 3}}
+  - {message: DriverInput, period_ms: 20, timeout_ms: 60, satisfies: [REQ-AEB-013],
+     e2e: {data_id: 0x0220, crc: Crc, counter: Counter, max_delta_counter: 3}}
+
+tx:
+  - {message: AebCommand, satisfies: [REQ-AEB-014],
+     e2e: {data_id: 0x0310, crc: Crc, counter: Counter, max_delta_counter: 2}}
+
+bindings:
+  target_valid: RadarObject.ObjValid
+  target_range: RadarObject.ObjRange
+  target_range_rate: RadarObject.ObjRangeRate
+  target_lateral: RadarObject.ObjLateralPos
+  ego_speed: EgoState.VehicleSpeed
+  brake_pedal: DriverInput.BrakePedal
+  accel_pedal: DriverInput.AccelPedalPos
+  status: AebCommand.AebStatus
+  fcw_warning: AebCommand.FcwWarning
+  brake_request: AebCommand.AebBrakeRequest
+
+logic:
+  satisfies: [REQ-AEB-001, REQ-AEB-002, REQ-AEB-003, REQ-AEB-004, REQ-AEB-005, REQ-AEB-006,
+              REQ-AEB-007, REQ-AEB-010, REQ-AEB-011, REQ-AEB-012, REQ-AEB-013]
+
+calibration:
+  min_speed_kph: {value: 10, satisfies: [REQ-AEB-009]}
+  max_speed_kph: {value: 150, satisfies: [REQ-AEB-009]}
+  max_target_range_m: {value: 150, satisfies: [REQ-AEB-008]}
+  lane_half_width_m: {value: 1.8, satisfies: [REQ-AEB-008]}
+  min_closing_speed_mps: {value: 0.5, satisfies: [REQ-AEB-008]}
+  fcw_ttc_s: {value: 2.8, satisfies: [REQ-AEB-001]}
+  warning_release_ttc_s: {value: 3.3, satisfies: [REQ-AEB-004]}
+  partial_brake_ttc_s: {value: 1.8, satisfies: [REQ-AEB-002]}
+  full_brake_ttc_s: {value: 1.2, satisfies: [REQ-AEB-003]}
+  min_warning_time_s: {value: 0.8, satisfies: [REQ-AEB-002]}
+  partial_decel_mps2: {value: 4.0, satisfies: [REQ-AEB-002]}
+  full_decel_mps2: {value: 8.0, satisfies: [REQ-AEB-003]}
+  kickdown_pedal_pct: {value: 80, satisfies: [REQ-AEB-006]}
+  standstill_speed_kph: {value: 1.0, satisfies: [REQ-AEB-005]}

@@ -1,0 +1,13 @@
+
+    // ---- feature 'acc' driver sequences ----
+    void engage() noexcept {
+        switch_main(true);
+        press(ea::plant::Button::kSet, 1);
+    }
+    // Press Set with the brake applied, then release the brake while Set is still held.
+    void release_brake_while_holding_set() noexcept {
+        plant_.press(ea::plant::Button::kSet);  // held for 100 ms
+        run(0.04);
+        plant_.set_brake_pedal(false);
+        run(kDriverActionS);
+    }

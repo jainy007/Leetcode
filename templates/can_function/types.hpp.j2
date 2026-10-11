@@ -1,0 +1,44 @@
+#pragma once
+
+#include <cstddef>
+#include <cstdint>
+
+namespace {{ ns }} {
+
+// States of feature '{{ feature }}'. The numeric codes are part of the CAN interface (status signal).
+enum class State : std::uint8_t {
+{% for s in states %}
+    k{{ s | camel }} = {{ loop.index0 }}U,
+{% endfor %}
+};
+const char* to_string(State s) noexcept;
+
+// Inputs of the feature logic: newest valid value of every bound rx signal (0 until received)
+// and the health of the message carrying it (a valid frame within the message's timeout).
+struct Inputs {
+{% for i in inputs %}
+    double {{ i.name }};  // {{ i.msg.name }}.{{ i.sig.dbc_name or i.sig.name }} [{{ i.sig.min }}, {{ i.sig.max }}] {{ i.sig.unit }}
+{% endfor %}
+{% for i in inputs %}
+    bool {{ i.name }}_ok;
+{% endfor %}
+    bool all_ok;  // every rx message is healthy
+};
+
+// Outputs of the feature logic, encoded into the tx messages every cycle.
+struct Outputs {
+{% for o in outputs %}
+    double {{ o.name }};  // {{ o.msg.name }}.{{ o.sig.dbc_name or o.sig.name }} [{{ o.sig.min }}, {{ o.sig.max }}] {{ o.sig.unit }}
+{% endfor %}
+};
+{% for m in messages %}
+
+// Message {{ m.name }} (CAN id {{ m.can_id | cpp_hex }}, {{ m.payload_length }} bytes). Source: {{ m.source }}
+struct {{ m.name }} {
+{% for s in m.signals %}
+    double {{ s.name }};  // [{{ s.min }}, {{ s.max }}] {{ s.unit }}
+{% endfor %}
+};
+{% endfor %}
+
+}  // namespace {{ ns }}

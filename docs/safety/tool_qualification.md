@@ -11,7 +11,7 @@ Status: **draft for assessment**. Owner: tool chain maintainer (see CODEOWNERS).
 | UC-1 | Generate C++ source for ASIL A–D software units (patterns `input_gate`, `gpu_stage`) from a reviewed model |
 | UC-2 | Generate SIL test cases from Gherkin scenarios, plus the trace data (`trace.json`) |
 | UC-3 | Check requirements, scenarios and models for consistency (`python3 -m tools.lint`) |
-| Excluded | Any AI or LLM component. Agents may draft inputs, which are reviewed by humans, but they are not part of the tool. |
+| Excluded | Any AI or LLM component at generation time. The tool may be *developed* with AI assistance (see change control); its execution is deterministic and AI-free. |
 
 ## 2. Tool impact (TI) and tool error detection (TD)
 | Use case | Possible malfunction | TI | Detection measures in the process | TD |
@@ -50,6 +50,8 @@ the development process). This plan uses **1c** for ASIL A–C and **1b + 1c** f
 ## 5. Change control
 - Changes to `tools/gen/`, `templates/`, `schemas/` or `sil/steps/` need two human approvals
   (CODEOWNERS and branch protection) and a passing qualification suite.
-- Agents never modify these paths (CLAUDE.md). The CI check fails if generated output changes
-  without a matching change to its inputs.
+- The tool may be developed by an AI agent (CLAUDE.md). This does not change the evidence, which
+  rests on validation, not on who wrote the code: the qualification suite, determinism tests,
+  mutation campaigns and owner review are required for every change. The CI check fails if
+  generated output changes without a matching change to its inputs.
 - Releases bump `GENERATOR_VERSION` and archive the qualification run (CI artefacts).

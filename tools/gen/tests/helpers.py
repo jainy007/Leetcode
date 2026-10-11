@@ -13,6 +13,7 @@ EXAMPLES = {
     "gate": REPO_ROOT / "examples" / "adas_input_gate",
     "gpu": REPO_ROOT / "examples" / "gpu_inference_stage",
     "acc": REPO_ROOT / "examples" / "acc",
+    "aeb": REPO_ROOT / "examples" / "aeb",
 }
 
 

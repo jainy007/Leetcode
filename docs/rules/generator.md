@@ -80,12 +80,12 @@ and the file it applies to.
 | GEN-056 | Graph memory must fit the static arena limit |
 | GEN-057 | Monitor timeout must not be shorter than the stage deadline |
 
-## Pattern acc_controller
+## Pattern can_function (framework for feature plug-ins)
 
 | ID | Rule |
 |---|---|
-| GEN-060 | Every interface signal must be bound to a DBC signal of a message in the right direction |
-| GEN-061 | A bound signal must cover the physical range the pattern needs (discrete: factor 1, offset 0) |
+| GEN-060 | The feature must exist and every interface signal must be bound to a DBC signal of a message in the right direction |
+| GEN-061 | A bound signal must cover the physical range the feature needs (discrete: factor 1, offset 0; tx: accepts 0) |
 | GEN-062 | E2E protection needs a CRC byte and a counter nibble that no interface signal uses |
 | GEN-063 | Calibration must be complete, consistent and representable in the command resolution |
 | GEN-064 | Receive timing must be consistent: multiples of the cycle, timeout >= 2 periods, E2E max delta >= timeout/period |

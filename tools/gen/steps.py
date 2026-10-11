@@ -50,28 +50,25 @@ _ENV = jinja2.Environment(undefined=jinja2.StrictUndefined, autoescape=False, ke
 _ENV.filters["camel"] = camel
 
 
-def catalogue_path(pattern: str) -> pathlib.Path:
-    return STEPS_DIR / f"{pattern}.yaml"
-
-
-def load_catalogue(pattern: str, diags: Diagnostics) -> list[CatalogueStep]:
-    path = catalogue_path(pattern)
-    display = f"sil/steps/{path.name}"
-    doc = loader.load_yaml(path, diags, display)
-    if doc is None or not schema.validate(doc, "steps.schema.json", diags, display):
-        return []
-    out = []
-    for entry in doc["steps"]:
-        regex = re.compile(entry["pattern"])
-        types = entry.get("types", {})
-        groups = set(regex.groupindex)
-        if groups != set(types):
-            diags.error("GEN-002", display, f"{entry['id']}: named groups {sorted(groups)} != types {sorted(types)}")
+def load_catalogues(rel_paths: list[str], diags: Diagnostics) -> list[CatalogueStep]:
+    """Loads one or more catalogues (repo-relative paths); step ids must be unique across them."""
+    out: list[CatalogueStep] = []
+    for rel in rel_paths:
+        path = STEPS_DIR.parent.parent / rel
+        doc = loader.load_yaml(path, diags, rel)
+        if doc is None or not schema.validate(doc, "steps.schema.json", diags, rel):
             continue
-        out.append(CatalogueStep(entry["id"], tuple(entry["keywords"]), regex, tuple(sorted(types.items())), entry["cpp"]))
+        for entry in doc["steps"]:
+            regex = re.compile(entry["pattern"])
+            types = entry.get("types", {})
+            groups = set(regex.groupindex)
+            if groups != set(types):
+                diags.error("GEN-002", rel, f"{entry['id']}: named groups {sorted(groups)} != types {sorted(types)}")
+                continue
+            out.append(CatalogueStep(entry["id"], tuple(entry["keywords"]), regex, tuple(sorted(types.items())), entry["cpp"]))
     ids = [s.id for s in out]
     if len(ids) != len(set(ids)):
-        diags.error("GEN-002", display, "duplicate step ids")
+        diags.error("GEN-002", ", ".join(rel_paths), "duplicate step ids")
     return out
 
 

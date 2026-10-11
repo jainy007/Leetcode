@@ -1,5 +1,5 @@
 # Closed-loop SIL scenarios: the plant (sil/plant) simulates ego vehicle, lead vehicle, radar,
-# driver and CAN bus. Steps come from sil/steps/acc_controller.yaml only.
+# driver and CAN bus. Steps come from sil/steps/can_function.yaml and sil/steps/features/acc.yaml only.
 Feature: ACC modes and driver interaction
 
   @REQ-ACC-001 @REQ-ACC-019

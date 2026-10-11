@@ -1,0 +1,61 @@
+#pragma once
+
+#include <array>
+#include <cstddef>
+#include <cstdint>
+
+#include "ea/core/span.hpp"
+#include "ea/e2e/p11.hpp"
+#include "{{ inc }}/{{ snake }}_codec.hpp"
+#include "{{ inc }}/{{ snake }}_logic.hpp"
+#include "{{ inc }}/{{ snake }}_types.hpp"
+
+namespace {{ ns }} {
+
+// {{ component.name }}: CAN-in / CAN-out vehicle function '{{ feature }}' (ASIL {{ component.asil }}, profile {{ component.profile }}).
+// Call on_frame() for every received frame and step() once per {{ cycle_ms }} ms cycle:
+//   1. receive: E2E P11 check + decode of the newest frame per message, timeout supervision -> Inputs
+//   2. logic:   {{ component.name }}Logic (feature '{{ feature }}') maps Inputs to Outputs
+//   3. send:    encode and E2E-protect the tx messages
+class {{ component.name }} {
+public:
+    static constexpr std::size_t kTxCount = {{ tx | length }}U;
+
+    {{ component.name }}() noexcept;
+
+    // Stores the newest frame per message; unknown ids and oversized payloads are ignored.
+    void on_frame(std::uint32_t can_id, ea::ConstByteSpan payload) noexcept;
+    void step() noexcept;
+
+    std::uint32_t tx_can_id(std::size_t i) const noexcept;
+    ea::ConstByteSpan tx_frame(std::size_t i) const noexcept;
+    const Inputs& inputs() const noexcept { return in_; }
+    const {{ component.name }}Logic& logic() const noexcept { return logic_; }
+
+private:
+    struct Mailbox {
+        std::array<std::uint8_t, 8> data{};
+        std::size_t length = 0U;
+        bool fresh = false;
+    };
+
+    void receive() noexcept;
+    void send() noexcept;
+
+{% for r in rx %}
+    // {{ r.cname }}: timeout {{ r.timeout_cycles }} cycles
+    Mailbox mb_{{ r.snake }}_{};
+    ea::e2e::P11Checker e2e_{{ r.snake }}_;
+    {{ r.cname }} {{ r.var }}{};
+    std::uint16_t age_{{ r.snake }}_;
+{% endfor %}
+{% for t in tx %}
+    ea::e2e::P11Protector e2e_{{ t.snake }}_;
+    std::array<std::uint8_t, k{{ t.cname }}PayloadLength> {{ t.var }}_{};
+{% endfor %}
+    Inputs in_{};
+    Outputs out_{};
+    {{ component.name }}Logic logic_;
+};
+
+}  // namespace {{ ns }}

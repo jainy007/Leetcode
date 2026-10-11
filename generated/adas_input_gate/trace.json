@@ -18,7 +18,7 @@
     "generated/adas_input_gate/src/adas_input_gate_task.cpp"
   ],
   "generator": "ea-gen 0.1.0",
-  "inputs_sha256": "3b9f778c3ef823e83f2651ddaee86726e36ef1d11efa1f7db104d4e82268f759",
+  "inputs_sha256": "e5e321b3b23399ab06a6215638bc4c33e4a006a901504d70a3d9199badecc08e",
   "pattern": "input_gate",
   "project": "adas_input_gate",
   "requirements": [

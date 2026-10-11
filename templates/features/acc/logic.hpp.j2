@@ -4,22 +4,14 @@
 #include <cstddef>
 #include <cstdint>
 
-#include "ea/core/span.hpp"
-#include "ea/e2e/p11.hpp"
-#include "{{ inc }}/{{ snake }}_codec.hpp"
 #include "{{ inc }}/{{ snake }}_types.hpp"
 
 namespace {{ ns }} {
 
-// {{ component.name }}: CAN-in / CAN-out adaptive cruise control (ASIL {{ component.asil }}, profile {{ component.profile }}).
-// Call on_frame() for every received frame and step() once per {{ cycle_ms }} ms cycle:
-//   1. receive: E2E P11 check + decode of the newest frame per message, timeout supervision
-//   2. modes:   OFF / STANDBY / ACTIVE / OVERRIDE / FAULT from driver inputs and input health
-//   3. control: speed and time-gap control, acceleration, deceleration and jerk limits
-//   4. send:    encode and E2E-protect {{ tx.msg.name }}
-class {{ component.name }} {
+// Feature 'acc' logic: driver mode machine, speed and time-gap control with acceleration,
+// deceleration and jerk limits. Pure function of Inputs and its own state; no I/O.
+class {{ component.name }}Logic {
 public:
-    // Calibration (from the model).
     static constexpr double kMinActivationSpeedKph = {{ cal.min_activation_speed_kph | cpp_double }};
     static constexpr double kDisengageSpeedKph = {{ cal.disengage_speed_kph | cpp_double }};
     static constexpr double kMaxSetSpeedKph = {{ cal.max_set_speed_kph | cpp_double }};
@@ -35,46 +27,22 @@ public:
     static constexpr double kSpeedGainPerS = {{ cal.speed_gain_per_s | cpp_double }};
     static constexpr double kGapGainPerS2 = {{ cal.gap_gain_per_s2 | cpp_double }};
     static constexpr double kRangeRateGainPerS = {{ cal.range_rate_gain_per_s | cpp_double }};
-    // Acceleration is handled in integer steps of the command resolution so the transmitted
-    // values honour the jerk limits exactly.
+    // Acceleration in integer steps of the command resolution: transmitted values honour the
+    // jerk limits exactly.
     static constexpr double kAccelResolution = {{ jerk.resolution | cpp_double }};
     static constexpr std::int32_t kJerkUpStep = {{ jerk.jerk_increase_max_mps3 }};    // per cycle
     static constexpr std::int32_t kJerkDownStep = {{ jerk.jerk_decrease_max_mps3 }};  // per cycle
 
-    {{ component.name }}() noexcept;
+    void step(const Inputs& in, Outputs& out) noexcept;
 
-    // Stores the newest frame per message; unknown ids and oversized payloads are ignored.
-    void on_frame(std::uint32_t can_id, ea::ConstByteSpan payload) noexcept;
-    void step() noexcept;
-
-    ea::ConstByteSpan command_frame() const noexcept { return ea::ConstByteSpan(tx_frame_.data(), tx_frame_.size()); }
-    Mode mode() const noexcept { return mode_; }
+    State state() const noexcept { return state_; }
     double set_speed_kph() const noexcept { return set_speed_kph_; }
 
 private:
-    struct Mailbox {
-        std::array<std::uint8_t, 8> data{};
-        std::size_t length = 0U;
-        bool fresh = false;
-    };
+    void update_mode(const Inputs& in) noexcept;
+    void control(const Inputs& in) noexcept;
 
-    void receive() noexcept;
-    bool inputs_healthy() const noexcept;
-    void update_mode() noexcept;
-    void control() noexcept;
-    void send() noexcept;
-
-{% for r in rx %}
-    // {{ r.cname }}: timeout {{ r.timeout_cycles }} cycles
-    Mailbox mb_{{ r.snake }}_{};
-    ea::e2e::P11Checker e2e_{{ r.snake }}_;
-    {{ r.cname }} {{ r.var }}{};
-    std::uint16_t age_{{ r.snake }}_;
-{% endfor %}
-    ea::e2e::P11Protector e2e_tx_;
-    std::array<std::uint8_t, k{{ tx.msg.name }}PayloadLength> tx_frame_{};
-
-    Mode mode_ = Mode::kOff;
+    State state_ = State::kOff;
     double set_speed_kph_ = 0.0;
     std::uint32_t gap_setting_ = {{ default_gap }}U;
     std::int32_t accel_raw_ = 0;  // commanded acceleration in kAccelResolution steps (+ accel, - decel)

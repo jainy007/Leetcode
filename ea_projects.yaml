@@ -4,3 +4,4 @@ projects:
   - {name: adas_input_gate, model: examples/adas_input_gate/model.yaml, output: generated/adas_input_gate}
   - {name: gpu_inference_stage, model: examples/gpu_inference_stage/model.yaml, output: generated/gpu_inference_stage}
   - {name: acc, model: examples/acc/model.yaml, output: generated/acc}
+  - {name: aeb, model: examples/aeb/model.yaml, output: generated/aeb}

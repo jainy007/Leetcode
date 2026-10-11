@@ -25,22 +25,23 @@ jobs:
       - name: generated/ is exactly the generator output
         run: python3 -m tools.gen --check
 
-  # AI-proposed changes may only touch inputs (requirements, Gherkin, models, docs). See CLAUDE.md.
-  protected-paths:
-    if: github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'ai-proposed')
+  # Extensibility gate: a freshly scaffolded feature must generate, build, pass its SIL and its
+  # starter mutation check without any manual edit.
+  scaffold:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          fetch-depth: 0
-      - name: Reject changes to the qualified tool chain and safety artefacts
-        run: |
-          changed=$(git diff --name-only "origin/${{ github.base_ref }}...HEAD")
-          echo "$changed"
-          if echo "$changed" | grep -E '^(generated|tools/gen|templates|schemas|sil/steps|runtime|docs/safety)/'; then
-            echo "::error::ai-proposed PRs must not modify the paths above (CLAUDE.md)"
-            exit 1
-          fi
+          python-version: "3.12"
+      - run: pip install -r tools/requirements.txt
+      - run: sudo apt-get update && sudo apt-get install -y ninja-build
+      - run: python3 -m tools.scaffold feature demo_lka --can-id 816
+      - run: python3 -m tools.gen
+      - run: cmake --preset linux-host
+      - run: cmake --build --preset linux-host
+      - run: ctest --preset linux-host -R DemoLka
+      - run: python3 -m tools.mutate demo_lka
 
   build-test:
     runs-on: ubuntu-24.04

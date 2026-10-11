@@ -1,0 +1,1709 @@
+{
+  "component": {
+    "asil": "B",
+    "name": "AebController",
+    "namespace": "adas::aeb",
+    "profile": "asil"
+  },
+  "generated_files": [
+    "generated/aeb/CMakeLists.txt",
+    "generated/aeb/include/aeb/aeb_controller.hpp",
+    "generated/aeb/include/aeb/aeb_controller_codec.hpp",
+    "generated/aeb/include/aeb/aeb_controller_logic.hpp",
+    "generated/aeb/include/aeb/aeb_controller_types.hpp",
+    "generated/aeb/sil/aeb_controller_sil.hpp",
+    "generated/aeb/sil/aeb_controller_sil_test.cpp",
+    "generated/aeb/src/aeb_controller.cpp",
+    "generated/aeb/src/aeb_controller_codec.cpp",
+    "generated/aeb/src/aeb_controller_logic.cpp"
+  ],
+  "generator": "ea-gen 0.1.0",
+  "inputs_sha256": "a08ca97b0dae15cd9bd7ef48fa8166ab2ed0041549faf134197c8d1be4271543",
+  "pattern": "can_function",
+  "project": "aeb",
+  "requirements": [
+    {
+      "asil": "B",
+      "ears": "event",
+      "id": "REQ-AEB-001",
+      "satisfied_by": [
+        "calibration:fcw_ttc_s",
+        "logic"
+      ],
+      "tests": [
+        "S01_ApproachToAStationaryVehicleRunsThroughTheWholeCascade"
+      ],
+      "text": "When a relevant target is approached with a time to collision of 2.8 s or less at an ego speed between 10 km/h and 150 km/h, the AebController shall issue a forward collision warning.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "B",
+      "ears": "event",
+      "id": "REQ-AEB-002",
+      "satisfied_by": [
+        "calibration:min_warning_time_s",
+        "calibration:partial_brake_ttc_s",
+        "calibration:partial_decel_mps2",
+        "logic"
+      ],
+      "tests": [
+        "S01_ApproachToAStationaryVehicleRunsThroughTheWholeCascade",
+        "S03_AHardBrakingLeadVehicleStillGetsTheMinimumWarningTime"
+      ],
+      "text": "When the forward collision warning has been active for at least 0.8 s and the time to collision is 1.8 s or less, the AebController shall request partial braking of 4 m/s2.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "B",
+      "ears": "event",
+      "id": "REQ-AEB-003",
+      "satisfied_by": [
+        "calibration:full_brake_ttc_s",
+        "calibration:full_decel_mps2",
+        "logic"
+      ],
+      "tests": [
+        "S01_ApproachToAStationaryVehicleRunsThroughTheWholeCascade",
+        "S02_ALateCutInTriggersFullBrakingWithoutTheMinimumWarningTime"
+      ],
+      "text": "When the time to collision is 1.2 s or less during a warning or partial braking, the AebController shall request full braking of 8 m/s2.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "QM",
+      "ears": "event",
+      "id": "REQ-AEB-004",
+      "satisfied_by": [
+        "calibration:warning_release_ttc_s",
+        "logic"
+      ],
+      "tests": [
+        "S04_TheWarningEndsWhenTheTimeToCollisionRisesAbove33S",
+        "S05_TheWarningEndsWhenTheLeadVehiclePullsAway"
+      ],
+      "text": "When during a warning without braking the time to collision rises above 3.3 s or the target is no longer relevant, the AebController shall end the warning.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "B",
+      "ears": "state",
+      "id": "REQ-AEB-005",
+      "satisfied_by": [
+        "calibration:standstill_speed_kph",
+        "logic"
+      ],
+      "tests": [
+        "S01_ApproachToAStationaryVehicleRunsThroughTheWholeCascade",
+        "S06_BrakingEndsOnceTheEgoVehicleNoLongerApproaches"
+      ],
+      "text": "While braking, the AebController shall continue braking until the ego vehicle no longer approaches the target or has stopped.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "B",
+      "ears": "event",
+      "id": "REQ-AEB-006",
+      "satisfied_by": [
+        "calibration:kickdown_pedal_pct",
+        "logic"
+      ],
+      "tests": [
+        "S07_KickdownCancelsTheInterventionALighterPedalDoesNot_Ex1",
+        "S08_KickdownCancelsTheInterventionALighterPedalDoesNot_Ex2",
+        "S09_KickdownAlsoCancelsFullBraking"
+      ],
+      "text": "When the driver presses the accelerator pedal to 80 % or more during a warning or braking, the AebController shall cancel the intervention.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "B",
+      "ears": "event",
+      "id": "REQ-AEB-007",
+      "satisfied_by": [
+        "logic"
+      ],
+      "tests": [
+        "S10_TheDriverSBrakePedalDoesNotCancelEmergencyBraking_Ex1",
+        "S11_TheDriverSBrakePedalDoesNotCancelEmergencyBraking_Ex2"
+      ],
+      "text": "When the driver presses the brake pedal during braking, the AebController shall continue braking.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "B",
+      "ears": "ubiquitous",
+      "id": "REQ-AEB-008",
+      "satisfied_by": [
+        "calibration:lane_half_width_m",
+        "calibration:max_target_range_m",
+        "calibration:min_closing_speed_mps"
+      ],
+      "tests": [
+        "S18_OnlyVehiclesWithin18MOfTheLaneCentreAreRelevant_Ex1",
+        "S19_OnlyVehiclesWithin18MOfTheLaneCentreAreRelevant_Ex2",
+        "S20_AVehicleFollowedAtTheSameSpeedIsNotAHazard"
+      ],
+      "text": "The AebController shall treat a radar object as relevant only if it is valid, at most 150 m ahead, at most 1.8 m from the ego lane centre and approaching at more than 0.5 m/s.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "B",
+      "ears": "unwanted",
+      "id": "REQ-AEB-009",
+      "satisfied_by": [
+        "calibration:max_speed_kph",
+        "calibration:min_speed_kph"
+      ],
+      "tests": [
+        "S21_WarningsStartOnlyBetween10KmHAnd150KmH_Ex1",
+        "S22_WarningsStartOnlyBetween10KmHAnd150KmH_Ex2",
+        "S23_WarningsStartOnlyBetween10KmHAnd150KmH_Ex3",
+        "S24_WarningsStartOnlyBetween10KmHAnd150KmH_Ex4"
+      ],
+      "text": "If the ego speed is below 10 km/h or above 150 km/h, then the AebController shall not start a warning.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "B",
+      "ears": "unwanted",
+      "id": "REQ-AEB-010",
+      "satisfied_by": [
+        "logic"
+      ],
+      "tests": [
+        "S12_AStationaryVehicleIsAvoidedFrom20KmHTo60KmH_Ex1",
+        "S13_AStationaryVehicleIsAvoidedFrom20KmHTo60KmH_Ex2",
+        "S14_AStationaryVehicleIsAvoidedFrom20KmHTo60KmH_Ex3"
+      ],
+      "text": "If the ego vehicle approaches a stationary vehicle in its lane at 20 km/h to 60 km/h without driver reaction, then the AebController shall avoid the collision.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "B",
+      "ears": "unwanted",
+      "id": "REQ-AEB-011",
+      "satisfied_by": [
+        "logic"
+      ],
+      "tests": [
+        "S15_TheImpactSpeedOnAStationaryVehicleAt80KmHIsAtMost40KmH"
+      ],
+      "text": "If the ego vehicle approaches a stationary vehicle in its lane at 80 km/h without driver reaction, then the AebController shall reduce the impact speed to 40 km/h or less.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "B",
+      "ears": "unwanted",
+      "id": "REQ-AEB-012",
+      "satisfied_by": [
+        "logic"
+      ],
+      "tests": [
+        "S16_AVehicleAt20KmHIsAvoidedFromUpTo80KmH_Ex1",
+        "S17_AVehicleAt20KmHIsAvoidedFromUpTo80KmH_Ex2"
+      ],
+      "text": "If the ego vehicle approaches a vehicle driving at 20 km/h in its lane at up to 80 km/h without driver reaction, then the AebController shall avoid the collision.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "B",
+      "ears": "unwanted",
+      "id": "REQ-AEB-013",
+      "satisfied_by": [
+        "logic",
+        "rx:DriverInput",
+        "rx:EgoState",
+        "rx:RadarObject"
+      ],
+      "tests": [
+        "S25_APausedRadarLeadsToFAULTWithoutInterventionThenRecovers",
+        "S26_VehicleInputTimeoutsLeadToFAULT_Ex1",
+        "S27_VehicleInputTimeoutsLeadToFAULT_Ex2",
+        "S28_VehicleInputTimeoutsLeadToFAULT_Ex3",
+        "S29_VehicleInputTimeoutsLeadToFAULT_Ex4"
+      ],
+      "text": "If no valid RadarObject frame is received for 120 ms, or no valid EgoState or DriverInput frame for 60 ms, then the AebController shall enter FAULT, request no braking and issue no warning, until all inputs are valid again.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "B",
+      "ears": "ubiquitous",
+      "id": "REQ-AEB-014",
+      "satisfied_by": [
+        "tx:AebCommand"
+      ],
+      "tests": [
+        "S01_ApproachToAStationaryVehicleRunsThroughTheWholeCascade"
+      ],
+      "text": "The AebController shall send the AebCommand message every 20 ms with E2E protection and report its state, the warning and the requested deceleration in it.",
+      "verification": [
+        "sil"
+      ]
+    }
+  ],
+  "sil_suite": "AebControllerSilTest",
+  "tests": [
+    {
+      "example": [],
+      "feature": "examples/aeb/features/cascade.feature",
+      "line": 7,
+      "name": "S01_ApproachToAStationaryVehicleRunsThroughTheWholeCascade",
+      "requirements": [
+        "REQ-AEB-001",
+        "REQ-AEB-002",
+        "REQ-AEB-003",
+        "REQ-AEB-005",
+        "REQ-AEB-014"
+      ],
+      "scenario": "Approach to a stationary vehicle runs through the whole cascade",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(50.0);",
+          "text": "Given the ego vehicle drives at 50 km/h"
+        },
+        {
+          "catalogue": "FN-S19",
+          "cpp": "sil_.plant().set_lead(60.0, 0.0, 0.0);",
+          "text": "And a stationary vehicle stands 60 m ahead"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(8.0);",
+          "text": "When 8 s pass"
+        },
+        {
+          "catalogue": "AEB-S02",
+          "cpp": "ASSERT_TRUE(sil_.feature().metrics().warned); EXPECT_GE(sil_.feature().metrics().ttc_at_warning_s, 2.7); EXPECT_LE(sil_.feature().metrics().ttc_at_warning_s, 2.9);",
+          "text": "Then a forward collision warning was issued at a time to collision between 2.7 s and 2.9 s"
+        },
+        {
+          "catalogue": "AEB-S04",
+          "cpp": "ASSERT_TRUE(sil_.feature().metrics().braked); EXPECT_GE(sil_.feature().metrics().first_brake_s - sil_.feature().metrics().first_warning_s, 0.8 - 1e-9);",
+          "text": "And the warning preceded braking by at least 0.8 s"
+        },
+        {
+          "catalogue": "AEB-S05",
+          "cpp": "ASSERT_TRUE(sil_.feature().metrics().braked); EXPECT_GE(sil_.feature().metrics().ttc_at_brake_s, 1.7); EXPECT_LE(sil_.feature().metrics().ttc_at_brake_s, 1.9);",
+          "text": "And emergency braking started at a time to collision between 1.7 s and 1.9 s"
+        },
+        {
+          "catalogue": "AEB-S13",
+          "cpp": "ASSERT_TRUE(sil_.feature().metrics().braked); EXPECT_EQ(sil_.feature().metrics().first_brake_raw, ea::plant::Plant::accel_raw(4.0));",
+          "text": "And emergency braking started with 4 m/s2"
+        },
+        {
+          "catalogue": "AEB-S14",
+          "cpp": "ASSERT_TRUE(sil_.feature().metrics().full_braked); EXPECT_GE(sil_.feature().metrics().ttc_at_full_brake_s, 1.1); EXPECT_LE(sil_.feature().metrics().ttc_at_full_brake_s, 1.3);",
+          "text": "And full braking started at a time to collision between 1.1 s and 1.3 s"
+        },
+        {
+          "catalogue": "AEB-S08",
+          "cpp": "EXPECT_EQ(sil_.feature().metrics().max_brake_raw, ea::plant::Plant::accel_raw(8.0));",
+          "text": "And the requested deceleration reached 8 m/s2"
+        },
+        {
+          "catalogue": "FN-S45",
+          "cpp": "EXPECT_FALSE(sil_.plant().metrics().collision);",
+          "text": "And no collision occurred"
+        },
+        {
+          "catalogue": "FN-S47",
+          "cpp": "EXPECT_LT(sil_.plant().ego_speed_kph(), 0.5);",
+          "text": "And the ego vehicle has stopped"
+        },
+        {
+          "catalogue": "AEB-S01",
+          "cpp": "EXPECT_EQ(sil_.feature().last_command().status, ea::plant::AebStatus::kStandby);",
+          "text": "And the AEB state is STANDBY"
+        },
+        {
+          "catalogue": "AEB-S10",
+          "cpp": "EXPECT_GT(sil_.feature().metrics().command_frames, 0U); EXPECT_EQ(sil_.feature().metrics().command_e2e_errors, 0U);",
+          "text": "And every command frame passed the E2E check"
+        },
+        {
+          "catalogue": "AEB-S11",
+          "cpp": "EXPECT_EQ(sil_.feature().metrics().command_frames, sil_.plant().metrics().ticks);",
+          "text": "And one command frame was sent per 20 ms"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/aeb/features/cascade.feature",
+      "line": 24,
+      "name": "S02_ALateCutInTriggersFullBrakingWithoutTheMinimumWarningTime",
+      "requirements": [
+        "REQ-AEB-003"
+      ],
+      "scenario": "A late cut-in triggers full braking without the minimum warning time",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(50.0);",
+          "text": "Given the ego vehicle drives at 50 km/h"
+        },
+        {
+          "catalogue": "FN-S14",
+          "cpp": "sil_.plant().cut_in(9.0, 20.0);",
+          "text": "When a vehicle cuts in 9 m ahead at 20 km/h"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "And 0.2 s pass"
+        },
+        {
+          "catalogue": "AEB-S01",
+          "cpp": "EXPECT_EQ(sil_.feature().last_command().status, ea::plant::AebStatus::kFullBrake);",
+          "text": "Then the AEB state is FULL_BRAKE"
+        },
+        {
+          "catalogue": "AEB-S07",
+          "cpp": "EXPECT_EQ(sil_.feature().last_command().brake_raw, ea::plant::Plant::accel_raw(8.0));",
+          "text": "And a deceleration of 8 m/s2 is requested"
+        },
+        {
+          "catalogue": "AEB-S09",
+          "cpp": "EXPECT_EQ(sil_.feature().last_command().warning, true);",
+          "text": "And the warning is on"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/aeb/features/cascade.feature",
+      "line": 33,
+      "name": "S03_AHardBrakingLeadVehicleStillGetsTheMinimumWarningTime",
+      "requirements": [
+        "REQ-AEB-002"
+      ],
+      "scenario": "A hard-braking lead vehicle still gets the minimum warning time",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(80.0);",
+          "text": "Given the ego vehicle drives at 80 km/h"
+        },
+        {
+          "catalogue": "FN-S11",
+          "cpp": "sil_.plant().set_lead(40.0, 80.0, 0.0);",
+          "text": "And a lead vehicle drives 40 m ahead at 80 km/h"
+        },
+        {
+          "catalogue": "FN-S13",
+          "cpp": "sil_.plant().lead_change_speed(0.0, 6.0);",
+          "text": "When the lead vehicle changes speed to 0 km/h at 6 m/s2"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(10.0);",
+          "text": "And 10 s pass"
+        },
+        {
+          "catalogue": "AEB-S04",
+          "cpp": "ASSERT_TRUE(sil_.feature().metrics().braked); EXPECT_GE(sil_.feature().metrics().first_brake_s - sil_.feature().metrics().first_warning_s, 0.8 - 1e-9);",
+          "text": "Then the warning preceded braking by at least 0.8 s"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/aeb/features/cascade.feature",
+      "line": 41,
+      "name": "S04_TheWarningEndsWhenTheTimeToCollisionRisesAbove33S",
+      "requirements": [
+        "REQ-AEB-004"
+      ],
+      "scenario": "The warning ends when the time to collision rises above 3.3 s",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(50.0);",
+          "text": "Given the ego vehicle drives at 50 km/h"
+        },
+        {
+          "catalogue": "FN-S11",
+          "cpp": "sil_.plant().set_lead(25.0, 30.0, 0.0);",
+          "text": "And a lead vehicle drives 25 m ahead at 30 km/h"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(2.0);",
+          "text": "When 2 s pass"
+        },
+        {
+          "catalogue": "AEB-S01",
+          "cpp": "EXPECT_EQ(sil_.feature().last_command().status, ea::plant::AebStatus::kWarning);",
+          "text": "Then the AEB state is WARNING"
+        },
+        {
+          "catalogue": "FN-S13",
+          "cpp": "sil_.plant().lead_change_speed(80.0, 2.0);",
+          "text": "When the lead vehicle changes speed to 80 km/h at 2 m/s2"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(3.0);",
+          "text": "And 3 s pass"
+        },
+        {
+          "catalogue": "AEB-S15",
+          "cpp": "EXPECT_GE(sil_.feature().metrics().ttc_at_warning_end_s, 3.3); EXPECT_LE(sil_.feature().metrics().ttc_at_warning_end_s, 3.5);",
+          "text": "Then the warning ended at a time to collision between 3.3 s and 3.5 s"
+        },
+        {
+          "catalogue": "AEB-S06",
+          "cpp": "EXPECT_FALSE(sil_.feature().metrics().braked);",
+          "text": "And emergency braking was never requested"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/aeb/features/cascade.feature",
+      "line": 52,
+      "name": "S05_TheWarningEndsWhenTheLeadVehiclePullsAway",
+      "requirements": [
+        "REQ-AEB-004"
+      ],
+      "scenario": "The warning ends when the lead vehicle pulls away",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(50.0);",
+          "text": "Given the ego vehicle drives at 50 km/h"
+        },
+        {
+          "catalogue": "FN-S11",
+          "cpp": "sil_.plant().set_lead(25.0, 30.0, 0.0);",
+          "text": "And a lead vehicle drives 25 m ahead at 30 km/h"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(2.0);",
+          "text": "When 2 s pass"
+        },
+        {
+          "catalogue": "AEB-S01",
+          "cpp": "EXPECT_EQ(sil_.feature().last_command().status, ea::plant::AebStatus::kWarning);",
+          "text": "Then the AEB state is WARNING"
+        },
+        {
+          "catalogue": "FN-S13",
+          "cpp": "sil_.plant().lead_change_speed(80.0, 4.0);",
+          "text": "When the lead vehicle changes speed to 80 km/h at 4 m/s2"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(2.0);",
+          "text": "And 2 s pass"
+        },
+        {
+          "catalogue": "AEB-S01",
+          "cpp": "EXPECT_EQ(sil_.feature().last_command().status, ea::plant::AebStatus::kStandby);",
+          "text": "Then the AEB state is STANDBY"
+        },
+        {
+          "catalogue": "AEB-S09",
+          "cpp": "EXPECT_EQ(sil_.feature().last_command().warning, false);",
+          "text": "And the warning is off"
+        },
+        {
+          "catalogue": "AEB-S06",
+          "cpp": "EXPECT_FALSE(sil_.feature().metrics().braked);",
+          "text": "And emergency braking was never requested"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/aeb/features/cascade.feature",
+      "line": 64,
+      "name": "S06_BrakingEndsOnceTheEgoVehicleNoLongerApproaches",
+      "requirements": [
+        "REQ-AEB-005"
+      ],
+      "scenario": "Braking ends once the ego vehicle no longer approaches",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(60.0);",
+          "text": "Given the ego vehicle drives at 60 km/h"
+        },
+        {
+          "catalogue": "FN-S11",
+          "cpp": "sil_.plant().set_lead(40.0, 20.0, 0.0);",
+          "text": "And a lead vehicle drives 40 m ahead at 20 km/h"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(10.0);",
+          "text": "When 10 s pass"
+        },
+        {
+          "catalogue": "AEB-S01",
+          "cpp": "EXPECT_EQ(sil_.feature().last_command().status, ea::plant::AebStatus::kStandby);",
+          "text": "Then the AEB state is STANDBY"
+        },
+        {
+          "catalogue": "FN-S45",
+          "cpp": "EXPECT_FALSE(sil_.plant().metrics().collision);",
+          "text": "And no collision occurred"
+        },
+        {
+          "catalogue": "FN-S48",
+          "cpp": "EXPECT_GT(sil_.plant().ego_speed_kph(), 1.0);",
+          "text": "And the ego vehicle is still moving"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "pedal",
+          "85"
+        ],
+        [
+          "result",
+          "the AEB state is STANDBY"
+        ]
+      ],
+      "feature": "examples/aeb/features/cascade.feature",
+      "line": 73,
+      "name": "S07_KickdownCancelsTheInterventionALighterPedalDoesNot_Ex1",
+      "requirements": [
+        "REQ-AEB-006"
+      ],
+      "scenario": "Kickdown cancels the intervention, a lighter pedal does not #1",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(50.0);",
+          "text": "Given the ego vehicle drives at 50 km/h"
+        },
+        {
+          "catalogue": "FN-S19",
+          "cpp": "sil_.plant().set_lead(60.0, 0.0, 0.0);",
+          "text": "And a stationary vehicle stands 60 m ahead"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(3.0);",
+          "text": "When 3 s pass"
+        },
+        {
+          "catalogue": "AEB-S09",
+          "cpp": "EXPECT_EQ(sil_.feature().last_command().warning, true);",
+          "text": "Then the warning is on"
+        },
+        {
+          "catalogue": "FN-S20",
+          "cpp": "sil_.plant().set_accel_pedal(85.0);",
+          "text": "When the driver holds the accelerator pedal at 85 %"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "And 0.2 s pass"
+        },
+        {
+          "catalogue": "AEB-S01",
+          "cpp": "EXPECT_EQ(sil_.feature().last_command().status, ea::plant::AebStatus::kStandby);",
+          "text": "Then the AEB state is STANDBY"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "pedal",
+          "75"
+        ],
+        [
+          "result",
+          "emergency braking is requested"
+        ]
+      ],
+      "feature": "examples/aeb/features/cascade.feature",
+      "line": 73,
+      "name": "S08_KickdownCancelsTheInterventionALighterPedalDoesNot_Ex2",
+      "requirements": [
+        "REQ-AEB-006"
+      ],
+      "scenario": "Kickdown cancels the intervention, a lighter pedal does not #2",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(50.0);",
+          "text": "Given the ego vehicle drives at 50 km/h"
+        },
+        {
+          "catalogue": "FN-S19",
+          "cpp": "sil_.plant().set_lead(60.0, 0.0, 0.0);",
+          "text": "And a stationary vehicle stands 60 m ahead"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(3.0);",
+          "text": "When 3 s pass"
+        },
+        {
+          "catalogue": "AEB-S09",
+          "cpp": "EXPECT_EQ(sil_.feature().last_command().warning, true);",
+          "text": "Then the warning is on"
+        },
+        {
+          "catalogue": "FN-S20",
+          "cpp": "sil_.plant().set_accel_pedal(75.0);",
+          "text": "When the driver holds the accelerator pedal at 75 %"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "And 0.2 s pass"
+        },
+        {
+          "catalogue": "AEB-S12",
+          "cpp": "EXPECT_GT(sil_.feature().last_command().brake_raw, 0);",
+          "text": "Then emergency braking is requested"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/aeb/features/cascade.feature",
+      "line": 88,
+      "name": "S09_KickdownAlsoCancelsFullBraking",
+      "requirements": [
+        "REQ-AEB-006"
+      ],
+      "scenario": "Kickdown also cancels full braking",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(50.0);",
+          "text": "Given the ego vehicle drives at 50 km/h"
+        },
+        {
+          "catalogue": "FN-S14",
+          "cpp": "sil_.plant().cut_in(9.0, 20.0);",
+          "text": "When a vehicle cuts in 9 m ahead at 20 km/h"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.1);",
+          "text": "And 0.1 s pass"
+        },
+        {
+          "catalogue": "AEB-S01",
+          "cpp": "EXPECT_EQ(sil_.feature().last_command().status, ea::plant::AebStatus::kFullBrake);",
+          "text": "Then the AEB state is FULL_BRAKE"
+        },
+        {
+          "catalogue": "FN-S20",
+          "cpp": "sil_.plant().set_accel_pedal(85.0);",
+          "text": "When the driver holds the accelerator pedal at 85 %"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.1);",
+          "text": "And 0.1 s pass"
+        },
+        {
+          "catalogue": "AEB-S01",
+          "cpp": "EXPECT_EQ(sil_.feature().last_command().status, ea::plant::AebStatus::kStandby);",
+          "text": "Then the AEB state is STANDBY"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "t",
+          "3"
+        ],
+        [
+          "stage",
+          "PARTIAL_BRAKE"
+        ]
+      ],
+      "feature": "examples/aeb/features/cascade.feature",
+      "line": 98,
+      "name": "S10_TheDriverSBrakePedalDoesNotCancelEmergencyBraking_Ex1",
+      "requirements": [
+        "REQ-AEB-007"
+      ],
+      "scenario": "The driver's brake pedal does not cancel emergency braking #1",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(50.0);",
+          "text": "Given the ego vehicle drives at 50 km/h"
+        },
+        {
+          "catalogue": "FN-S19",
+          "cpp": "sil_.plant().set_lead(60.0, 0.0, 0.0);",
+          "text": "And a stationary vehicle stands 60 m ahead"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(3.0);",
+          "text": "When 3 s pass"
+        },
+        {
+          "catalogue": "AEB-S01",
+          "cpp": "EXPECT_EQ(sil_.feature().last_command().status, ea::plant::AebStatus::kPartialBrake);",
+          "text": "Then the AEB state is PARTIAL_BRAKE"
+        },
+        {
+          "catalogue": "FN-S21",
+          "cpp": "sil_.plant().set_brake_pedal(true);",
+          "text": "When the driver holds the brake pedal"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.04);",
+          "text": "And 0.04 s pass"
+        },
+        {
+          "catalogue": "AEB-S01",
+          "cpp": "EXPECT_EQ(sil_.feature().last_command().status, ea::plant::AebStatus::kPartialBrake);",
+          "text": "Then the AEB state is PARTIAL_BRAKE"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(5.0);",
+          "text": "When 5 s pass"
+        },
+        {
+          "catalogue": "FN-S45",
+          "cpp": "EXPECT_FALSE(sil_.plant().metrics().collision);",
+          "text": "Then no collision occurred"
+        },
+        {
+          "catalogue": "AEB-S08",
+          "cpp": "EXPECT_EQ(sil_.feature().metrics().max_brake_raw, ea::plant::Plant::accel_raw(8.0));",
+          "text": "And the requested deceleration reached 8 m/s2"
+        },
+        {
+          "catalogue": "FN-S47",
+          "cpp": "EXPECT_LT(sil_.plant().ego_speed_kph(), 0.5);",
+          "text": "And the ego vehicle has stopped"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "t",
+          "3.6"
+        ],
+        [
+          "stage",
+          "FULL_BRAKE"
+        ]
+      ],
+      "feature": "examples/aeb/features/cascade.feature",
+      "line": 98,
+      "name": "S11_TheDriverSBrakePedalDoesNotCancelEmergencyBraking_Ex2",
+      "requirements": [
+        "REQ-AEB-007"
+      ],
+      "scenario": "The driver's brake pedal does not cancel emergency braking #2",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(50.0);",
+          "text": "Given the ego vehicle drives at 50 km/h"
+        },
+        {
+          "catalogue": "FN-S19",
+          "cpp": "sil_.plant().set_lead(60.0, 0.0, 0.0);",
+          "text": "And a stationary vehicle stands 60 m ahead"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(3.6);",
+          "text": "When 3.6 s pass"
+        },
+        {
+          "catalogue": "AEB-S01",
+          "cpp": "EXPECT_EQ(sil_.feature().last_command().status, ea::plant::AebStatus::kFullBrake);",
+          "text": "Then the AEB state is FULL_BRAKE"
+        },
+        {
+          "catalogue": "FN-S21",
+          "cpp": "sil_.plant().set_brake_pedal(true);",
+          "text": "When the driver holds the brake pedal"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.04);",
+          "text": "And 0.04 s pass"
+        },
+        {
+          "catalogue": "AEB-S01",
+          "cpp": "EXPECT_EQ(sil_.feature().last_command().status, ea::plant::AebStatus::kFullBrake);",
+          "text": "Then the AEB state is FULL_BRAKE"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(5.0);",
+          "text": "When 5 s pass"
+        },
+        {
+          "catalogue": "FN-S45",
+          "cpp": "EXPECT_FALSE(sil_.plant().metrics().collision);",
+          "text": "Then no collision occurred"
+        },
+        {
+          "catalogue": "AEB-S08",
+          "cpp": "EXPECT_EQ(sil_.feature().metrics().max_brake_raw, ea::plant::Plant::accel_raw(8.0));",
+          "text": "And the requested deceleration reached 8 m/s2"
+        },
+        {
+          "catalogue": "FN-S47",
+          "cpp": "EXPECT_LT(sil_.plant().ego_speed_kph(), 0.5);",
+          "text": "And the ego vehicle has stopped"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "speed",
+          "20"
+        ]
+      ],
+      "feature": "examples/aeb/features/performance.feature",
+      "line": 4,
+      "name": "S12_AStationaryVehicleIsAvoidedFrom20KmHTo60KmH_Ex1",
+      "requirements": [
+        "REQ-AEB-010"
+      ],
+      "scenario": "A stationary vehicle is avoided from 20 km/h to 60 km/h #1",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(20.0);",
+          "text": "Given the ego vehicle drives at 20 km/h"
+        },
+        {
+          "catalogue": "FN-S19",
+          "cpp": "sil_.plant().set_lead(100.0, 0.0, 0.0);",
+          "text": "And a stationary vehicle stands 100 m ahead"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(20.0);",
+          "text": "When 20 s pass"
+        },
+        {
+          "catalogue": "FN-S45",
+          "cpp": "EXPECT_FALSE(sil_.plant().metrics().collision);",
+          "text": "Then no collision occurred"
+        },
+        {
+          "catalogue": "FN-S47",
+          "cpp": "EXPECT_LT(sil_.plant().ego_speed_kph(), 0.5);",
+          "text": "And the ego vehicle has stopped"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "speed",
+          "40"
+        ]
+      ],
+      "feature": "examples/aeb/features/performance.feature",
+      "line": 4,
+      "name": "S13_AStationaryVehicleIsAvoidedFrom20KmHTo60KmH_Ex2",
+      "requirements": [
+        "REQ-AEB-010"
+      ],
+      "scenario": "A stationary vehicle is avoided from 20 km/h to 60 km/h #2",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(40.0);",
+          "text": "Given the ego vehicle drives at 40 km/h"
+        },
+        {
+          "catalogue": "FN-S19",
+          "cpp": "sil_.plant().set_lead(100.0, 0.0, 0.0);",
+          "text": "And a stationary vehicle stands 100 m ahead"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(20.0);",
+          "text": "When 20 s pass"
+        },
+        {
+          "catalogue": "FN-S45",
+          "cpp": "EXPECT_FALSE(sil_.plant().metrics().collision);",
+          "text": "Then no collision occurred"
+        },
+        {
+          "catalogue": "FN-S47",
+          "cpp": "EXPECT_LT(sil_.plant().ego_speed_kph(), 0.5);",
+          "text": "And the ego vehicle has stopped"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "speed",
+          "60"
+        ]
+      ],
+      "feature": "examples/aeb/features/performance.feature",
+      "line": 4,
+      "name": "S14_AStationaryVehicleIsAvoidedFrom20KmHTo60KmH_Ex3",
+      "requirements": [
+        "REQ-AEB-010"
+      ],
+      "scenario": "A stationary vehicle is avoided from 20 km/h to 60 km/h #3",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(60.0);",
+          "text": "Given the ego vehicle drives at 60 km/h"
+        },
+        {
+          "catalogue": "FN-S19",
+          "cpp": "sil_.plant().set_lead(100.0, 0.0, 0.0);",
+          "text": "And a stationary vehicle stands 100 m ahead"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(20.0);",
+          "text": "When 20 s pass"
+        },
+        {
+          "catalogue": "FN-S45",
+          "cpp": "EXPECT_FALSE(sil_.plant().metrics().collision);",
+          "text": "Then no collision occurred"
+        },
+        {
+          "catalogue": "FN-S47",
+          "cpp": "EXPECT_LT(sil_.plant().ego_speed_kph(), 0.5);",
+          "text": "And the ego vehicle has stopped"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/aeb/features/performance.feature",
+      "line": 18,
+      "name": "S15_TheImpactSpeedOnAStationaryVehicleAt80KmHIsAtMost40KmH",
+      "requirements": [
+        "REQ-AEB-011"
+      ],
+      "scenario": "The impact speed on a stationary vehicle at 80 km/h is at most 40 km/h",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(80.0);",
+          "text": "Given the ego vehicle drives at 80 km/h"
+        },
+        {
+          "catalogue": "FN-S19",
+          "cpp": "sil_.plant().set_lead(100.0, 0.0, 0.0);",
+          "text": "And a stationary vehicle stands 100 m ahead"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(10.0);",
+          "text": "When 10 s pass"
+        },
+        {
+          "catalogue": "FN-S46",
+          "cpp": "EXPECT_LE(sil_.plant().metrics().impact_speed_kph, 40.0);",
+          "text": "Then the impact speed was at most 40 km/h"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "speed",
+          "50"
+        ]
+      ],
+      "feature": "examples/aeb/features/performance.feature",
+      "line": 25,
+      "name": "S16_AVehicleAt20KmHIsAvoidedFromUpTo80KmH_Ex1",
+      "requirements": [
+        "REQ-AEB-012"
+      ],
+      "scenario": "A vehicle at 20 km/h is avoided from up to 80 km/h #1",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(50.0);",
+          "text": "Given the ego vehicle drives at 50 km/h"
+        },
+        {
+          "catalogue": "FN-S11",
+          "cpp": "sil_.plant().set_lead(100.0, 20.0, 0.0);",
+          "text": "And a lead vehicle drives 100 m ahead at 20 km/h"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(20.0);",
+          "text": "When 20 s pass"
+        },
+        {
+          "catalogue": "FN-S45",
+          "cpp": "EXPECT_FALSE(sil_.plant().metrics().collision);",
+          "text": "Then no collision occurred"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "speed",
+          "80"
+        ]
+      ],
+      "feature": "examples/aeb/features/performance.feature",
+      "line": 25,
+      "name": "S17_AVehicleAt20KmHIsAvoidedFromUpTo80KmH_Ex2",
+      "requirements": [
+        "REQ-AEB-012"
+      ],
+      "scenario": "A vehicle at 20 km/h is avoided from up to 80 km/h #2",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(80.0);",
+          "text": "Given the ego vehicle drives at 80 km/h"
+        },
+        {
+          "catalogue": "FN-S11",
+          "cpp": "sil_.plant().set_lead(100.0, 20.0, 0.0);",
+          "text": "And a lead vehicle drives 100 m ahead at 20 km/h"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(20.0);",
+          "text": "When 20 s pass"
+        },
+        {
+          "catalogue": "FN-S45",
+          "cpp": "EXPECT_FALSE(sil_.plant().metrics().collision);",
+          "text": "Then no collision occurred"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "offset",
+          "2.0"
+        ],
+        [
+          "result",
+          "no forward collision warning was issued"
+        ]
+      ],
+      "feature": "examples/aeb/features/robustness.feature",
+      "line": 4,
+      "name": "S18_OnlyVehiclesWithin18MOfTheLaneCentreAreRelevant_Ex1",
+      "requirements": [
+        "REQ-AEB-008"
+      ],
+      "scenario": "Only vehicles within 1.8 m of the lane centre are relevant #1",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(50.0);",
+          "text": "Given the ego vehicle drives at 50 km/h"
+        },
+        {
+          "catalogue": "FN-S12",
+          "cpp": "sil_.plant().set_lead(60.0, 0.0, 2.0);",
+          "text": "And a vehicle drives 60 m ahead at 0 km/h with 2.0 m lateral offset"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(4.0);",
+          "text": "When 4 s pass"
+        },
+        {
+          "catalogue": "AEB-S03",
+          "cpp": "EXPECT_FALSE(sil_.feature().metrics().warned);",
+          "text": "Then no forward collision warning was issued"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "offset",
+          "1.6"
+        ],
+        [
+          "result",
+          "a forward collision warning was issued at a time to collision between 2.7 s and 2.9 s"
+        ]
+      ],
+      "feature": "examples/aeb/features/robustness.feature",
+      "line": 4,
+      "name": "S19_OnlyVehiclesWithin18MOfTheLaneCentreAreRelevant_Ex2",
+      "requirements": [
+        "REQ-AEB-008"
+      ],
+      "scenario": "Only vehicles within 1.8 m of the lane centre are relevant #2",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(50.0);",
+          "text": "Given the ego vehicle drives at 50 km/h"
+        },
+        {
+          "catalogue": "FN-S12",
+          "cpp": "sil_.plant().set_lead(60.0, 0.0, 1.6);",
+          "text": "And a vehicle drives 60 m ahead at 0 km/h with 1.6 m lateral offset"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(4.0);",
+          "text": "When 4 s pass"
+        },
+        {
+          "catalogue": "AEB-S02",
+          "cpp": "ASSERT_TRUE(sil_.feature().metrics().warned); EXPECT_GE(sil_.feature().metrics().ttc_at_warning_s, 2.7); EXPECT_LE(sil_.feature().metrics().ttc_at_warning_s, 2.9);",
+          "text": "Then a forward collision warning was issued at a time to collision between 2.7 s and 2.9 s"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/aeb/features/robustness.feature",
+      "line": 16,
+      "name": "S20_AVehicleFollowedAtTheSameSpeedIsNotAHazard",
+      "requirements": [
+        "REQ-AEB-008"
+      ],
+      "scenario": "A vehicle followed at the same speed is not a hazard",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(80.0);",
+          "text": "Given the ego vehicle drives at 80 km/h"
+        },
+        {
+          "catalogue": "FN-S11",
+          "cpp": "sil_.plant().set_lead(10.0, 80.0, 0.0);",
+          "text": "And a lead vehicle drives 10 m ahead at 80 km/h"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(10.0);",
+          "text": "When 10 s pass"
+        },
+        {
+          "catalogue": "AEB-S03",
+          "cpp": "EXPECT_FALSE(sil_.feature().metrics().warned);",
+          "text": "Then no forward collision warning was issued"
+        },
+        {
+          "catalogue": "AEB-S06",
+          "cpp": "EXPECT_FALSE(sil_.feature().metrics().braked);",
+          "text": "And emergency braking was never requested"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "speed",
+          "9"
+        ],
+        [
+          "distance",
+          "20"
+        ],
+        [
+          "time",
+          "5"
+        ],
+        [
+          "result",
+          "no forward collision warning was issued"
+        ]
+      ],
+      "feature": "examples/aeb/features/robustness.feature",
+      "line": 24,
+      "name": "S21_WarningsStartOnlyBetween10KmHAnd150KmH_Ex1",
+      "requirements": [
+        "REQ-AEB-009"
+      ],
+      "scenario": "Warnings start only between 10 km/h and 150 km/h #1",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(9.0);",
+          "text": "Given the ego vehicle drives at 9 km/h"
+        },
+        {
+          "catalogue": "FN-S19",
+          "cpp": "sil_.plant().set_lead(20.0, 0.0, 0.0);",
+          "text": "And a stationary vehicle stands 20 m ahead"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(5.0);",
+          "text": "When 5 s pass"
+        },
+        {
+          "catalogue": "AEB-S03",
+          "cpp": "EXPECT_FALSE(sil_.feature().metrics().warned);",
+          "text": "Then no forward collision warning was issued"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "speed",
+          "11"
+        ],
+        [
+          "distance",
+          "20"
+        ],
+        [
+          "time",
+          "5"
+        ],
+        [
+          "result",
+          "a forward collision warning was issued at a time to collision between 2.7 s and 2.9 s"
+        ]
+      ],
+      "feature": "examples/aeb/features/robustness.feature",
+      "line": 24,
+      "name": "S22_WarningsStartOnlyBetween10KmHAnd150KmH_Ex2",
+      "requirements": [
+        "REQ-AEB-009"
+      ],
+      "scenario": "Warnings start only between 10 km/h and 150 km/h #2",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(11.0);",
+          "text": "Given the ego vehicle drives at 11 km/h"
+        },
+        {
+          "catalogue": "FN-S19",
+          "cpp": "sil_.plant().set_lead(20.0, 0.0, 0.0);",
+          "text": "And a stationary vehicle stands 20 m ahead"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(5.0);",
+          "text": "When 5 s pass"
+        },
+        {
+          "catalogue": "AEB-S02",
+          "cpp": "ASSERT_TRUE(sil_.feature().metrics().warned); EXPECT_GE(sil_.feature().metrics().ttc_at_warning_s, 2.7); EXPECT_LE(sil_.feature().metrics().ttc_at_warning_s, 2.9);",
+          "text": "Then a forward collision warning was issued at a time to collision between 2.7 s and 2.9 s"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "speed",
+          "145"
+        ],
+        [
+          "distance",
+          "140"
+        ],
+        [
+          "time",
+          "2"
+        ],
+        [
+          "result",
+          "a forward collision warning was issued at a time to collision between 2.7 s and 2.9 s"
+        ]
+      ],
+      "feature": "examples/aeb/features/robustness.feature",
+      "line": 24,
+      "name": "S23_WarningsStartOnlyBetween10KmHAnd150KmH_Ex3",
+      "requirements": [
+        "REQ-AEB-009"
+      ],
+      "scenario": "Warnings start only between 10 km/h and 150 km/h #3",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(145.0);",
+          "text": "Given the ego vehicle drives at 145 km/h"
+        },
+        {
+          "catalogue": "FN-S19",
+          "cpp": "sil_.plant().set_lead(140.0, 0.0, 0.0);",
+          "text": "And a stationary vehicle stands 140 m ahead"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(2.0);",
+          "text": "When 2 s pass"
+        },
+        {
+          "catalogue": "AEB-S02",
+          "cpp": "ASSERT_TRUE(sil_.feature().metrics().warned); EXPECT_GE(sil_.feature().metrics().ttc_at_warning_s, 2.7); EXPECT_LE(sil_.feature().metrics().ttc_at_warning_s, 2.9);",
+          "text": "Then a forward collision warning was issued at a time to collision between 2.7 s and 2.9 s"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "speed",
+          "155"
+        ],
+        [
+          "distance",
+          "140"
+        ],
+        [
+          "time",
+          "2"
+        ],
+        [
+          "result",
+          "no forward collision warning was issued"
+        ]
+      ],
+      "feature": "examples/aeb/features/robustness.feature",
+      "line": 24,
+      "name": "S24_WarningsStartOnlyBetween10KmHAnd150KmH_Ex4",
+      "requirements": [
+        "REQ-AEB-009"
+      ],
+      "scenario": "Warnings start only between 10 km/h and 150 km/h #4",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(155.0);",
+          "text": "Given the ego vehicle drives at 155 km/h"
+        },
+        {
+          "catalogue": "FN-S19",
+          "cpp": "sil_.plant().set_lead(140.0, 0.0, 0.0);",
+          "text": "And a stationary vehicle stands 140 m ahead"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(2.0);",
+          "text": "When 2 s pass"
+        },
+        {
+          "catalogue": "AEB-S03",
+          "cpp": "EXPECT_FALSE(sil_.feature().metrics().warned);",
+          "text": "Then no forward collision warning was issued"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/aeb/features/robustness.feature",
+      "line": 38,
+      "name": "S25_APausedRadarLeadsToFAULTWithoutInterventionThenRecovers",
+      "requirements": [
+        "REQ-AEB-013"
+      ],
+      "scenario": "A paused radar leads to FAULT without intervention, then recovers",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(50.0);",
+          "text": "Given the ego vehicle drives at 50 km/h"
+        },
+        {
+          "catalogue": "FN-S19",
+          "cpp": "sil_.plant().set_lead(100.0, 0.0, 0.0);",
+          "text": "And a stationary vehicle stands 100 m ahead"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(1.0);",
+          "text": "When 1 s passes"
+        },
+        {
+          "catalogue": "FN-S18",
+          "cpp": "sil_.plant().skip_frames(ea::plant::Stream::kRadar, 5U);",
+          "text": "And the radar sender pauses for 5 frames"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.16);",
+          "text": "And 0.16 s pass"
+        },
+        {
+          "catalogue": "AEB-S01",
+          "cpp": "EXPECT_EQ(sil_.feature().last_command().status, ea::plant::AebStatus::kFault);",
+          "text": "Then the AEB state is FAULT"
+        },
+        {
+          "catalogue": "AEB-S09",
+          "cpp": "EXPECT_EQ(sil_.feature().last_command().warning, false);",
+          "text": "And the warning is off"
+        },
+        {
+          "catalogue": "AEB-S06",
+          "cpp": "EXPECT_FALSE(sil_.feature().metrics().braked);",
+          "text": "And emergency braking was never requested"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "When 0.2 s pass"
+        },
+        {
+          "catalogue": "AEB-S01",
+          "cpp": "EXPECT_EQ(sil_.feature().last_command().status, ea::plant::AebStatus::kStandby);",
+          "text": "Then the AEB state is STANDBY"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "message",
+          "ego state"
+        ],
+        [
+          "n",
+          "2"
+        ],
+        [
+          "state",
+          "STANDBY"
+        ]
+      ],
+      "feature": "examples/aeb/features/robustness.feature",
+      "line": 51,
+      "name": "S26_VehicleInputTimeoutsLeadToFAULT_Ex1",
+      "requirements": [
+        "REQ-AEB-013"
+      ],
+      "scenario": "Vehicle input timeouts lead to FAULT #1",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(50.0);",
+          "text": "Given the ego vehicle drives at 50 km/h"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(1.0);",
+          "text": "When 1 s passes"
+        },
+        {
+          "catalogue": "FN-S18",
+          "cpp": "sil_.plant().skip_frames(ea::plant::Stream::kEgoState, 2U);",
+          "text": "And the ego state sender pauses for 2 frames"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.06);",
+          "text": "And 0.06 s pass"
+        },
+        {
+          "catalogue": "AEB-S01",
+          "cpp": "EXPECT_EQ(sil_.feature().last_command().status, ea::plant::AebStatus::kStandby);",
+          "text": "Then the AEB state is STANDBY"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "message",
+          "ego state"
+        ],
+        [
+          "n",
+          "3"
+        ],
+        [
+          "state",
+          "FAULT"
+        ]
+      ],
+      "feature": "examples/aeb/features/robustness.feature",
+      "line": 51,
+      "name": "S27_VehicleInputTimeoutsLeadToFAULT_Ex2",
+      "requirements": [
+        "REQ-AEB-013"
+      ],
+      "scenario": "Vehicle input timeouts lead to FAULT #2",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(50.0);",
+          "text": "Given the ego vehicle drives at 50 km/h"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(1.0);",
+          "text": "When 1 s passes"
+        },
+        {
+          "catalogue": "FN-S18",
+          "cpp": "sil_.plant().skip_frames(ea::plant::Stream::kEgoState, 3U);",
+          "text": "And the ego state sender pauses for 3 frames"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.06);",
+          "text": "And 0.06 s pass"
+        },
+        {
+          "catalogue": "AEB-S01",
+          "cpp": "EXPECT_EQ(sil_.feature().last_command().status, ea::plant::AebStatus::kFault);",
+          "text": "Then the AEB state is FAULT"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "message",
+          "driver input"
+        ],
+        [
+          "n",
+          "2"
+        ],
+        [
+          "state",
+          "STANDBY"
+        ]
+      ],
+      "feature": "examples/aeb/features/robustness.feature",
+      "line": 51,
+      "name": "S28_VehicleInputTimeoutsLeadToFAULT_Ex3",
+      "requirements": [
+        "REQ-AEB-013"
+      ],
+      "scenario": "Vehicle input timeouts lead to FAULT #3",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(50.0);",
+          "text": "Given the ego vehicle drives at 50 km/h"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(1.0);",
+          "text": "When 1 s passes"
+        },
+        {
+          "catalogue": "FN-S18",
+          "cpp": "sil_.plant().skip_frames(ea::plant::Stream::kDriverInput, 2U);",
+          "text": "And the driver input sender pauses for 2 frames"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.06);",
+          "text": "And 0.06 s pass"
+        },
+        {
+          "catalogue": "AEB-S01",
+          "cpp": "EXPECT_EQ(sil_.feature().last_command().status, ea::plant::AebStatus::kStandby);",
+          "text": "Then the AEB state is STANDBY"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "message",
+          "driver input"
+        ],
+        [
+          "n",
+          "3"
+        ],
+        [
+          "state",
+          "FAULT"
+        ]
+      ],
+      "feature": "examples/aeb/features/robustness.feature",
+      "line": 51,
+      "name": "S29_VehicleInputTimeoutsLeadToFAULT_Ex4",
+      "requirements": [
+        "REQ-AEB-013"
+      ],
+      "scenario": "Vehicle input timeouts lead to FAULT #4",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(50.0);",
+          "text": "Given the ego vehicle drives at 50 km/h"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(1.0);",
+          "text": "When 1 s passes"
+        },
+        {
+          "catalogue": "FN-S18",
+          "cpp": "sil_.plant().skip_frames(ea::plant::Stream::kDriverInput, 3U);",
+          "text": "And the driver input sender pauses for 3 frames"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.06);",
+          "text": "And 0.06 s pass"
+        },
+        {
+          "catalogue": "AEB-S01",
+          "cpp": "EXPECT_EQ(sil_.feature().last_command().status, ea::plant::AebStatus::kFault);",
+          "text": "Then the AEB state is FAULT"
+        }
+      ]
+    }
+  ]
+}

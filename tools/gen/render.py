@@ -53,7 +53,9 @@ def tool_files(pattern: str) -> list[pathlib.Path]:
     files = sorted(f for f in GEN_DIR.rglob("*.py") if "tests" not in f.relative_to(GEN_DIR).parts)
     files += sorted((TEMPLATE_DIR / "common").rglob("*.j2"))
     files += sorted((TEMPLATE_DIR / pattern).rglob("*.j2"))
-    files += [REPO_ROOT / "sil" / "steps" / f"{pattern}.yaml"]
+    steps_file = REPO_ROOT / "sil" / "steps" / f"{pattern}.yaml"
+    if steps_file.is_file():
+        files.append(steps_file)
     files += sorted((REPO_ROOT / "schemas").glob("*.schema.json"))
     return files
 

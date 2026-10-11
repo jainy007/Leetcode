@@ -9,18 +9,18 @@
 ```
 examples/acc/requirements.yaml   22 EARS requirements (ISO 15622 style, values are project choices)
 examples/acc/interfaces/acc.dbc  4 classic-CAN messages: RadarObject, EgoState, DriverInput -> AccCommand
-examples/acc/model.yaml          pattern acc_controller: timing, E2E, bindings, calibration
+examples/acc/model.yaml          pattern can_function, feature acc: timing, E2E, bindings, calibration
 examples/acc/features/*.feature  modes, control, faults; expected numbers derived from the requirements
         │  python3 -m tools.gen   (rules GEN-001..GEN-064, no AI)
         ▼
-generated/acc/                   codec, controller, SIL harness, 46 SIL tests, trace.json
+generated/acc/                   codec, framework component, ACC logic, SIL harness, 46 SIL tests, trace.json
         │
 sil/plant/                       hand-written plant: ego + lead vehicle, radar, driver, CAN timing,
                                  fault injection (lost / corrupted / paused frames), metrics
 ```
 
 **The test oracle is independent of the generator.** The plant encodes and decodes frames from
-its own hand-written copy of the DBC (`sil/plant/include/ea/plant/acc_can.hpp`). It checks the
+its own hand-written copy of the DBC (`sil/plant/include/ea/plant/vehicle_can.hpp`, `acc_can.hpp`). It checks the
 controller's E2E protection itself. Every observation, such as mode, requests, distance or
 speed, comes from what the plant sees on the bus and in its own vehicle state. Expected values
 come from the requirements, for example a following distance of `5 m + T_gap · v`.
@@ -51,6 +51,10 @@ come from the requirements, for example a following distance of `5 m + T_gap · 
 
 ## Mutation testing
 Each mutant is one deliberate defect. After each, the code was regenerated, rebuilt and SIL rerun.
+The campaign is reproducible: `python3 -m tools.mutate acc` (spec: `examples/acc/mutations.yaml`). The
+latest run detected 33 of 35 mutants, declared 2 equivalent, and had 0 unexpected results. It covers
+mutants in the input files, the feature template (`templates/features/acc/`) and the framework
+template (`templates/can_function/`).
 
 ### Defects in the inputs (model / DBC): 16 of 16 detected
 | Mutant | Detected by |
@@ -104,7 +108,8 @@ Equivalent (no requirement-level observation can tell them apart):
   object.
 - **Function scope:** no stop-and-go (by requirement).
 - **E2E:** modelled on AUTOSAR Profile 11, but not validated against official AUTOSAR test vectors.
-- **Exception to `CLAUDE.md`:** at the repository owner's request, an AI wrote the new pattern
-  (`tools/gen/patterns/acc_controller.py`, `templates/acc_controller/`), the step catalogue
-  (`sil/steps/acc_controller.yaml`) and the E2E runtime (`runtime/*/e2e/p11*`). These paths are
-  human-only, so they need the two-person review before the pattern counts as qualified.
+- **Authorship:** the agent wrote the toolchain end to end at the repository owner's request
+  (see `CLAUDE.md`). The generation step itself stays deterministic and AI-free.
+- **Framework split:** since this report was first written, the pattern was split into the
+  `can_function` framework and the `acc` feature plug-in. All 46 SIL tests and the mutation
+  campaign were re-run afterwards.

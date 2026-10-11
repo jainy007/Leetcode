@@ -48,6 +48,8 @@ class Context:
     variables: dict[str, Any]
     outputs: list[tuple[str, str]]  # (template, output path relative to project output dir)
     sil_suite: str
+    step_catalogues: list[str] = field(default_factory=list)  # repo-relative; default sil/steps/<pattern>.yaml
+    extra_tool_files: list[pathlib.Path] = field(default_factory=list)  # tool files outside the pattern dir
 
 
 def _check_finite(doc: Any, display: str, diags: Diagnostics, where: str = "") -> None:
@@ -132,12 +134,13 @@ def generate(name: str, model_rel: str, output_rel: str, diags: Diagnostics) -> 
     if built is None or not diags.ok():
         return {}
     inputs, ctx = built
-    catalogue = steps.load_catalogue(inputs.pattern, diags)
+    catalogue = steps.load_catalogues(ctx.step_catalogues or [f"sil/steps/{inputs.pattern}.yaml"], diags)
     bound = steps.bind(inputs.scenarios, catalogue, ctx.resolve_ref, diags)
     if not diags.ok():
         return {}
 
-    digest = render.inputs_digest(inputs.files + render.tool_files(inputs.pattern))
+    catalogue_files = [REPO_ROOT / c for c in ctx.step_catalogues]
+    digest = render.inputs_digest(inputs.files + render.tool_files(inputs.pattern) + catalogue_files + ctx.extra_tool_files)
     header = render.header_lines(inputs.pattern, name, digest)
     tests = []
     for idx, b in enumerate(bound, start=1):
@@ -159,7 +162,7 @@ def generate(name: str, model_rel: str, output_rel: str, diags: Diagnostics) -> 
     files: dict[str, str] = {}
     for template, out in ctx.outputs:
         path = f"{output_rel}/{out}"
-        source = template if template.startswith("common/") else f"{inputs.pattern}/{template}"
+        source = template if template.startswith(("common/", "features/")) else f"{inputs.pattern}/{template}"
         files[path] = render.render(env, source, path, variables, header)
 
     satisfied_by: dict[str, list[str]] = {}

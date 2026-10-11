@@ -1,195 +1,150 @@
-# Controlled step vocabulary for the acc_controller pattern: closed-loop SIL against the plant in
-# sil/plant. Qualified tool configuration: humans only (see CLAUDE.md).
-# Observations come from the plant's own decoding of the AccCommand frames and its own vehicle
-# state, never from the controller's internals.
+# Shared step vocabulary for every can_function feature: scenario set-up, driver, traffic,
+# bus faults and vehicle-level observations against the plant (sil/plant). Feature-specific
+# observations live in sil/steps/features/<feature>.yaml. Ids: FN-Sxx here, <FEATURE>-Sxx there.
 schema_version: 1
-pattern: acc_controller
+pattern: can_function
 steps:
-  # ---- scenario set-up and driver --------------------------------------------------------
-  - id: ACC-S01
+  - id: FN-S01
     keywords: [given, when]
     pattern: '^the ego vehicle drives at (?P<v>[0-9]+(?:\.[0-9]+)?) km/h$'
     types: {v: number}
     cpp: 'sil_.plant().set_ego_speed_kph({{ v }});'
-  - id: ACC-S02
+  - id: FN-S02
     keywords: [given, when]
     pattern: '^the driver switches ACC (?P<state>on|off)$'
     types: {state: 'enum:[on, off]'}
     cpp: 'sil_.switch_main({{ "true" if state == "on" else "false" }});'
-  - id: ACC-S03
-    keywords: [given]
-    pattern: '^ACC is engaged$'
-    cpp: 'sil_.engage();'
-  - id: ACC-S04
+  - id: FN-S04
     keywords: [given, when]
     pattern: '^the driver presses the (?P<button>set|resume|cancel|speed up|speed down) button$'
     types: {button: 'enum:[set, resume, cancel, speed up, speed down]'}
     cpp: 'sil_.press(ea::plant::Button::k{{ button | camel }}, 1);'
-  - id: ACC-S05
+  - id: FN-S05
     keywords: [when]
     pattern: '^the driver presses the (?P<button>set|resume|cancel|speed up|speed down) button (?P<n>[0-9]{1,2}) times$'
     types: {button: 'enum:[set, resume, cancel, speed up, speed down]', n: int}
     cpp: 'sil_.press(ea::plant::Button::k{{ button | camel }}, {{ n }});'
-  - id: ACC-S06
+  - id: FN-S06
     keywords: [given, when]
     pattern: '^the driver (?P<action>presses|releases) the brake pedal$'
     types: {action: 'enum:[presses, releases]'}
     cpp: 'sil_.brake({{ "true" if action == "presses" else "false" }});'
-  - id: ACC-S07
+  - id: FN-S07
     keywords: [when]
     pattern: '^the driver presses the accelerator pedal to (?P<pct>[0-9]+(?:\.[0-9]+)?) %$'
     types: {pct: number}
     cpp: 'sil_.accelerator({{ pct }});'
-  - id: ACC-S08
+  - id: FN-S08
     keywords: [when]
     pattern: '^the driver releases the accelerator pedal$'
     cpp: 'sil_.accelerator(0.0);'
-  - id: ACC-S09
+  - id: FN-S09
     keywords: [given]
     pattern: '^the time gap setting is (?P<n>[1-9])$'
     types: {n: int}
     cpp: 'sil_.plant().set_gap_setting({{ n }}U);'
-  - id: ACC-S10
+  - id: FN-S10
     keywords: [when]
     pattern: '^(?P<t>[0-9]+(?:\.[0-9]+)?) s pass(?:es)?$'
     types: {t: number}
     cpp: 'sil_.run({{ t }});'
-  # ---- traffic ---------------------------------------------------------------------------
-  - id: ACC-S11
+  - id: FN-S11
     keywords: [given]
     pattern: '^a lead vehicle drives (?P<d>[0-9]+(?:\.[0-9]+)?) m ahead at (?P<v>[0-9]+(?:\.[0-9]+)?) km/h$'
     types: {d: number, v: number}
     cpp: 'sil_.plant().set_lead({{ d }}, {{ v }}, 0.0);'
-  - id: ACC-S12
+  - id: FN-S12
     keywords: [given]
     pattern: '^a vehicle drives (?P<d>[0-9]+(?:\.[0-9]+)?) m ahead at (?P<v>[0-9]+(?:\.[0-9]+)?) km/h with (?P<lat>-?[0-9]+(?:\.[0-9]+)?) m lateral offset$'
     types: {d: number, v: number, lat: number}
     cpp: 'sil_.plant().set_lead({{ d }}, {{ v }}, {{ lat }});'
-  - id: ACC-S13
+  - id: FN-S13
     keywords: [when]
     pattern: '^the lead vehicle changes speed to (?P<v>[0-9]+(?:\.[0-9]+)?) km/h at (?P<a>[0-9]+(?:\.[0-9]+)?) m/s2$'
     types: {v: number, a: number}
     cpp: 'sil_.plant().lead_change_speed({{ v }}, {{ a }});'
-  - id: ACC-S14
+  - id: FN-S14
     keywords: [when]
     pattern: '^a vehicle cuts in (?P<d>[0-9]+(?:\.[0-9]+)?) m ahead at (?P<v>[0-9]+(?:\.[0-9]+)?) km/h$'
     types: {d: number, v: number}
     cpp: 'sil_.plant().cut_in({{ d }}, {{ v }});'
-  - id: ACC-S15
+  - id: FN-S15
     keywords: [when]
     pattern: '^the lead vehicle leaves the lane$'
     cpp: 'sil_.plant().remove_lead();'
-  # ---- faults ----------------------------------------------------------------------------
-  - id: ACC-S16
+  - id: FN-S16
     keywords: [when]
     pattern: '^the next (?P<n>[0-9]{1,3}) radar frames are (?P<fault>lost|corrupted)$'
     types: {n: int, fault: 'enum:[lost, corrupted]'}
     cpp: 'sil_.plant().{{ "lose_frames" if fault == "lost" else "corrupt_frames" }}(ea::plant::Stream::kRadar, {{ n }}U);'
-  - id: ACC-S17
+  - id: FN-S17
     keywords: [when]
     pattern: '^the next (?P<n>[0-9]{1,3}) (?P<stream>ego state|driver input) frames are lost$'
     types: {n: int, stream: 'enum:[ego state, driver input]'}
     cpp: 'sil_.plant().lose_frames(ea::plant::Stream::k{{ stream | camel }}, {{ n }}U);'
-  - id: ACC-S18
+  - id: FN-S18
     keywords: [when]
     pattern: '^the (?P<stream>radar|ego state|driver input) sender pauses for (?P<n>[0-9]{1,3}) frames$'
     types: {stream: 'enum:[radar, ego state, driver input]', n: int}
     cpp: 'sil_.plant().skip_frames(ea::plant::Stream::k{{ stream | camel }}, {{ n }}U);'
-  - id: ACC-S19
-    keywords: [when]
-    pattern: '^the driver releases the brake pedal while holding the set button$'
-    cpp: 'sil_.release_brake_while_holding_set();'
-  # ---- observations: command frames ----------------------------------------------------
-  - id: ACC-S20
-    keywords: [then]
-    pattern: '^the ACC state is (?P<s>OFF|STANDBY|ACTIVE|OVERRIDE|FAULT)$'
-    types: {s: 'enum:[OFF, STANDBY, ACTIVE, OVERRIDE, FAULT]'}
-    cpp: 'EXPECT_EQ(sil_.plant().last_command().status, ea::plant::AccStatus::k{{ s | camel }});'
-  - id: ACC-S21
-    keywords: [then]
-    pattern: '^neither acceleration nor braking is requested$'
-    cpp: 'EXPECT_EQ(sil_.plant().last_command().accel_raw, 0); EXPECT_EQ(sil_.plant().last_command().brake_raw, 0);'
-  - id: ACC-S22
-    keywords: [then]
-    pattern: '^the set speed is (?P<v>[0-9]+) km/h$'
-    types: {v: number}
-    cpp: 'EXPECT_DOUBLE_EQ(sil_.plant().last_command().set_speed_kph, {{ v }});'
-  - id: ACC-S23
-    keywords: [then]
-    pattern: '^the reported time gap setting is (?P<n>[0-9])$'
-    types: {n: int}
-    cpp: 'EXPECT_EQ(sil_.plant().last_command().time_gap_setting, {{ n }}U);'
-  - id: ACC-S24
+  - id: FN-S24
     keywords: [then]
     pattern: '^the ACC state changed within (?P<ms>[0-9]+) ms of the driver action$'
     types: {ms: number}
     cpp: 'EXPECT_GE(sil_.plant().status_change_latency_ms(), 0.0); EXPECT_LE(sil_.plant().status_change_latency_ms(), {{ ms }});'
-  - id: ACC-S25
-    keywords: [then]
-    pattern: '^braking is requested$'
-    cpp: 'EXPECT_GT(sil_.plant().last_command().brake_raw, 0);'
-  - id: ACC-S26
-    keywords: [then]
-    pattern: '^braking was never requested$'
-    cpp: 'EXPECT_EQ(sil_.plant().metrics().max_brake_raw, 0);'
-  - id: ACC-S27
-    keywords: [then]
-    pattern: '^the requested acceleration never exceeded (?P<a>[0-9]+(?:\.[0-9]+)?) m/s2$'
-    types: {a: number}
-    cpp: 'EXPECT_LE(sil_.plant().metrics().max_accel_raw, ea::plant::AccPlant::accel_raw({{ a }}));'
-  - id: ACC-S28
-    keywords: [then]
-    pattern: '^the requested deceleration never exceeded (?P<a>[0-9]+(?:\.[0-9]+)?) m/s2$'
-    types: {a: number}
-    cpp: 'EXPECT_LE(sil_.plant().metrics().max_brake_raw, ea::plant::AccPlant::accel_raw({{ a }}));'
-  - id: ACC-S29
-    keywords: [then]
-    pattern: '^the requested jerk never exceeded (?P<up>[0-9]+(?:\.[0-9]+)?) m/s3 increasing and (?P<down>[0-9]+(?:\.[0-9]+)?) m/s3 decreasing$'
-    types: {up: number, down: number}
-    cpp: 'EXPECT_LE(sil_.plant().metrics().max_jerk_up_raw, ea::plant::AccPlant::jerk_step_raw({{ up }})); EXPECT_LE(sil_.plant().metrics().max_jerk_down_raw, ea::plant::AccPlant::jerk_step_raw({{ down }}));'
-  - id: ACC-S30
-    keywords: [then]
-    pattern: '^acceleration and braking were never requested together$'
-    cpp: 'EXPECT_EQ(sil_.plant().metrics().both_requested, 0U);'
-  - id: ACC-S31
-    keywords: [then]
-    pattern: '^the steering request was always 0 deg$'
-    cpp: 'EXPECT_EQ(sil_.plant().metrics().steering_nonzero, 0U);'
-  - id: ACC-S32
-    keywords: [then]
-    pattern: '^every command frame passed the E2E check$'
-    cpp: 'EXPECT_GT(sil_.plant().metrics().command_frames, 0U); EXPECT_EQ(sil_.plant().metrics().command_e2e_errors, 0U);'
-  - id: ACC-S33
-    keywords: [then]
-    pattern: '^one command frame was sent per 20 ms$'
-    cpp: 'EXPECT_EQ(sil_.plant().metrics().command_frames, sil_.plant().metrics().ticks);'
-  # ---- observations: vehicle state -------------------------------------------------------
-  - id: ACC-S40
+  - id: FN-S40
     keywords: [then]
     pattern: '^the ego speed is (?P<v>[0-9]+(?:\.[0-9]+)?) km/h within (?P<tol>[0-9]+(?:\.[0-9]+)?) km/h$'
     types: {v: number, tol: number}
     cpp: 'EXPECT_NEAR(sil_.plant().ego_speed_kph(), {{ v }}, {{ tol }});'
-  - id: ACC-S41
+  - id: FN-S41
     keywords: [then]
     pattern: '^the ego speed is below (?P<v>[0-9]+(?:\.[0-9]+)?) km/h$'
     types: {v: number}
     cpp: 'EXPECT_LT(sil_.plant().ego_speed_kph(), {{ v }});'
-  - id: ACC-S42
+  - id: FN-S42
     keywords: [then]
     pattern: '^the ego speed never exceeded (?P<v>[0-9]+(?:\.[0-9]+)?) km/h$'
     types: {v: number}
     cpp: 'EXPECT_LE(sil_.plant().metrics().max_ego_speed_kph, {{ v }} + 1e-6);  // m/s <-> km/h round-off'
-  - id: ACC-S43
+  - id: FN-S43
     keywords: [then]
     pattern: '^the distance to the lead vehicle is (?P<d>[0-9]+(?:\.[0-9]+)?) m within (?P<tol>[0-9]+(?:\.[0-9]+)?) m$'
     types: {d: number, tol: number}
     cpp: 'ASSERT_TRUE(sil_.plant().lead_present()); EXPECT_NEAR(sil_.plant().distance_m(), {{ d }}, {{ tol }});'
-  - id: ACC-S44
+  - id: FN-S44
     keywords: [then]
     pattern: '^the distance to the lead vehicle never fell below (?P<d>[0-9]+(?:\.[0-9]+)?) m$'
     types: {d: number}
     cpp: 'EXPECT_GT(sil_.plant().metrics().min_distance_m, {{ d }});'
-  - id: ACC-S45
+  - id: FN-S45
     keywords: [then]
     pattern: '^no collision occurred$'
     cpp: 'EXPECT_FALSE(sil_.plant().metrics().collision);'
+  - id: FN-S19
+    keywords: [given]
+    pattern: '^a stationary vehicle stands (?P<d>[0-9]+(?:\.[0-9]+)?) m ahead$'
+    types: {d: number}
+    cpp: 'sil_.plant().set_lead({{ d }}, 0.0, 0.0);'
+  - id: FN-S20
+    keywords: [given, when]
+    pattern: '^the driver holds the accelerator pedal at (?P<pct>[0-9]+(?:\.[0-9]+)?) %$'
+    types: {pct: number}
+    cpp: 'sil_.plant().set_accel_pedal({{ pct }});'
+  - id: FN-S21
+    keywords: [given, when]
+    pattern: '^the driver holds the brake pedal$'
+    cpp: 'sil_.plant().set_brake_pedal(true);'
+  - id: FN-S46
+    keywords: [then]
+    pattern: '^the impact speed was at most (?P<v>[0-9]+(?:\.[0-9]+)?) km/h$'
+    types: {v: number}
+    cpp: 'EXPECT_LE(sil_.plant().metrics().impact_speed_kph, {{ v }});'
+  - id: FN-S47
+    keywords: [then]
+    pattern: '^the ego vehicle has stopped$'
+    cpp: 'EXPECT_LT(sil_.plant().ego_speed_kph(), 0.5);'
+  - id: FN-S48
+    keywords: [then]
+    pattern: '^the ego vehicle is still moving$'
+    cpp: 'EXPECT_GT(sil_.plant().ego_speed_kph(), 1.0);'

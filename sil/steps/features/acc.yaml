@@ -1,0 +1,71 @@
+# Step vocabulary of feature 'acc' (observations of AccCommand via ea::plant::AccObserver,
+# reached as sil_.feature()). Combined with sil/steps/can_function.yaml.
+schema_version: 1
+pattern: acc
+steps:
+  - id: ACC-S03
+    keywords: [given]
+    pattern: '^ACC is engaged$'
+    cpp: 'sil_.engage();'
+  - id: ACC-S19
+    keywords: [when]
+    pattern: '^the driver releases the brake pedal while holding the set button$'
+    cpp: 'sil_.release_brake_while_holding_set();'
+  - id: ACC-S20
+    keywords: [then]
+    pattern: '^the ACC state is (?P<s>OFF|STANDBY|ACTIVE|OVERRIDE|FAULT)$'
+    types: {s: 'enum:[OFF, STANDBY, ACTIVE, OVERRIDE, FAULT]'}
+    cpp: 'EXPECT_EQ(sil_.feature().last_command().status, ea::plant::AccStatus::k{{ s | camel }});'
+  - id: ACC-S21
+    keywords: [then]
+    pattern: '^neither acceleration nor braking is requested$'
+    cpp: 'EXPECT_EQ(sil_.feature().last_command().accel_raw, 0); EXPECT_EQ(sil_.feature().last_command().brake_raw, 0);'
+  - id: ACC-S22
+    keywords: [then]
+    pattern: '^the set speed is (?P<v>[0-9]+) km/h$'
+    types: {v: number}
+    cpp: 'EXPECT_DOUBLE_EQ(sil_.feature().last_command().set_speed_kph, {{ v }});'
+  - id: ACC-S23
+    keywords: [then]
+    pattern: '^the reported time gap setting is (?P<n>[0-9])$'
+    types: {n: int}
+    cpp: 'EXPECT_EQ(sil_.feature().last_command().time_gap_setting, {{ n }}U);'
+  - id: ACC-S25
+    keywords: [then]
+    pattern: '^braking is requested$'
+    cpp: 'EXPECT_GT(sil_.feature().last_command().brake_raw, 0);'
+  - id: ACC-S26
+    keywords: [then]
+    pattern: '^braking was never requested$'
+    cpp: 'EXPECT_EQ(sil_.feature().metrics().max_brake_raw, 0);'
+  - id: ACC-S27
+    keywords: [then]
+    pattern: '^the requested acceleration never exceeded (?P<a>[0-9]+(?:\.[0-9]+)?) m/s2$'
+    types: {a: number}
+    cpp: 'EXPECT_LE(sil_.feature().metrics().max_accel_raw, ea::plant::Plant::accel_raw({{ a }}));'
+  - id: ACC-S28
+    keywords: [then]
+    pattern: '^the requested deceleration never exceeded (?P<a>[0-9]+(?:\.[0-9]+)?) m/s2$'
+    types: {a: number}
+    cpp: 'EXPECT_LE(sil_.feature().metrics().max_brake_raw, ea::plant::Plant::accel_raw({{ a }}));'
+  - id: ACC-S29
+    keywords: [then]
+    pattern: '^the requested jerk never exceeded (?P<up>[0-9]+(?:\.[0-9]+)?) m/s3 increasing and (?P<down>[0-9]+(?:\.[0-9]+)?) m/s3 decreasing$'
+    types: {up: number, down: number}
+    cpp: 'EXPECT_LE(sil_.feature().metrics().max_jerk_up_raw, ea::plant::Plant::jerk_step_raw({{ up }})); EXPECT_LE(sil_.feature().metrics().max_jerk_down_raw, ea::plant::Plant::jerk_step_raw({{ down }}));'
+  - id: ACC-S30
+    keywords: [then]
+    pattern: '^acceleration and braking were never requested together$'
+    cpp: 'EXPECT_EQ(sil_.feature().metrics().both_requested, 0U);'
+  - id: ACC-S31
+    keywords: [then]
+    pattern: '^the steering request was always 0 deg$'
+    cpp: 'EXPECT_EQ(sil_.feature().metrics().steering_nonzero, 0U);'
+  - id: ACC-S32
+    keywords: [then]
+    pattern: '^every command frame passed the E2E check$'
+    cpp: 'EXPECT_GT(sil_.feature().metrics().command_frames, 0U); EXPECT_EQ(sil_.feature().metrics().command_e2e_errors, 0U);'
+  - id: ACC-S33
+    keywords: [then]
+    pattern: '^one command frame was sent per 20 ms$'
+    cpp: 'EXPECT_EQ(sil_.feature().metrics().command_frames, sil_.plant().metrics().ticks);'
