@@ -25,10 +25,18 @@ That authorisation does **not** relax one rule: **the generation step stays AI-f
 2. `python3 -m tools.gen --check` passes (generated/ is current).
 3. `ctest` passes for presets `linux-host`, `linux-host-asan` and `linux-host-tsan`.
 4. `python3 -m tools.trace --results build/linux-host/test-results` reports every requirement PASSED.
-5. **A new or changed feature gets a mutation check.** Plant defects in the model and the
-   templates, then confirm the SIL fails. Record the result in the feature's report under `docs/`.
-6. Expected values in Gherkin come from the requirements, never from running the code.
-7. Optimizations keep outputs bit-identical, proven by an equivalence test.
+5. **A new or changed feature gets a mutation check:** `python3 -m tools.mutate <project>`.
+   - Plant defects in the model, the DBC and the templates; every calibration value needs a mutant.
+   - Every mutant must be detected, or declared `equivalent` or `tolerated` with a reason.
+   - Record the result in the feature's report under `docs/`.
+6. **Structural coverage gate:** `python3 -m tools.coverage`, after running ctest on the
+   `linux-host-coverage` preset with `LLVM_PROFILE_FILE` set. ASIL D-derived files need 100 %
+   MC/DC or a justified exception; no file may fall below `coverage_baseline.json`.
+7. **ASIL D functions are decomposed:** controller B(D) + independent monitor B(D) + system
+   project with safety goals and FTTI (GEN-065). Never rate a function lower than its safety goals
+   without saying so; ask if the ASIL is unclear.
+8. Expected values in Gherkin come from the requirements, never from running the code.
+9. Optimizations keep outputs bit-identical, proven by an equivalence test.
 
 ## Adding an ADAS feature
 See `docs/extending.md`. In short:
@@ -46,6 +54,8 @@ python3 -m tools.gen --check    # fail if generated/ differs from what the gener
 python3 -m tools.lint           # requirements / Gherkin / model consistency, writes nothing
 python3 -m tools.trace --results build/linux-host/test-results
 python3 -m unittest discover -s tools/gen/tests -t .
+python3 -m tools.mutate <project>                  # mutation campaign (examples/<project>/mutations.yaml)
+python3 -m tools.coverage                          # MC/DC gate (after ctest on linux-host-coverage)
 ```
 
 ## Coding rules

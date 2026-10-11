@@ -23,8 +23,14 @@ what is specific to it.
 └──────────────────────────────────────────┘   └──────────────────────────────────────────────┘
 ```
 
-Shipped features: `acc` (adaptive cruise control) and `aeb` (forward collision warning plus
-emergency braking). Both use the same vehicle bus and the same plant.
+Shipped features:
+- `acc` (adaptive cruise control);
+- `aeb` (forward collision warning plus emergency braking);
+- their independent safety monitors `acc_monitor` and `aeb_monitor`.
+
+All of them use the same vehicle bus and the same plant. The systems `acc_system` and
+`aeb_system` combine a controller with its monitor into a decomposed ASIL D function (see below
+and `docs/safety/acc_aeb_safety_concept.md`).
 
 ## Workflow
 1. **Scaffold.** This creates a feature that already builds and passes its own SIL:
@@ -68,6 +74,40 @@ emergency braking). Both use the same vehicle bus and the same plant.
    - Declare a mutant `equivalent` only with a written reason.
 9. **Report.** Write `docs/<f>_sil_report.md` (see `docs/acc_sil_report.md`,
    `docs/aeb_sil_report.md`). Then complete the definition of done in `CLAUDE.md`.
+
+## ASIL D features: controller + monitor + system
+A function whose safety goals are ASIL D is decomposed (ISO 26262-9) into a controller B(D) and an
+independent monitor B(D). The actuator ECU applies only commands the monitor has approved
+(assumption of use, modelled by `ea::plant::MonitoredActuator`).
+1. **Controller:** an ordinary feature, as above, rated `B(D)`.
+2. **Monitor:** a second feature, for example `<f>_monitor` (see `tools/gen/features/acc_monitor.py`).
+   - Its rx messages are the sensors plus the controller's command, with the command's E2E counter
+     bound as an rx signal (GEN-062 allows reading a counter).
+   - Its tx message reuses the monitor layout of `sil/plant/.../monitor_can.hpp` (status, permit,
+     approved counter, fault reason).
+   - The logic checks every new command against an envelope derived from the safety goals, not
+     from the control law. The first violation latches `SAFE_STATE`.
+   - The feature module declares `MECHANISMS`: each diagnostic mechanism with its fault detection
+     time as a function of the calibration and rx timeouts. It also declares `STIMULUS`, a plant
+     node standing in for the controller in the monitor's own SIL, and `PLANT_TABLES`.
+   - The DBC is the monitor's own extract of the bus. GEN-066 checks that it agrees with the
+     controller's.
+3. **System:** `examples/<f>_system/model.yaml` (pattern `can_system`) names both projects, the
+   actuator reaction time (FRTI) and the safety goals with their FTTI and mechanisms.
+   - GEN-065 rejects any mechanism whose FDTI plus FRTI exceeds the FTTI.
+   - The system SIL runs both generated nodes on one bus. It injects faults into node outputs
+     with `sil/steps/can_system.yaml` and `monitored_actuator.yaml`, and asserts "the actuator
+     entered its safe state within the fault detection budget of <goal>".
+   - It also asserts that fault-free scenarios run without any monitor intervention.
+
+## Verification gates every feature passes
+- **Generated codec test:** back-to-back against the runtime codec, for every DBC message.
+- **Generated component test:** wrong CRC, out-of-range values behind a valid CRC, oversized frames.
+- **Mutation campaign:** every calibration value needs a mutant. Every mutant is detected, or
+  declared `equivalent` (no observable difference) or `tolerated` (within every requirement's
+  tolerance), with a written reason.
+- **Structural coverage:** `python3 -m tools.coverage`. Files of `X(D)` components need 100 %
+  MC/DC, or a justification in `coverage_justifications.yaml`.
 
 ## When the framework is not enough
 - **A new transport or sensor type** (lane markings from a camera, several radar objects, Ethernet
