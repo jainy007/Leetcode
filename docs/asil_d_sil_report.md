@@ -88,7 +88,14 @@ never intervened and every command was applied.
    scenarios.
 
 ## Mutation campaigns
-MUTATION_TABLE
+| Project | Mutants | Detected | Equivalent / tolerated (with reasons) | Unexpected |
+|---|---|---|---|---|
+| `acc_monitor` | 30 | 28 (rules, codec test, SIL) | 2 equivalent (200 m range defensive; echoed counter redundant to the permit) | 0 |
+| `aeb_monitor` | 25 | 22 | 3 equivalent (150 m range defensive; approach implied by the TTC check; echoed counter redundant) | 0 |
+| `acc_system` | 13 | 12 (8 by GEN-065/066/067/068/069 before any code exists, 4 by system SIL) | 1 tolerated (a faster follower reaction only lengthens the derived FTTI) | 0 |
+
+Every calibration value of every model has a mutant (`tools.mutate` fails otherwise).
+Reproduce with `python3 -m tools.mutate <project>`.
 
 ## Structural coverage (generated product code, all ASIL D-derived files)
 | Measure | Result |
