@@ -15,12 +15,12 @@ double ttc_of(const WorldView& w) {
 
 AebObserver::AebObserver() noexcept : rx_(can::kAebCommandE2e) {}
 
-void AebObserver::observe(const WorldView& world, const ControllerPort& sut) noexcept {
-    for (std::size_t i = 0U; i < sut.tx_count(); ++i) {
-        if (sut.tx_can_id(i) != can::kAebCommandId) {
+void AebObserver::observe(const WorldView& world, Span<const BusFrame> frames) noexcept {
+    for (const BusFrame& bf : frames) {
+        if (bf.can_id != can::kAebCommandId) {
             continue;
         }
-        const ConstByteSpan f = sut.tx_frame(i);
+        const ConstByteSpan f = bf.payload();
         ++m_.command_frames;
         if (!e2e::is_usable(rx_.check(f))) {
             ++m_.command_e2e_errors;

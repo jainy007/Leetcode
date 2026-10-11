@@ -8,7 +8,7 @@ feature: acc
 component:
   name: AccController
   namespace: adas::acc
-  asil: B
+  asil: B(D)
   profile: asil
 
 inputs:

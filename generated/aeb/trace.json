@@ -1,6 +1,6 @@
 {
   "component": {
-    "asil": "B",
+    "asil": "B(D)",
     "name": "AebController",
     "namespace": "adas::aeb",
     "profile": "asil"
@@ -18,12 +18,12 @@
     "generated/aeb/src/aeb_controller_logic.cpp"
   ],
   "generator": "ea-gen 0.1.0",
-  "inputs_sha256": "a08ca97b0dae15cd9bd7ef48fa8166ab2ed0041549faf134197c8d1be4271543",
+  "inputs_sha256": "7985079d35cf79be077da24af2c4f9d16c2c565e0ce9d01d499b7c22d7f7c8d2",
   "pattern": "can_function",
   "project": "aeb",
   "requirements": [
     {
-      "asil": "B",
+      "asil": "B(D)",
       "ears": "event",
       "id": "REQ-AEB-001",
       "satisfied_by": [
@@ -39,7 +39,7 @@
       ]
     },
     {
-      "asil": "B",
+      "asil": "B(D)",
       "ears": "event",
       "id": "REQ-AEB-002",
       "satisfied_by": [
@@ -58,7 +58,7 @@
       ]
     },
     {
-      "asil": "B",
+      "asil": "B(D)",
       "ears": "event",
       "id": "REQ-AEB-003",
       "satisfied_by": [
@@ -93,7 +93,7 @@
       ]
     },
     {
-      "asil": "B",
+      "asil": "B(D)",
       "ears": "state",
       "id": "REQ-AEB-005",
       "satisfied_by": [
@@ -110,7 +110,7 @@
       ]
     },
     {
-      "asil": "B",
+      "asil": "B(D)",
       "ears": "event",
       "id": "REQ-AEB-006",
       "satisfied_by": [
@@ -128,7 +128,7 @@
       ]
     },
     {
-      "asil": "B",
+      "asil": "B(D)",
       "ears": "event",
       "id": "REQ-AEB-007",
       "satisfied_by": [
@@ -144,7 +144,7 @@
       ]
     },
     {
-      "asil": "B",
+      "asil": "B(D)",
       "ears": "ubiquitous",
       "id": "REQ-AEB-008",
       "satisfied_by": [
@@ -163,7 +163,7 @@
       ]
     },
     {
-      "asil": "B",
+      "asil": "B(D)",
       "ears": "unwanted",
       "id": "REQ-AEB-009",
       "satisfied_by": [
@@ -182,7 +182,7 @@
       ]
     },
     {
-      "asil": "B",
+      "asil": "B(D)",
       "ears": "unwanted",
       "id": "REQ-AEB-010",
       "satisfied_by": [
@@ -199,7 +199,7 @@
       ]
     },
     {
-      "asil": "B",
+      "asil": "B(D)",
       "ears": "unwanted",
       "id": "REQ-AEB-011",
       "satisfied_by": [
@@ -214,7 +214,7 @@
       ]
     },
     {
-      "asil": "B",
+      "asil": "B(D)",
       "ears": "unwanted",
       "id": "REQ-AEB-012",
       "satisfied_by": [
@@ -230,7 +230,7 @@
       ]
     },
     {
-      "asil": "B",
+      "asil": "B(D)",
       "ears": "unwanted",
       "id": "REQ-AEB-013",
       "satisfied_by": [
@@ -252,7 +252,7 @@
       ]
     },
     {
-      "asil": "B",
+      "asil": "B(D)",
       "ears": "ubiquitous",
       "id": "REQ-AEB-014",
       "satisfied_by": [

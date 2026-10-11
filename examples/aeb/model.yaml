@@ -6,7 +6,7 @@ feature: aeb
 component:
   name: AebController
   namespace: adas::aeb
-  asil: B
+  asil: B(D)
   profile: asil
 
 inputs:

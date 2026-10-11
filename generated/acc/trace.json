@@ -1,6 +1,6 @@
 {
   "component": {
-    "asil": "B",
+    "asil": "B(D)",
     "name": "AccController",
     "namespace": "adas::acc",
     "profile": "asil"
@@ -18,7 +18,7 @@
     "generated/acc/src/acc_controller_logic.cpp"
   ],
   "generator": "ea-gen 0.1.0",
-  "inputs_sha256": "e3f0b69ab4e6da8dcf4e68125db331147578831a646589377e6c96cffacf9544",
+  "inputs_sha256": "fbfce52a7d6bd218de02fbc84f6ae65f4d57f340161623b43290af8f8ea21a6d",
   "pattern": "can_function",
   "project": "acc",
   "requirements": [
@@ -38,7 +38,7 @@
       ]
     },
     {
-      "asil": "B",
+      "asil": "B(D)",
       "ears": "event",
       "id": "REQ-ACC-002",
       "satisfied_by": [
@@ -56,7 +56,7 @@
       ]
     },
     {
-      "asil": "B",
+      "asil": "B(D)",
       "ears": "unwanted",
       "id": "REQ-ACC-003",
       "satisfied_by": [
@@ -107,7 +107,7 @@
       ]
     },
     {
-      "asil": "B",
+      "asil": "B(D)",
       "ears": "event",
       "id": "REQ-ACC-006",
       "satisfied_by": [
@@ -124,7 +124,7 @@
       ]
     },
     {
-      "asil": "B",
+      "asil": "B(D)",
       "ears": "event",
       "id": "REQ-ACC-007",
       "satisfied_by": [
@@ -156,7 +156,7 @@
       ]
     },
     {
-      "asil": "B",
+      "asil": "B(D)",
       "ears": "unwanted",
       "id": "REQ-ACC-009",
       "satisfied_by": [
@@ -189,7 +189,7 @@
       ]
     },
     {
-      "asil": "B",
+      "asil": "B(D)",
       "ears": "state",
       "id": "REQ-ACC-011",
       "satisfied_by": [
@@ -226,7 +226,7 @@
       ]
     },
     {
-      "asil": "B",
+      "asil": "B(D)",
       "ears": "ubiquitous",
       "id": "REQ-ACC-013",
       "satisfied_by": [
@@ -244,7 +244,7 @@
       ]
     },
     {
-      "asil": "B",
+      "asil": "B(D)",
       "ears": "ubiquitous",
       "id": "REQ-ACC-014",
       "satisfied_by": [
@@ -281,7 +281,7 @@
       ]
     },
     {
-      "asil": "B",
+      "asil": "B(D)",
       "ears": "unwanted",
       "id": "REQ-ACC-016",
       "satisfied_by": [
@@ -299,7 +299,7 @@
       ]
     },
     {
-      "asil": "B",
+      "asil": "B(D)",
       "ears": "ubiquitous",
       "id": "REQ-ACC-017",
       "satisfied_by": [
@@ -317,7 +317,7 @@
       ]
     },
     {
-      "asil": "B",
+      "asil": "B(D)",
       "ears": "ubiquitous",
       "id": "REQ-ACC-018",
       "satisfied_by": [
@@ -333,7 +333,7 @@
       ]
     },
     {
-      "asil": "B",
+      "asil": "B(D)",
       "ears": "state",
       "id": "REQ-ACC-019",
       "satisfied_by": [
@@ -352,7 +352,7 @@
       ]
     },
     {
-      "asil": "B",
+      "asil": "B(D)",
       "ears": "ubiquitous",
       "id": "REQ-ACC-020",
       "satisfied_by": [
@@ -368,7 +368,7 @@
       ]
     },
     {
-      "asil": "B",
+      "asil": "B(D)",
       "ears": "unwanted",
       "id": "REQ-ACC-021",
       "satisfied_by": [
@@ -398,7 +398,7 @@
       ]
     },
     {
-      "asil": "B",
+      "asil": "B(D)",
       "ears": "state",
       "id": "REQ-ACC-022",
       "satisfied_by": [

@@ -140,7 +140,7 @@ enum class ${Camel}Status : std::uint8_t { kStandby = 0, kActive = 1, kFault = 2
 class ${Camel}Observer final : public FeatureObserver {
 public:
     ${Camel}Observer() noexcept;
-    void observe(const WorldView& world, const ControllerPort& sut) noexcept override;
+    void observe(const WorldView& world, Span<const BusFrame> frames) noexcept override;
     bool longitudinal_request(double& accel_mps2) const noexcept override;
     std::int32_t status_code() const noexcept override { return static_cast<std::int32_t>(status_); }
 
@@ -167,12 +167,12 @@ namespace ea::plant {
 
 ${Camel}Observer::${Camel}Observer() noexcept : rx_(can::k${Camel}CommandE2e) {}
 
-void ${Camel}Observer::observe(const WorldView& /*world*/, const ControllerPort& sut) noexcept {
-    for (std::size_t i = 0U; i < sut.tx_count(); ++i) {
-        if (sut.tx_can_id(i) != can::k${Camel}CommandId) {
+void ${Camel}Observer::observe(const WorldView& /*world*/, Span<const BusFrame> frames) noexcept {
+    for (const BusFrame& bf : frames) {
+        if (bf.can_id != can::k${Camel}CommandId) {
             continue;
         }
-        const ConstByteSpan f = sut.tx_frame(i);
+        const ConstByteSpan f = bf.payload();
         ++frames_;
         if (!e2e::is_usable(rx_.check(f))) {
             ++e2e_errors_;

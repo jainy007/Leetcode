@@ -1,5 +1,7 @@
 # Adaptive Cruise Control (ACC), longitudinal only, 30..180 km/h (not stop-and-go).
 # Derived from common ACC practice (ISO 15622 style); values are project choices, NOT normative.
+# ASIL D safety goals are decomposed (ISO 26262-9): controller B(D) + independent monitor B(D).
+# Safety goals, FTTI and the monitor live in examples/*_system and examples/*_monitor.
 schema_version: 1
 component: AccController
 requirements:
@@ -11,7 +13,7 @@ requirements:
       When the driver switches the ACC main switch on, the AccController shall enter STANDBY.
     verification: [sil]
   - id: REQ-ACC-002
-    asil: B
+    asil: B(D)
     ears: event
     text: >-
       When the driver presses Set in STANDBY with the brake pedal released and an ego speed of at
@@ -19,7 +21,7 @@ requirements:
       ego speed rounded to the nearest km/h.
     verification: [sil]
   - id: REQ-ACC-003
-    asil: B
+    asil: B(D)
     ears: unwanted
     text: >-
       If the driver presses Set or Resume at an ego speed below 30 km/h, then the AccController
@@ -41,14 +43,14 @@ requirements:
       change the set speed by 5 km/h, limited to the range 30 km/h to 180 km/h.
     verification: [sil]
   - id: REQ-ACC-006
-    asil: B
+    asil: B(D)
     ears: event
     text: >-
       When the driver presses the brake pedal or Cancel in ACTIVE or OVERRIDE, the AccController
       shall enter STANDBY within one cycle and keep the set speed stored.
     verification: [sil]
   - id: REQ-ACC-007
-    asil: B
+    asil: B(D)
     ears: event
     text: >-
       When the driver presses the accelerator pedal beyond 5 % in ACTIVE, the AccController shall
@@ -62,7 +64,7 @@ requirements:
       clear the set speed.
     verification: [sil]
   - id: REQ-ACC-009
-    asil: B
+    asil: B(D)
     ears: unwanted
     text: >-
       If the ego speed falls below 25 km/h in ACTIVE, then the AccController shall enter STANDBY.
@@ -76,7 +78,7 @@ requirements:
       set speed with a steady-state error of at most 1 km/h.
     verification: [sil]
   - id: REQ-ACC-011
-    asil: B
+    asil: B(D)
     ears: state
     text: >-
       While ACTIVE with a relevant target, the AccController shall control the distance to the
@@ -91,14 +93,14 @@ requirements:
       and 2.0 s.
     verification: [sil]
   - id: REQ-ACC-013
-    asil: B
+    asil: B(D)
     ears: ubiquitous
     text: >-
       The AccController shall treat a radar object as the relevant target only if it is valid,
       at most 200 m ahead and at most 1.8 m from the ego lane centre.
     verification: [sil]
   - id: REQ-ACC-014
-    asil: B
+    asil: B(D)
     ears: ubiquitous
     text: >-
       The AccController shall limit the requested acceleration to 2.0 m/s2 and the requested
@@ -112,7 +114,7 @@ requirements:
       acceleration to 2.5 m/s3 when it increases and 5.0 m/s3 when it decreases.
     verification: [sil]
   - id: REQ-ACC-016
-    asil: B
+    asil: B(D)
     ears: unwanted
     text: >-
       If a relevant target that is followed at the selected time gap decelerates at up to 3 m/s2,
@@ -121,25 +123,25 @@ requirements:
     verification: [sil]
   # --- Outputs ----------------------------------------------------------------------------------
   - id: REQ-ACC-017
-    asil: B
+    asil: B(D)
     ears: ubiquitous
     text: >-
       The AccController shall never request acceleration and braking at the same time.
     verification: [sil]
   - id: REQ-ACC-018
-    asil: B
+    asil: B(D)
     ears: ubiquitous
     text: >-
       The AccController shall always request a steering angle of 0 deg.
     verification: [sil]
   - id: REQ-ACC-019
-    asil: B
+    asil: B(D)
     ears: state
     text: >-
       While not ACTIVE, the AccController shall request neither acceleration nor braking.
     verification: [sil]
   - id: REQ-ACC-020
-    asil: B
+    asil: B(D)
     ears: ubiquitous
     text: >-
       The AccController shall send the AccCommand message every 20 ms with E2E protection and
@@ -147,7 +149,7 @@ requirements:
     verification: [sil]
   # --- Faults -----------------------------------------------------------------------------------
   - id: REQ-ACC-021
-    asil: B
+    asil: B(D)
     ears: unwanted
     text: >-
       If no valid RadarObject frame is received for 120 ms, or no valid EgoState or DriverInput
@@ -155,7 +157,7 @@ requirements:
       check count as not received.
     verification: [sil]
   - id: REQ-ACC-022
-    asil: B
+    asil: B(D)
     ears: state
     text: >-
       While in FAULT, the AccController shall remain in FAULT until the driver switches the ACC

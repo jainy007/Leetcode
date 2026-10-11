@@ -34,7 +34,7 @@ struct AccMetrics {
 class AccObserver final : public FeatureObserver {
 public:
     AccObserver() noexcept;
-    void observe(const WorldView& world, const ControllerPort& sut) noexcept override;
+    void observe(const WorldView& world, Span<const BusFrame> frames) noexcept override;
     bool longitudinal_request(double& accel_mps2) const noexcept override;
     std::int32_t status_code() const noexcept override { return static_cast<std::int32_t>(cmd_.status); }
 
