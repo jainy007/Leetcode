@@ -1,0 +1,66 @@
+{
+  "generated/acc/src/acc_controller.cpp": {
+    "branches": 93.75,
+    "mcdc": 100.0
+  },
+  "generated/acc/src/acc_controller_codec.cpp": {
+    "branches": 100.0,
+    "mcdc": 100.0
+  },
+  "generated/acc/src/acc_controller_logic.cpp": {
+    "branches": 96.88,
+    "mcdc": 100.0
+  },
+  "generated/acc_monitor/src/acc_monitor.cpp": {
+    "branches": 93.75,
+    "mcdc": 100.0
+  },
+  "generated/acc_monitor/src/acc_monitor_codec.cpp": {
+    "branches": 100.0,
+    "mcdc": 100.0
+  },
+  "generated/acc_monitor/src/acc_monitor_logic.cpp": {
+    "branches": 98.33,
+    "mcdc": 100.0
+  },
+  "generated/adas_input_gate/src/adas_input_gate.cpp": {
+    "branches": 75.0,
+    "mcdc": 100.0
+  },
+  "generated/adas_input_gate/src/adas_input_gate_codec.cpp": {
+    "branches": 100.0,
+    "mcdc": 100.0
+  },
+  "generated/aeb/src/aeb_controller.cpp": {
+    "branches": 93.75,
+    "mcdc": 100.0
+  },
+  "generated/aeb/src/aeb_controller_codec.cpp": {
+    "branches": 100.0,
+    "mcdc": 100.0
+  },
+  "generated/aeb/src/aeb_controller_logic.cpp": {
+    "branches": 94.74,
+    "mcdc": 91.67
+  },
+  "generated/aeb_monitor/src/aeb_monitor.cpp": {
+    "branches": 93.75,
+    "mcdc": 100.0
+  },
+  "generated/aeb_monitor/src/aeb_monitor_codec.cpp": {
+    "branches": 100.0,
+    "mcdc": 100.0
+  },
+  "generated/aeb_monitor/src/aeb_monitor_logic.cpp": {
+    "branches": 100.0,
+    "mcdc": 100.0
+  },
+  "generated/gpu_inference_stage/src/obstacle_score_monitor.cpp": {
+    "branches": 75.0,
+    "mcdc": 50.0
+  },
+  "generated/gpu_inference_stage/src/obstacle_score_stage.cpp": {
+    "branches": 63.75,
+    "mcdc": 22.22
+  }
+}

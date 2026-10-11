@@ -10,4 +10,7 @@ if(EA_BUILD_TESTS)
         SOURCES sil/{{ snake }}_sil_test.cpp
         LIBS {{ inc }} ea::plant)
     target_include_directories({{ inc }}_sil PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    ea_add_gtest({{ inc }}_codec_test
+        SOURCES sil/{{ snake }}_codec_test.cpp sil/{{ snake }}_component_test.cpp
+        LIBS {{ inc }})
 endif()

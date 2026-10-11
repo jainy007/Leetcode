@@ -1,7 +1,7 @@
 # GENERATED FILE - DO NOT EDIT. Changes are overwritten and rejected by CI.
 # Generator: ea-gen 0.1.0 (rule-based, deterministic; no AI in this path)
 # Project:   acc (pattern: can_function)
-# Inputs:    sha256:7daf72a7ff67fdde3af69c03ce9ff58b4ecdb3b7244d701c28de0793bc835631
+# Inputs:    sha256:df14c530c502f140150ce4bf860cdd1e8018cd3a627d306d9073740480ad2f3b
 # Regenerate: python3 -m tools.gen
 
 add_library(acc STATIC
@@ -16,4 +16,7 @@ if(EA_BUILD_TESTS)
         SOURCES sil/acc_controller_sil_test.cpp
         LIBS acc ea::plant)
     target_include_directories(acc_sil PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    ea_add_gtest(acc_codec_test
+        SOURCES sil/acc_controller_codec_test.cpp sil/acc_controller_component_test.cpp
+        LIBS acc)
 endif()

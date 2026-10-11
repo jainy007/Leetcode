@@ -148,3 +148,30 @@ def build_message(doc: dict, display: str, diags: Diagnostics) -> Message | None
         someip=doc.get("someip"), can_id=doc.get("can_id"), e2e=e2e, satisfies=tuple(doc.get("satisfies", [])),
         source=doc.get("source", display),
     )
+
+
+def codec_vectors(messages) -> list[dict]:
+    """Test vectors for the generated back-to-back codec test (common/codec_test.cpp.j2).
+
+    For every message: the signals at the low, high and middle raw value of their physical
+    range, the expected raw bit pattern of each, and the values just outside the range (for
+    encode in the physical domain, for decode as raw bits when the field can hold them)."""
+    out = []
+    for m in messages:
+        sigs = []
+        for s in m.signals:
+            def bits(raw: int, s=s) -> int:
+                return raw & ((1 << s.length) - 1)
+
+            raws = {"lo": s.raw_lo, "hi": s.raw_hi, "mid": (s.raw_lo + s.raw_hi) // 2}
+            sigs.append({
+                "name": s.name, "start": s.start_bit, "length": s.length,
+                "order": "kBigEndian" if s.big_endian else "kLittleEndian", "factor": s.factor, "offset": s.offset,
+                "raw": raws, "bits": {k: bits(v) for k, v in raws.items()},
+                "phys": {k: v * s.factor + s.offset for k, v in raws.items()},
+                "above": (s.raw_hi + 1) * s.factor + s.offset, "below": (s.raw_lo - 1) * s.factor + s.offset,
+                "raw_above": bits(s.raw_hi + 1) if s.raw_hi + 1 <= s.raw_type_max else None,
+                "raw_below": bits(s.raw_lo - 1) if s.raw_lo - 1 >= s.raw_type_min else None,
+            })
+        out.append({"name": m.name, "snake": m.snake, "length": m.payload_length, "signals": sigs})
+    return out

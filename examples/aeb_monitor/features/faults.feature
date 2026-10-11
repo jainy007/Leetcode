@@ -57,3 +57,13 @@ Feature: AEB monitor faults
     And the actuator entered its safe state within 40 ms of the first fault
     And the request was ramped out within 460 ms of the first fault
     And the actuator applies no request
+
+  @REQ-AEBM-001
+  Scenario: A radar pause without braking does not trigger the monitor
+    Given the ego vehicle drives at 50 km/h
+    And the AEB controller is in STANDBY with 0 m/s2 braking
+    When 0.2 s pass
+    And the radar sender pauses for 10 frames
+    And 1 s pass
+    Then the monitor state is MONITORING
+    And the monitor never entered SAFE_STATE

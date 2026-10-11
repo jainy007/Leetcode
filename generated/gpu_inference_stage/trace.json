@@ -16,7 +16,7 @@
     "generated/gpu_inference_stage/src/obstacle_score_stage.cpp"
   ],
   "generator": "ea-gen 0.1.0",
-  "inputs_sha256": "2b2cc1de9869f153865de1c79359dc198287716630efcaa55192fce6f3ffc6ed",
+  "inputs_sha256": "fc3fc2669b7d7a8178527f959cb9d5c8e33a671595b25690ce99798b8499d060",
   "pattern": "gpu_stage",
   "project": "gpu_inference_stage",
   "requirements": [

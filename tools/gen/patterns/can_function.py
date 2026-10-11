@@ -13,7 +13,7 @@ from __future__ import annotations
 from tools.gen import dbc, loader
 from tools.gen.errors import Diagnostics
 from tools.gen.features import load_features
-from tools.gen.patterns.codec import Message, Signal, build_message, to_camel, to_snake
+from tools.gen.patterns.codec import Message, Signal, build_message, codec_vectors, to_camel, to_snake
 from tools.gen.render import REPO_ROOT, TEMPLATE_DIR
 
 _EPS = 1e-9
@@ -200,6 +200,7 @@ def build(inputs, diags: Diagnostics):
         "states": feature.STATES, "messages": [messages[k] for k in sorted(messages)],
         "rx": rx_list, "tx": tx_list, "inputs": sorted(rx_inputs, key=lambda b: b["name"]),
         "outputs": sorted(tx_outputs, key=lambda b: b["name"]), "b": bindings, "cal": cal, "cycle_ms": cycle,
+        "codec_vectors": codec_vectors([messages[k] for k in sorted(messages)]),
         **feature_vars,
     }
     outputs = [
@@ -212,6 +213,8 @@ def build(inputs, diags: Diagnostics):
         ("component.cpp.j2", f"src/{snake}.cpp"),
         ("sil_harness.hpp.j2", f"sil/{snake}_sil.hpp"),
         ("sil_test.cpp.j2", f"sil/{snake}_sil_test.cpp"),
+        ("common/codec_test.cpp.j2", f"sil/{snake}_codec_test.cpp"),
+        ("component_test.cpp.j2", f"sil/{snake}_component_test.cpp"),
         ("CMakeLists.txt.j2", "CMakeLists.txt"),
     ]
     feature_files = sorted((TEMPLATE_DIR / "features" / feature.NAME).rglob("*.j2"))

@@ -8,12 +8,19 @@ Reads examples/<project>/mutations.yaml:
         file: examples/acc/model.yaml              # repo-relative; inputs, templates or generator
         old: "[1.0, 1.5, 2.0]"                     # must occur exactly once
         new: "[1.0, 1.6, 2.0]"
-        expect: detected                           # detected | equivalent
-        note: optional reason (required for equivalent)
+        expect: detected                           # detected | equivalent | tolerated
+        note: optional reason (required for equivalent and tolerated)
+
+'equivalent': no observable behaviour can differ. 'tolerated': behaviour differs, but stays within
+every requirement's tolerance (e.g. a tuning gain without a requirement of its own).
 
 For each mutant: apply, regenerate (a generator rejection counts as detected), rebuild the
-project's SIL target, run it, restore every file. Exit code 1 if a mutant expected to be detected
-survives, or an 'equivalent' mutant is detected (the list is then out of date).
+project's test targets (<project>_sil and, if generated, <project>_codec_test), run them, restore
+every file. Exit code 1 if a mutant expected to be detected survives, or an 'equivalent' mutant
+is detected (the list is then out of date).
+
+Calibration gate (ASIL D): every calibration value of the project's model must be changed by at
+least one mutant of model.yaml; otherwise the run fails before any mutant is applied.
 """
 from __future__ import annotations
 
@@ -32,6 +39,18 @@ def _run(cmd: list[str]) -> subprocess.CompletedProcess:
     return subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True)
 
 
+def _targets(project: str) -> list[str]:
+    cmake = (REPO_ROOT / "generated" / project / "CMakeLists.txt").read_text(encoding="utf-8")
+    return [f"{project}_sil"] + ([f"{project}_codec_test"] if f"{project}_codec_test" in cmake else [])
+
+
+def missing_calibration_mutants(project: str, mutants: list[dict]) -> list[str]:
+    model_rel = f"examples/{project}/model.yaml"
+    model = yaml.safe_load((REPO_ROOT / model_rel).read_text(encoding="utf-8"))
+    olds = [m["old"] for m in mutants if m["file"] == model_rel]
+    return [k for k in sorted(model.get("calibration", {})) if not any(f"{k}: {{value:" in o for o in olds)]
+
+
 def evaluate(project: str, build_dir: pathlib.Path, m: dict) -> tuple[str, str]:
     path = REPO_ROOT / m["file"]
     original = path.read_bytes()
@@ -44,15 +63,18 @@ def evaluate(project: str, build_dir: pathlib.Path, m: dict) -> tuple[str, str]:
         if gen.returncode != 0:
             rules = sorted(set(re.findall(r"GEN-\d{3}", gen.stderr)))
             return "detected", f"generator ({', '.join(rules) or 'error'})"
-        build = _run(["cmake", "--build", str(build_dir), "--target", f"{project}_sil"])
+        targets = _targets(project)
+        build = _run(["cmake", "--build", str(build_dir)] + [a for t in targets for a in ("--target", t)])
         if build.returncode != 0:
             return "detected", "does not compile"
-        exe = build_dir / "generated" / project / f"{project}_sil"
-        sil = _run([str(exe), "--gtest_brief=1"])
-        failed = len(re.findall(r"^\[  FAILED  \] \S+ \(", sil.stdout, re.M))
-        total = re.search(r"\[==========\] (\d+) tests? from", sil.stdout)
-        if sil.returncode != 0 or failed:
-            return "detected", f"SIL ({failed} of {total.group(1) if total else '?'} tests failed)"
+        for target in targets:
+            exe = build_dir / "generated" / project / target
+            run = _run([str(exe), "--gtest_brief=1"])
+            failed = len(re.findall(r"^\[  FAILED  \] \S+ \(", run.stdout, re.M))
+            total = re.search(r"\[==========\] (\d+) tests? from", run.stdout)
+            if run.returncode != 0 or failed:
+                kind = "SIL" if target.endswith("_sil") else "codec test"
+                return "detected", f"{kind} ({failed} of {total.group(1) if total else '?'} tests failed)"
         return "survived", "all SIL tests passed"
     finally:
         path.write_bytes(original)
@@ -67,6 +89,10 @@ def main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
 
     spec = yaml.safe_load((REPO_ROOT / "examples" / args.project / "mutations.yaml").read_text(encoding="utf-8"))
+    missing = missing_calibration_mutants(args.project, spec["mutations"])
+    if missing:
+        print(f"calibration values without a mutant: {', '.join(missing)}")
+        return 1
     mutants = [m for m in spec["mutations"] if not args.only or m["name"] == args.only]
     rows, bad = [], 0
     try:
@@ -74,15 +100,18 @@ def main(argv: list[str] | None = None) -> int:
             verdict, detail = evaluate(args.project, args.build_dir, m)
             expect = m.get("expect", "detected")
             ok = (verdict == "detected") == (expect == "detected") and verdict != "ERROR"
+            ok = ok and (expect == "detected" or bool(m.get("note")))
             bad += 0 if ok else 1
             rows.append((m["name"], m["file"], expect, verdict, detail, m.get("note", "")))
             print(f"{'ok ' if ok else 'BAD'} {m['name']}: {verdict} - {detail}", flush=True)
     finally:
         _run([sys.executable, "-m", "tools.gen"])  # leave generated/ consistent with the inputs
-        _run(["cmake", "--build", str(args.build_dir), "--target", f"{args.project}_sil"])
+        _run(["cmake", "--build", str(args.build_dir)] + [a for t in _targets(args.project) for a in ("--target", t)])
     det = sum(1 for r in rows if r[3] == "detected")
     eq = sum(1 for r in rows if r[2] == "equivalent")
-    print(f"{det} of {len(rows)} mutants detected; {eq} declared equivalent; {bad} unexpected result(s)")
+    tol = sum(1 for r in rows if r[2] == "tolerated")
+    print(f"{det} of {len(rows)} mutants detected; {eq} declared equivalent; {tol} declared tolerated; "
+          f"{bad} unexpected result(s)")
     if args.report:
         lines = ["| Mutant | File | Expected | Result | Detail | Note |", "|---|---|---|---|---|---|"]
         lines += [f"| {r[0]} | `{r[1]}` | {r[2]} | {r[3]} | {r[4]} | {r[5]} |" for r in rows]

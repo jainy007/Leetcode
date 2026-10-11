@@ -1,7 +1,7 @@
 // GENERATED FILE - DO NOT EDIT. Changes are overwritten and rejected by CI.
 // Generator: ea-gen 0.1.0 (rule-based, deterministic; no AI in this path)
 // Project:   acc (pattern: can_function)
-// Inputs:    sha256:7daf72a7ff67fdde3af69c03ce9ff58b4ecdb3b7244d701c28de0793bc835631
+// Inputs:    sha256:df14c530c502f140150ce4bf860cdd1e8018cd3a627d306d9073740480ad2f3b
 // Regenerate: python3 -m tools.gen
 
 #include <gtest/gtest.h>
@@ -503,11 +503,29 @@ TEST_F(AccControllerSilTest, S25_AVehicleBeyond200MIsNotATargetEvenWhenClosingFa
     ASSERT_TRUE(sil_.plant().lead_present()); EXPECT_NEAR(sil_.plant().distance_m(), 205.0, 2.0);
 }
 
-// Scenario: The lead vehicle brakes while being followed #1
+// Scenario: A vehicle just inside 200 m is a target
 // Source:   examples/acc/features/control.feature:70
+// Verifies: REQ-ACC-013
+TEST_F(AccControllerSilTest, S26_AVehicleJustInside200MIsATarget) {
+    // Given the ego vehicle drives at 180 km/h  [FN-S01]
+    sil_.plant().set_ego_speed_kph(180.0);
+    // And a lead vehicle drives 215 m ahead at 0 km/h  [FN-S11]
+    sil_.plant().set_lead(215.0, 0.0, 0.0);
+    // And ACC is engaged  [ACC-S03]
+    sil_.engage();
+    // When 0.2 s pass  [FN-S10]
+    sil_.run(0.2);
+    // Then braking is requested  [ACC-S25]
+    EXPECT_GT(sil_.feature().last_command().brake_raw, 0);
+    // And the distance to the lead vehicle is 185 m within 2 m  [FN-S43]
+    ASSERT_TRUE(sil_.plant().lead_present()); EXPECT_NEAR(sil_.plant().distance_m(), 185.0, 2.0);
+}
+
+// Scenario: The lead vehicle brakes while being followed #1
+// Source:   examples/acc/features/control.feature:79
 // Verifies: REQ-ACC-016, REQ-ACC-014, REQ-ACC-017
 // Example:  target=50, decel=2
-TEST_F(AccControllerSilTest, S26_TheLeadVehicleBrakesWhileBeingFollowed_Ex1) {
+TEST_F(AccControllerSilTest, S27_TheLeadVehicleBrakesWhileBeingFollowed_Ex1) {
     // Given the ego vehicle drives at 100 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(100.0);
     // And a lead vehicle drives 46.7 m ahead at 100 km/h  [FN-S11]
@@ -529,10 +547,10 @@ TEST_F(AccControllerSilTest, S26_TheLeadVehicleBrakesWhileBeingFollowed_Ex1) {
 }
 
 // Scenario: The lead vehicle brakes while being followed #2
-// Source:   examples/acc/features/control.feature:70
+// Source:   examples/acc/features/control.feature:79
 // Verifies: REQ-ACC-016, REQ-ACC-014, REQ-ACC-017
 // Example:  target=50, decel=3
-TEST_F(AccControllerSilTest, S27_TheLeadVehicleBrakesWhileBeingFollowed_Ex2) {
+TEST_F(AccControllerSilTest, S28_TheLeadVehicleBrakesWhileBeingFollowed_Ex2) {
     // Given the ego vehicle drives at 100 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(100.0);
     // And a lead vehicle drives 46.7 m ahead at 100 km/h  [FN-S11]
@@ -554,10 +572,10 @@ TEST_F(AccControllerSilTest, S27_TheLeadVehicleBrakesWhileBeingFollowed_Ex2) {
 }
 
 // Scenario: The lead vehicle brakes while being followed #3
-// Source:   examples/acc/features/control.feature:70
+// Source:   examples/acc/features/control.feature:79
 // Verifies: REQ-ACC-016, REQ-ACC-014, REQ-ACC-017
 // Example:  target=30, decel=3
-TEST_F(AccControllerSilTest, S28_TheLeadVehicleBrakesWhileBeingFollowed_Ex3) {
+TEST_F(AccControllerSilTest, S29_TheLeadVehicleBrakesWhileBeingFollowed_Ex3) {
     // Given the ego vehicle drives at 100 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(100.0);
     // And a lead vehicle drives 46.7 m ahead at 100 km/h  [FN-S11]
@@ -579,9 +597,9 @@ TEST_F(AccControllerSilTest, S28_TheLeadVehicleBrakesWhileBeingFollowed_Ex3) {
 }
 
 // Scenario: A slower vehicle cuts in 25 m ahead
-// Source:   examples/acc/features/control.feature:88
+// Source:   examples/acc/features/control.feature:97
 // Verifies: REQ-ACC-016, REQ-ACC-014, REQ-ACC-015
-TEST_F(AccControllerSilTest, S29_ASlowerVehicleCutsIn25MAhead) {
+TEST_F(AccControllerSilTest, S30_ASlowerVehicleCutsIn25MAhead) {
     // Given the ego vehicle drives at 100 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(100.0);
     // And ACC is engaged  [ACC-S03]
@@ -601,9 +619,9 @@ TEST_F(AccControllerSilTest, S29_ASlowerVehicleCutsIn25MAhead) {
 }
 
 // Scenario: The lead vehicle leaves and the ego vehicle resumes the set speed
-// Source:   examples/acc/features/control.feature:99
+// Source:   examples/acc/features/control.feature:108
 // Verifies: REQ-ACC-011
-TEST_F(AccControllerSilTest, S30_TheLeadVehicleLeavesAndTheEgoVehicleResumesTheSetSpeed) {
+TEST_F(AccControllerSilTest, S31_TheLeadVehicleLeavesAndTheEgoVehicleResumesTheSetSpeed) {
     // Given the ego vehicle drives at 120 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(120.0);
     // And a lead vehicle drives 46.7 m ahead at 100 km/h  [FN-S11]
@@ -621,9 +639,9 @@ TEST_F(AccControllerSilTest, S30_TheLeadVehicleLeavesAndTheEgoVehicleResumesTheS
 }
 
 // Scenario: Every command frame is E2E protected and sent every cycle
-// Source:   examples/acc/features/control.feature:109
+// Source:   examples/acc/features/control.feature:118
 // Verifies: REQ-ACC-020, REQ-ACC-018
-TEST_F(AccControllerSilTest, S31_EveryCommandFrameIsE2EProtectedAndSentEveryCycle) {
+TEST_F(AccControllerSilTest, S32_EveryCommandFrameIsE2EProtectedAndSentEveryCycle) {
     // Given the ego vehicle drives at 100 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(100.0);
     // And a lead vehicle drives 60 m ahead at 90 km/h  [FN-S11]
@@ -644,7 +662,7 @@ TEST_F(AccControllerSilTest, S31_EveryCommandFrameIsE2EProtectedAndSentEveryCycl
 // Source:   examples/acc/features/faults.feature:4
 // Verifies: REQ-ACC-021
 // Example:  n=2, fault=lost
-TEST_F(AccControllerSilTest, S32_LostRadarFramesBelowTheTimeoutAreTolerated_Ex1) {
+TEST_F(AccControllerSilTest, S33_LostRadarFramesBelowTheTimeoutAreTolerated_Ex1) {
     // Given the ego vehicle drives at 100 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(100.0);
     // And ACC is engaged  [ACC-S03]
@@ -661,7 +679,7 @@ TEST_F(AccControllerSilTest, S32_LostRadarFramesBelowTheTimeoutAreTolerated_Ex1)
 // Source:   examples/acc/features/faults.feature:4
 // Verifies: REQ-ACC-021
 // Example:  n=2, fault=corrupted
-TEST_F(AccControllerSilTest, S33_LostRadarFramesBelowTheTimeoutAreTolerated_Ex2) {
+TEST_F(AccControllerSilTest, S34_LostRadarFramesBelowTheTimeoutAreTolerated_Ex2) {
     // Given the ego vehicle drives at 100 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(100.0);
     // And ACC is engaged  [ACC-S03]
@@ -678,7 +696,7 @@ TEST_F(AccControllerSilTest, S33_LostRadarFramesBelowTheTimeoutAreTolerated_Ex2)
 // Source:   examples/acc/features/faults.feature:17
 // Verifies: REQ-ACC-021, REQ-ACC-019
 // Example:  n=3, fault=lost
-TEST_F(AccControllerSilTest, S34_RadarFramesMissingFor120MsLeadToFAULT_Ex1) {
+TEST_F(AccControllerSilTest, S35_RadarFramesMissingFor120MsLeadToFAULT_Ex1) {
     // Given the ego vehicle drives at 100 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(100.0);
     // And ACC is engaged  [ACC-S03]
@@ -697,7 +715,7 @@ TEST_F(AccControllerSilTest, S34_RadarFramesMissingFor120MsLeadToFAULT_Ex1) {
 // Source:   examples/acc/features/faults.feature:17
 // Verifies: REQ-ACC-021, REQ-ACC-019
 // Example:  n=3, fault=corrupted
-TEST_F(AccControllerSilTest, S35_RadarFramesMissingFor120MsLeadToFAULT_Ex2) {
+TEST_F(AccControllerSilTest, S36_RadarFramesMissingFor120MsLeadToFAULT_Ex2) {
     // Given the ego vehicle drives at 100 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(100.0);
     // And ACC is engaged  [ACC-S03]
@@ -716,7 +734,7 @@ TEST_F(AccControllerSilTest, S35_RadarFramesMissingFor120MsLeadToFAULT_Ex2) {
 // Source:   examples/acc/features/faults.feature:31
 // Verifies: REQ-ACC-021
 // Example:  n=2, message=ego state, state=ACTIVE
-TEST_F(AccControllerSilTest, S36_VehicleFramesMissingFor60MsLeadToFAULT_Ex1) {
+TEST_F(AccControllerSilTest, S37_VehicleFramesMissingFor60MsLeadToFAULT_Ex1) {
     // Given the ego vehicle drives at 100 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(100.0);
     // And ACC is engaged  [ACC-S03]
@@ -733,7 +751,7 @@ TEST_F(AccControllerSilTest, S36_VehicleFramesMissingFor60MsLeadToFAULT_Ex1) {
 // Source:   examples/acc/features/faults.feature:31
 // Verifies: REQ-ACC-021
 // Example:  n=3, message=ego state, state=FAULT
-TEST_F(AccControllerSilTest, S37_VehicleFramesMissingFor60MsLeadToFAULT_Ex2) {
+TEST_F(AccControllerSilTest, S38_VehicleFramesMissingFor60MsLeadToFAULT_Ex2) {
     // Given the ego vehicle drives at 100 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(100.0);
     // And ACC is engaged  [ACC-S03]
@@ -750,7 +768,7 @@ TEST_F(AccControllerSilTest, S37_VehicleFramesMissingFor60MsLeadToFAULT_Ex2) {
 // Source:   examples/acc/features/faults.feature:31
 // Verifies: REQ-ACC-021
 // Example:  n=2, message=driver input, state=ACTIVE
-TEST_F(AccControllerSilTest, S38_VehicleFramesMissingFor60MsLeadToFAULT_Ex3) {
+TEST_F(AccControllerSilTest, S39_VehicleFramesMissingFor60MsLeadToFAULT_Ex3) {
     // Given the ego vehicle drives at 100 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(100.0);
     // And ACC is engaged  [ACC-S03]
@@ -767,7 +785,7 @@ TEST_F(AccControllerSilTest, S38_VehicleFramesMissingFor60MsLeadToFAULT_Ex3) {
 // Source:   examples/acc/features/faults.feature:31
 // Verifies: REQ-ACC-021
 // Example:  n=3, message=driver input, state=FAULT
-TEST_F(AccControllerSilTest, S39_VehicleFramesMissingFor60MsLeadToFAULT_Ex4) {
+TEST_F(AccControllerSilTest, S40_VehicleFramesMissingFor60MsLeadToFAULT_Ex4) {
     // Given the ego vehicle drives at 100 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(100.0);
     // And ACC is engaged  [ACC-S03]
@@ -784,7 +802,7 @@ TEST_F(AccControllerSilTest, S39_VehicleFramesMissingFor60MsLeadToFAULT_Ex4) {
 // Source:   examples/acc/features/faults.feature:46
 // Verifies: REQ-ACC-021
 // Example:  message=radar, n=2, state=ACTIVE
-TEST_F(AccControllerSilTest, S40_APausedSenderIsDetectedExactlyAtTheTimeout_Ex1) {
+TEST_F(AccControllerSilTest, S41_APausedSenderIsDetectedExactlyAtTheTimeout_Ex1) {
     // Given the ego vehicle drives at 100 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(100.0);
     // And ACC is engaged  [ACC-S03]
@@ -801,7 +819,7 @@ TEST_F(AccControllerSilTest, S40_APausedSenderIsDetectedExactlyAtTheTimeout_Ex1)
 // Source:   examples/acc/features/faults.feature:46
 // Verifies: REQ-ACC-021
 // Example:  message=radar, n=3, state=FAULT
-TEST_F(AccControllerSilTest, S41_APausedSenderIsDetectedExactlyAtTheTimeout_Ex2) {
+TEST_F(AccControllerSilTest, S42_APausedSenderIsDetectedExactlyAtTheTimeout_Ex2) {
     // Given the ego vehicle drives at 100 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(100.0);
     // And ACC is engaged  [ACC-S03]
@@ -818,7 +836,7 @@ TEST_F(AccControllerSilTest, S41_APausedSenderIsDetectedExactlyAtTheTimeout_Ex2)
 // Source:   examples/acc/features/faults.feature:46
 // Verifies: REQ-ACC-021
 // Example:  message=ego state, n=2, state=ACTIVE
-TEST_F(AccControllerSilTest, S42_APausedSenderIsDetectedExactlyAtTheTimeout_Ex3) {
+TEST_F(AccControllerSilTest, S43_APausedSenderIsDetectedExactlyAtTheTimeout_Ex3) {
     // Given the ego vehicle drives at 100 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(100.0);
     // And ACC is engaged  [ACC-S03]
@@ -835,7 +853,7 @@ TEST_F(AccControllerSilTest, S42_APausedSenderIsDetectedExactlyAtTheTimeout_Ex3)
 // Source:   examples/acc/features/faults.feature:46
 // Verifies: REQ-ACC-021
 // Example:  message=ego state, n=3, state=FAULT
-TEST_F(AccControllerSilTest, S43_APausedSenderIsDetectedExactlyAtTheTimeout_Ex4) {
+TEST_F(AccControllerSilTest, S44_APausedSenderIsDetectedExactlyAtTheTimeout_Ex4) {
     // Given the ego vehicle drives at 100 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(100.0);
     // And ACC is engaged  [ACC-S03]
@@ -852,7 +870,7 @@ TEST_F(AccControllerSilTest, S43_APausedSenderIsDetectedExactlyAtTheTimeout_Ex4)
 // Source:   examples/acc/features/faults.feature:46
 // Verifies: REQ-ACC-021
 // Example:  message=driver input, n=2, state=ACTIVE
-TEST_F(AccControllerSilTest, S44_APausedSenderIsDetectedExactlyAtTheTimeout_Ex5) {
+TEST_F(AccControllerSilTest, S45_APausedSenderIsDetectedExactlyAtTheTimeout_Ex5) {
     // Given the ego vehicle drives at 100 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(100.0);
     // And ACC is engaged  [ACC-S03]
@@ -869,7 +887,7 @@ TEST_F(AccControllerSilTest, S44_APausedSenderIsDetectedExactlyAtTheTimeout_Ex5)
 // Source:   examples/acc/features/faults.feature:46
 // Verifies: REQ-ACC-021
 // Example:  message=driver input, n=3, state=FAULT
-TEST_F(AccControllerSilTest, S45_APausedSenderIsDetectedExactlyAtTheTimeout_Ex6) {
+TEST_F(AccControllerSilTest, S46_APausedSenderIsDetectedExactlyAtTheTimeout_Ex6) {
     // Given the ego vehicle drives at 100 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(100.0);
     // And ACC is engaged  [ACC-S03]
@@ -885,7 +903,7 @@ TEST_F(AccControllerSilTest, S45_APausedSenderIsDetectedExactlyAtTheTimeout_Ex6)
 // Scenario: FAULT is latched until the main switch is turned off
 // Source:   examples/acc/features/faults.feature:63
 // Verifies: REQ-ACC-022
-TEST_F(AccControllerSilTest, S46_FAULTIsLatchedUntilTheMainSwitchIsTurnedOff) {
+TEST_F(AccControllerSilTest, S47_FAULTIsLatchedUntilTheMainSwitchIsTurnedOff) {
     // Given the ego vehicle drives at 100 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(100.0);
     // And ACC is engaged  [ACC-S03]

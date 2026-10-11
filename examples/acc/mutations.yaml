@@ -15,6 +15,18 @@ mutations:
   - {name: "wrong E2E data id (radar)", file: examples/acc/model.yaml, old: "data_id: 0x0200", new: "data_id: 0x0201"}
   - {name: "E2E max delta 3 -> 2 (ego)", file: examples/acc/model.yaml, old: "data_id: 0x0210, crc: Crc, counter: Counter, max_delta_counter: 3", new: "data_id: 0x0210, crc: Crc, counter: Counter, max_delta_counter: 2"}
   - {name: "brake request bound to accel signal", file: examples/acc/model.yaml, old: "brake_request: AccCommand.BrakeRequest", new: "brake_request: AccCommand.AccelRequest"}
+  # ---- inputs: model, remaining calibration values (every value has a mutant: tools.mutate gate) ----
+  - {name: "min activation speed 30 -> 35 km/h", file: examples/acc/model.yaml, old: "min_activation_speed_kph: {value: 30", new: "min_activation_speed_kph: {value: 35"}
+  - {name: "max set speed 180 -> 170 km/h", file: examples/acc/model.yaml, old: "max_set_speed_kph: {value: 180", new: "max_set_speed_kph: {value: 170"}
+  - {name: "time gaps 2.0 -> 2.1 s", file: examples/acc/model.yaml, old: "time_gaps_s: {value: [1.0, 1.5, 2.0]", new: "time_gaps_s: {value: [1.0, 1.5, 2.1]"}
+  - {name: "max target range 200 -> 180 m", file: examples/acc/model.yaml, old: "max_target_range_m: {value: 200", new: "max_target_range_m: {value: 180"}
+  - {name: "jerk decrease 5.0 -> 6.0 m/s3", file: examples/acc/model.yaml, old: "jerk_decrease_max_mps3: {value: 5.0", new: "jerk_decrease_max_mps3: {value: 6.0"}
+  - {name: "speed gain 0.3 -> 0.4 1/s", file: examples/acc/model.yaml, old: "speed_gain_per_s: {value: 0.3", new: "speed_gain_per_s: {value: 0.4", expect: tolerated,
+     note: "control tuning without a requirement of its own; behaviour stays within the requirement-level tolerances (REQ-ACC-010/011/014/015)"}
+  - {name: "gap gain 0.2 -> 0.3 1/s2", file: examples/acc/model.yaml, old: "gap_gain_per_s2: {value: 0.2", new: "gap_gain_per_s2: {value: 0.3", expect: tolerated,
+     note: "control tuning without a requirement of its own; behaviour stays within the requirement-level tolerances (REQ-ACC-010/011/014/015)"}
+  - {name: "range rate gain 0.6 -> 0.8 1/s", file: examples/acc/model.yaml, old: "range_rate_gain_per_s: {value: 0.6", new: "range_rate_gain_per_s: {value: 0.8", expect: tolerated,
+     note: "control tuning without a requirement of its own; behaviour stays within the requirement-level tolerances (REQ-ACC-010/011/014/015)"}
   # ---- inputs: DBC ----
   - {name: "AccelRequest factor 0.01 -> 0.02", file: examples/acc/interfaces/acc.dbc, old: "AccelRequest : 16|10@1+ (0.01,0)", new: "AccelRequest : 16|10@1+ (0.02,0)"}
   - {name: "ObjRange moved by one bit", file: examples/acc/interfaces/acc.dbc, old: "ObjRange : 16|12@1+", new: "ObjRange : 17|11@1+"}

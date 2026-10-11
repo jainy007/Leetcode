@@ -11,6 +11,8 @@
     "generated/aeb_monitor/include/aeb_monitor/aeb_monitor_codec.hpp",
     "generated/aeb_monitor/include/aeb_monitor/aeb_monitor_logic.hpp",
     "generated/aeb_monitor/include/aeb_monitor/aeb_monitor_types.hpp",
+    "generated/aeb_monitor/sil/aeb_monitor_codec_test.cpp",
+    "generated/aeb_monitor/sil/aeb_monitor_component_test.cpp",
     "generated/aeb_monitor/sil/aeb_monitor_sil.hpp",
     "generated/aeb_monitor/sil/aeb_monitor_sil_test.cpp",
     "generated/aeb_monitor/src/aeb_monitor.cpp",
@@ -18,7 +20,7 @@
     "generated/aeb_monitor/src/aeb_monitor_logic.cpp"
   ],
   "generator": "ea-gen 0.1.0",
-  "inputs_sha256": "4edac0782e43a3effd02948398696bdcee44fdc1992b83dad1769ef283390f0c",
+  "inputs_sha256": "31e2c7fbd93dd01fd60ce38fb1537e40edd8600b328b348b62317cb35b638c06",
   "pattern": "can_function",
   "project": "aeb_monitor",
   "requirements": [
@@ -31,7 +33,8 @@
       ],
       "tests": [
         "S01_AJustifiedBrakingCascadeIsApprovedUntilTheVehicleHasStopped",
-        "S23_WithoutAnyCommandTheMonitorStaysInINITAndGrantsNoPermit"
+        "S26_WithoutAnyCommandTheMonitorStaysInINITAndGrantsNoPermit",
+        "S28_ARadarPauseWithoutBrakingDoesNotTriggerTheMonitor"
       ],
       "text": "When the first valid AebCommand frame is received, the AebMonitor shall enter MONITORING and check that command.",
       "verification": [
@@ -65,10 +68,10 @@
         "logic"
       ],
       "tests": [
-        "S10_DecelerationLimitsPerBrakingState_Ex1",
-        "S11_DecelerationLimitsPerBrakingState_Ex2",
-        "S12_DecelerationLimitsPerBrakingState_Ex3",
-        "S13_DecelerationLimitsPerBrakingState_Ex4"
+        "S11_DecelerationLimitsPerBrakingState_Ex1",
+        "S12_DecelerationLimitsPerBrakingState_Ex2",
+        "S13_DecelerationLimitsPerBrakingState_Ex3",
+        "S14_DecelerationLimitsPerBrakingState_Ex4"
       ],
       "text": "If an AebCommand requests more than 8.1 m/s2, or more than 4.1 m/s2 in PARTIAL_BRAKE, then the AebMonitor shall enter SAFE_STATE with reason REQUEST_LIMIT.",
       "verification": [
@@ -85,9 +88,9 @@
         "logic"
       ],
       "tests": [
-        "S14_BrakingIsAllowedOnlyInABrakingState_Ex1",
-        "S15_BrakingIsAllowedOnlyInABrakingState_Ex2",
-        "S16_BrakingIsAllowedOnlyInABrakingState_Ex3"
+        "S15_BrakingIsAllowedOnlyInABrakingState_Ex1",
+        "S16_BrakingIsAllowedOnlyInABrakingState_Ex2",
+        "S17_BrakingIsAllowedOnlyInABrakingState_Ex3"
       ],
       "text": "If an AebCommand requests braking in a state other than PARTIAL_BRAKE or FULL_BRAKE, then the AebMonitor shall enter SAFE_STATE with reason REQUEST_OUTSIDE_BRAKING.",
       "verification": [
@@ -112,9 +115,10 @@
         "S03_BrakingOnsetNeedsAnInLaneTargetWithinTTC21S_Ex2",
         "S04_BrakingOnsetNeedsAnInLaneTargetWithinTTC21S_Ex3",
         "S05_BrakingOnsetNeedsAnInLaneTargetWithinTTC21S_Ex4",
-        "S06_BrakingWithoutAnyTargetIsNeverApplied",
-        "S07_ATargetRecedingIsNoReasonToBrake",
-        "S18_ANewBrakingOnsetIsJustifiedAgainAfterBrakingEnded"
+        "S06_BrakingOnsetNeedsAnInLaneTargetWithinTTC21S_Ex5",
+        "S07_BrakingWithoutAnyTargetIsNeverApplied",
+        "S08_ATargetRecedingIsNoReasonToBrake",
+        "S19_ANewBrakingOnsetIsJustifiedAgainAfterBrakingEnded"
       ],
       "text": "If braking starts while no valid radar target at most 150 m ahead and at most 2.1 m from the lane centre approaches with a time to collision of 2.1 s or less, then the AebMonitor shall enter SAFE_STATE with reason UNJUSTIFIED_BRAKING.",
       "verification": [
@@ -133,8 +137,9 @@
         "logic"
       ],
       "tests": [
-        "S08_FullBrakingOnsetNeedsTTC15S_Ex1",
-        "S09_FullBrakingOnsetNeedsTTC15S_Ex2"
+        "S09_FullBrakingOnsetNeedsTTC15S_Ex1",
+        "S10_FullBrakingOnsetNeedsTTC15S_Ex2",
+        "S20_FullBrakingRequestedForARecedingTargetIsUnjustified"
       ],
       "text": "If a deceleration above 4.1 m/s2 is first requested while no such target approaches with a time to collision of 1.5 s or less, then the AebMonitor shall enter SAFE_STATE with reason UNJUSTIFIED_FULL_BRAKING.",
       "verification": [
@@ -152,7 +157,8 @@
         "logic"
       ],
       "tests": [
-        "S17_BrakingThatContinuesAfterTheTargetLeftTheLaneLatchesSAFESTAT"
+        "S18_BrakingThatContinuesAfterTheTargetLeftTheLaneLatchesSAFESTAT",
+        "S21_BrakingThatContinuesWithoutAValidRadarLatchesSAFESTATE"
       ],
       "text": "If braking continues while no valid radar target at most 150 m ahead and at most 2.1 m from the lane centre is present, then the AebMonitor shall enter SAFE_STATE with reason UNJUSTIFIED_BRAKING.",
       "verification": [
@@ -168,11 +174,11 @@
         "rx:AebCommand"
       ],
       "tests": [
-        "S19_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex1",
-        "S20_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex2",
-        "S21_UpToTwoLostOrCorruptedCommandFramesAreTolerated_Ex1",
-        "S22_UpToTwoLostOrCorruptedCommandFramesAreTolerated_Ex2",
-        "S23_WithoutAnyCommandTheMonitorStaysInINITAndGrantsNoPermit"
+        "S22_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex1",
+        "S23_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex2",
+        "S24_UpToTwoLostOrCorruptedCommandFramesAreTolerated_Ex1",
+        "S25_UpToTwoLostOrCorruptedCommandFramesAreTolerated_Ex2",
+        "S26_WithoutAnyCommandTheMonitorStaysInINITAndGrantsNoPermit"
       ],
       "text": "If in MONITORING no valid AebCommand frame is received for 60 ms, then the AebMonitor shall enter SAFE_STATE with reason COMMAND_TIMEOUT.",
       "verification": [
@@ -187,9 +193,9 @@
         "logic"
       ],
       "tests": [
-        "S06_BrakingWithoutAnyTargetIsNeverApplied",
-        "S19_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex1",
-        "S20_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex2"
+        "S07_BrakingWithoutAnyTargetIsNeverApplied",
+        "S22_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex1",
+        "S23_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex2"
       ],
       "text": "While in SAFE_STATE, the AebMonitor shall withdraw the permit and report the reason of the first violation until the next power cycle.",
       "verification": [
@@ -205,7 +211,7 @@
       ],
       "tests": [
         "S01_AJustifiedBrakingCascadeIsApprovedUntilTheVehicleHasStopped",
-        "S24_AFrozenMonitorMakesTheActuatorRampOutBrakingAndRequestATakeo"
+        "S27_AFrozenMonitorMakesTheActuatorRampOutBrakingAndRequestATakeo"
       ],
       "text": "The AebMonitor shall send the AebMonitorStatus message every 20 ms with E2E protection.",
       "verification": [
@@ -596,10 +602,79 @@
       ]
     },
     {
+      "example": [
+        [
+          "d",
+          "160"
+        ],
+        [
+          "lat",
+          "0.0"
+        ],
+        [
+          "state",
+          "SAFE_STATE"
+        ],
+        [
+          "reason",
+          "UNJUSTIFIED_BRAKING"
+        ]
+      ],
+      "feature": "examples/aeb_monitor/features/justification.feature",
+      "line": 30,
+      "name": "S06_BrakingOnsetNeedsAnInLaneTargetWithinTTC21S_Ex5",
+      "requirements": [
+        "REQ-AEBM-005"
+      ],
+      "scenario": "Braking onset needs an in-lane target within TTC 2.1 s #5",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(50.0);",
+          "text": "Given the ego vehicle drives at 50 km/h"
+        },
+        {
+          "catalogue": "FN-S12",
+          "cpp": "sil_.plant().set_lead(160.0, 0.0, 0.0);",
+          "text": "And a vehicle drives 160 m ahead at 0 km/h with 0.0 m lateral offset"
+        },
+        {
+          "catalogue": "AEBM-S01",
+          "cpp": "sil_.command(static_cast<double>(ea::plant::AebStatus::kStandby), 0.0);",
+          "text": "And the AEB controller is in STANDBY with 0 m/s2 braking"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.1);",
+          "text": "When 0.1 s pass"
+        },
+        {
+          "catalogue": "AEBM-S01",
+          "cpp": "sil_.command(static_cast<double>(ea::plant::AebStatus::kPartialBrake), 4.0);",
+          "text": "And the AEB controller is in PARTIAL_BRAKE with 4 m/s2 braking"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.1);",
+          "text": "And 0.1 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kSafeState);",
+          "text": "Then the monitor state is SAFE_STATE"
+        },
+        {
+          "catalogue": "AEBM-S02",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AebMonitorReason::kUnjustifiedBraking));",
+          "text": "And the monitor reports the fault reason UNJUSTIFIED_BRAKING"
+        }
+      ]
+    },
+    {
       "example": [],
       "feature": "examples/aeb_monitor/features/justification.feature",
-      "line": 48,
-      "name": "S06_BrakingWithoutAnyTargetIsNeverApplied",
+      "line": 49,
+      "name": "S07_BrakingWithoutAnyTargetIsNeverApplied",
       "requirements": [
         "REQ-AEBM-005",
         "REQ-AEBM-009"
@@ -666,8 +741,8 @@
     {
       "example": [],
       "feature": "examples/aeb_monitor/features/justification.feature",
-      "line": 62,
-      "name": "S07_ATargetRecedingIsNoReasonToBrake",
+      "line": 63,
+      "name": "S08_ATargetRecedingIsNoReasonToBrake",
       "requirements": [
         "REQ-AEBM-005"
       ],
@@ -731,8 +806,8 @@
         ]
       ],
       "feature": "examples/aeb_monitor/features/justification.feature",
-      "line": 73,
-      "name": "S08_FullBrakingOnsetNeedsTTC15S_Ex1",
+      "line": 74,
+      "name": "S09_FullBrakingOnsetNeedsTTC15S_Ex1",
       "requirements": [
         "REQ-AEBM-006"
       ],
@@ -806,8 +881,8 @@
         ]
       ],
       "feature": "examples/aeb_monitor/features/justification.feature",
-      "line": 73,
-      "name": "S09_FullBrakingOnsetNeedsTTC15S_Ex2",
+      "line": 74,
+      "name": "S10_FullBrakingOnsetNeedsTTC15S_Ex2",
       "requirements": [
         "REQ-AEBM-006"
       ],
@@ -885,8 +960,8 @@
         ]
       ],
       "feature": "examples/aeb_monitor/features/justification.feature",
-      "line": 91,
-      "name": "S10_DecelerationLimitsPerBrakingState_Ex1",
+      "line": 92,
+      "name": "S11_DecelerationLimitsPerBrakingState_Ex1",
       "requirements": [
         "REQ-AEBM-003"
       ],
@@ -954,8 +1029,8 @@
         ]
       ],
       "feature": "examples/aeb_monitor/features/justification.feature",
-      "line": 91,
-      "name": "S11_DecelerationLimitsPerBrakingState_Ex2",
+      "line": 92,
+      "name": "S12_DecelerationLimitsPerBrakingState_Ex2",
       "requirements": [
         "REQ-AEBM-003"
       ],
@@ -1023,8 +1098,8 @@
         ]
       ],
       "feature": "examples/aeb_monitor/features/justification.feature",
-      "line": 91,
-      "name": "S12_DecelerationLimitsPerBrakingState_Ex3",
+      "line": 92,
+      "name": "S13_DecelerationLimitsPerBrakingState_Ex3",
       "requirements": [
         "REQ-AEBM-003"
       ],
@@ -1092,8 +1167,8 @@
         ]
       ],
       "feature": "examples/aeb_monitor/features/justification.feature",
-      "line": 91,
-      "name": "S13_DecelerationLimitsPerBrakingState_Ex4",
+      "line": 92,
+      "name": "S14_DecelerationLimitsPerBrakingState_Ex4",
       "requirements": [
         "REQ-AEBM-003"
       ],
@@ -1149,8 +1224,8 @@
         ]
       ],
       "feature": "examples/aeb_monitor/features/justification.feature",
-      "line": 109,
-      "name": "S14_BrakingIsAllowedOnlyInABrakingState_Ex1",
+      "line": 110,
+      "name": "S15_BrakingIsAllowedOnlyInABrakingState_Ex1",
       "requirements": [
         "REQ-AEBM-004"
       ],
@@ -1206,8 +1281,8 @@
         ]
       ],
       "feature": "examples/aeb_monitor/features/justification.feature",
-      "line": 109,
-      "name": "S15_BrakingIsAllowedOnlyInABrakingState_Ex2",
+      "line": 110,
+      "name": "S16_BrakingIsAllowedOnlyInABrakingState_Ex2",
       "requirements": [
         "REQ-AEBM-004"
       ],
@@ -1263,8 +1338,8 @@
         ]
       ],
       "feature": "examples/aeb_monitor/features/justification.feature",
-      "line": 109,
-      "name": "S16_BrakingIsAllowedOnlyInABrakingState_Ex3",
+      "line": 110,
+      "name": "S17_BrakingIsAllowedOnlyInABrakingState_Ex3",
       "requirements": [
         "REQ-AEBM-004"
       ],
@@ -1315,8 +1390,8 @@
     {
       "example": [],
       "feature": "examples/aeb_monitor/features/justification.feature",
-      "line": 126,
-      "name": "S17_BrakingThatContinuesAfterTheTargetLeftTheLaneLatchesSAFESTAT",
+      "line": 127,
+      "name": "S18_BrakingThatContinuesAfterTheTargetLeftTheLaneLatchesSAFESTAT",
       "requirements": [
         "REQ-AEBM-007"
       ],
@@ -1382,8 +1457,8 @@
     {
       "example": [],
       "feature": "examples/aeb_monitor/features/justification.feature",
-      "line": 140,
-      "name": "S18_ANewBrakingOnsetIsJustifiedAgainAfterBrakingEnded",
+      "line": 141,
+      "name": "S19_ANewBrakingOnsetIsJustifiedAgainAfterBrakingEnded",
       "requirements": [
         "REQ-AEBM-005"
       ],
@@ -1462,6 +1537,145 @@
       ]
     },
     {
+      "example": [],
+      "feature": "examples/aeb_monitor/features/justification.feature",
+      "line": 158,
+      "name": "S20_FullBrakingRequestedForARecedingTargetIsUnjustified",
+      "requirements": [
+        "REQ-AEBM-006"
+      ],
+      "scenario": "Full braking requested for a receding target is unjustified",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(50.0);",
+          "text": "Given the ego vehicle drives at 50 km/h"
+        },
+        {
+          "catalogue": "FN-S11",
+          "cpp": "sil_.plant().set_lead(15.0, 20.0, 0.0);",
+          "text": "And a lead vehicle drives 15 m ahead at 20 km/h"
+        },
+        {
+          "catalogue": "AEBM-S01",
+          "cpp": "sil_.command(static_cast<double>(ea::plant::AebStatus::kStandby), 0.0);",
+          "text": "And the AEB controller is in STANDBY with 0 m/s2 braking"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.1);",
+          "text": "When 0.1 s pass"
+        },
+        {
+          "catalogue": "AEBM-S01",
+          "cpp": "sil_.command(static_cast<double>(ea::plant::AebStatus::kPartialBrake), 4.0);",
+          "text": "And the AEB controller is in PARTIAL_BRAKE with 4 m/s2 braking"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.1);",
+          "text": "And 0.1 s pass"
+        },
+        {
+          "catalogue": "FN-S13",
+          "cpp": "sil_.plant().lead_change_speed(80.0, 8.0);",
+          "text": "And the lead vehicle changes speed to 80 km/h at 8 m/s2"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(1.5);",
+          "text": "And 1.5 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kMonitoring);",
+          "text": "Then the monitor state is MONITORING"
+        },
+        {
+          "catalogue": "AEBM-S01",
+          "cpp": "sil_.command(static_cast<double>(ea::plant::AebStatus::kFullBrake), 8.0);",
+          "text": "When the AEB controller is in FULL_BRAKE with 8 m/s2 braking"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.1);",
+          "text": "And 0.1 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kSafeState);",
+          "text": "Then the monitor state is SAFE_STATE"
+        },
+        {
+          "catalogue": "AEBM-S02",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AebMonitorReason::kUnjustifiedFullBraking));",
+          "text": "And the monitor reports the fault reason UNJUSTIFIED_FULL_BRAKING"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/aeb_monitor/features/justification.feature",
+      "line": 174,
+      "name": "S21_BrakingThatContinuesWithoutAValidRadarLatchesSAFESTATE",
+      "requirements": [
+        "REQ-AEBM-007"
+      ],
+      "scenario": "Braking that continues without a valid radar latches SAFE_STATE",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(50.0);",
+          "text": "Given the ego vehicle drives at 50 km/h"
+        },
+        {
+          "catalogue": "FN-S19",
+          "cpp": "sil_.plant().set_lead(22.0, 0.0, 0.0);",
+          "text": "And a stationary vehicle stands 22 m ahead"
+        },
+        {
+          "catalogue": "AEBM-S01",
+          "cpp": "sil_.command(static_cast<double>(ea::plant::AebStatus::kStandby), 0.0);",
+          "text": "And the AEB controller is in STANDBY with 0 m/s2 braking"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.1);",
+          "text": "When 0.1 s pass"
+        },
+        {
+          "catalogue": "AEBM-S01",
+          "cpp": "sil_.command(static_cast<double>(ea::plant::AebStatus::kPartialBrake), 4.0);",
+          "text": "And the AEB controller is in PARTIAL_BRAKE with 4 m/s2 braking"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.1);",
+          "text": "And 0.1 s pass"
+        },
+        {
+          "catalogue": "FN-S18",
+          "cpp": "sil_.plant().skip_frames(ea::plant::Stream::kRadar, 10U);",
+          "text": "And the radar sender pauses for 10 frames"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.4);",
+          "text": "And 0.4 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kSafeState);",
+          "text": "Then the monitor state is SAFE_STATE"
+        },
+        {
+          "catalogue": "AEBM-S02",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AebMonitorReason::kUnjustifiedBraking));",
+          "text": "And the monitor reports the fault reason UNJUSTIFIED_BRAKING"
+        }
+      ]
+    },
+    {
       "example": [
         [
           "f",
@@ -1470,7 +1684,7 @@
       ],
       "feature": "examples/aeb_monitor/features/faults.feature",
       "line": 6,
-      "name": "S19_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex1",
+      "name": "S22_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex1",
       "requirements": [
         "REQ-AEBM-008",
         "REQ-AEBM-009"
@@ -1533,7 +1747,7 @@
       ],
       "feature": "examples/aeb_monitor/features/faults.feature",
       "line": 6,
-      "name": "S20_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex2",
+      "name": "S23_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex2",
       "requirements": [
         "REQ-AEBM-008",
         "REQ-AEBM-009"
@@ -1596,7 +1810,7 @@
       ],
       "feature": "examples/aeb_monitor/features/faults.feature",
       "line": 23,
-      "name": "S21_UpToTwoLostOrCorruptedCommandFramesAreTolerated_Ex1",
+      "name": "S24_UpToTwoLostOrCorruptedCommandFramesAreTolerated_Ex1",
       "requirements": [
         "REQ-AEBM-008"
       ],
@@ -1648,7 +1862,7 @@
       ],
       "feature": "examples/aeb_monitor/features/faults.feature",
       "line": 23,
-      "name": "S22_UpToTwoLostOrCorruptedCommandFramesAreTolerated_Ex2",
+      "name": "S25_UpToTwoLostOrCorruptedCommandFramesAreTolerated_Ex2",
       "requirements": [
         "REQ-AEBM-008"
       ],
@@ -1695,7 +1909,7 @@
       "example": [],
       "feature": "examples/aeb_monitor/features/faults.feature",
       "line": 38,
-      "name": "S23_WithoutAnyCommandTheMonitorStaysInINITAndGrantsNoPermit",
+      "name": "S26_WithoutAnyCommandTheMonitorStaysInINITAndGrantsNoPermit",
       "requirements": [
         "REQ-AEBM-001",
         "REQ-AEBM-008"
@@ -1738,7 +1952,7 @@
       "example": [],
       "feature": "examples/aeb_monitor/features/faults.feature",
       "line": 47,
-      "name": "S24_AFrozenMonitorMakesTheActuatorRampOutBrakingAndRequestATakeo",
+      "name": "S27_AFrozenMonitorMakesTheActuatorRampOutBrakingAndRequestATakeo",
       "requirements": [
         "REQ-AEBM-010"
       ],
@@ -1803,6 +2017,53 @@
           "catalogue": "MON-S08",
           "cpp": "EXPECT_FALSE(sil_.actuator().applying());",
           "text": "And the actuator applies no request"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/aeb_monitor/features/faults.feature",
+      "line": 62,
+      "name": "S28_ARadarPauseWithoutBrakingDoesNotTriggerTheMonitor",
+      "requirements": [
+        "REQ-AEBM-001"
+      ],
+      "scenario": "A radar pause without braking does not trigger the monitor",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(50.0);",
+          "text": "Given the ego vehicle drives at 50 km/h"
+        },
+        {
+          "catalogue": "AEBM-S01",
+          "cpp": "sil_.command(static_cast<double>(ea::plant::AebStatus::kStandby), 0.0);",
+          "text": "And the AEB controller is in STANDBY with 0 m/s2 braking"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "When 0.2 s pass"
+        },
+        {
+          "catalogue": "FN-S18",
+          "cpp": "sil_.plant().skip_frames(ea::plant::Stream::kRadar, 10U);",
+          "text": "And the radar sender pauses for 10 frames"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(1.0);",
+          "text": "And 1 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kMonitoring);",
+          "text": "Then the monitor state is MONITORING"
+        },
+        {
+          "catalogue": "MON-S05",
+          "cpp": "EXPECT_LT(sil_.actuator().metrics().monitor_safe_state_s, 0.0);",
+          "text": "And the monitor never entered SAFE_STATE"
         }
       ]
     }

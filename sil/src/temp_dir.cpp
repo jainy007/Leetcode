@@ -33,7 +33,11 @@ bool TempDir::remember(const char* p, bool is_dir) noexcept {
     if (count_ >= kMaxEntries) {
         return false;
     }
-    std::strncpy(entries_[count_].data(), p, kMaxPath - 1U);
+    const std::size_t n = std::strlen(p);
+    if (n >= kMaxPath) {
+        return false;  // never store a truncated path (cleanup would miss it)
+    }
+    std::memcpy(entries_[count_].data(), p, n + 1U);
     is_dir_[count_] = is_dir;
     ++count_;
     return true;
@@ -50,7 +54,9 @@ bool TempDir::copy_from(const char* src_dir, const char* rel) noexcept {
     if (slash != nullptr) {
         std::array<char, kMaxPath> dir{};
         const int len = static_cast<int>(slash - rel);
-        (void)std::snprintf(dir.data(), dir.size(), "%s/%.*s", path_.data(), len, rel);
+        if (std::snprintf(dir.data(), dir.size(), "%s/%.*s", path_.data(), len, rel) >= static_cast<int>(dir.size())) {
+            return false;
+        }
         struct stat st {};
         if (stat(dir.data(), &st) != 0) {
             if (mkdir(dir.data(), 0700) != 0 || !remember(dir.data(), true)) {

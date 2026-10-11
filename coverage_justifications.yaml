@@ -1,0 +1,13 @@
+# Uncovered MC/DC conditions in generated code that no test can or should reach, with reasons.
+# Checked by python3 -m tools.coverage: a file of an ASIL D-derived component (asil D or X(D))
+# needs 100 % MC/DC except for the conditions listed here. An entry that no longer matches an
+# uncovered condition fails the gate too (stale justification).
+justifications:
+  - file: generated/aeb/src/aeb_controller_logic.cpp
+    source: "if (kickdown || !relevant || stopped) {"
+    condition: 3
+    reason: >-
+      REQ-AEB-005 ends braking at standstill. 'relevant' needs a closing speed above 0.5 m/s, and
+      'stopped' means an ego speed of at most 1 km/h (0.28 m/s), so both hold together only if the
+      target moves backwards. The plant has no reversing actor, so the condition cannot be shown
+      independent in SIL. The check stays as a guard for reversing targets on the real radar.

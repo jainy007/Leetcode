@@ -11,6 +11,8 @@
     "generated/acc/include/acc/acc_controller_codec.hpp",
     "generated/acc/include/acc/acc_controller_logic.hpp",
     "generated/acc/include/acc/acc_controller_types.hpp",
+    "generated/acc/sil/acc_controller_codec_test.cpp",
+    "generated/acc/sil/acc_controller_component_test.cpp",
     "generated/acc/sil/acc_controller_sil.hpp",
     "generated/acc/sil/acc_controller_sil_test.cpp",
     "generated/acc/src/acc_controller.cpp",
@@ -18,7 +20,7 @@
     "generated/acc/src/acc_controller_logic.cpp"
   ],
   "generator": "ea-gen 0.1.0",
-  "inputs_sha256": "7daf72a7ff67fdde3af69c03ce9ff58b4ecdb3b7244d701c28de0793bc835631",
+  "inputs_sha256": "df14c530c502f140150ce4bf860cdd1e8018cd3a627d306d9073740480ad2f3b",
   "pattern": "can_function",
   "project": "acc",
   "requirements": [
@@ -201,7 +203,7 @@
         "S20_FollowASlowerVehicleAtTheSelectedTimeGap_Ex2",
         "S21_FollowASlowerVehicleAtTheSelectedTimeGap_Ex3",
         "S22_AFasterLeadVehicleDoesNotPullTheEgoVehicleAboveTheSetSpeed",
-        "S30_TheLeadVehicleLeavesAndTheEgoVehicleResumesTheSetSpeed"
+        "S31_TheLeadVehicleLeavesAndTheEgoVehicleResumesTheSetSpeed"
       ],
       "text": "While ACTIVE with a relevant target, the AccController shall control the distance to the target to 5 m plus the selected time gap multiplied by the ego speed, with a steady-state error of at most 2 m, and shall not exceed the set speed.",
       "verification": [
@@ -236,7 +238,8 @@
       "tests": [
         "S23_AVehicleInTheAdjacentLaneIsIgnored",
         "S24_AVehicleJustInsideTheLaneBoundaryIsFollowed",
-        "S25_AVehicleBeyond200MIsNotATargetEvenWhenClosingFast"
+        "S25_AVehicleBeyond200MIsNotATargetEvenWhenClosingFast",
+        "S26_AVehicleJustInside200MIsATarget"
       ],
       "text": "The AccController shall treat a radar object as the relevant target only if it is valid, at most 200 m ahead and at most 1.8 m from the ego lane centre.",
       "verification": [
@@ -253,10 +256,10 @@
       ],
       "tests": [
         "S18_AccelerateToAHigherSetSpeedWithinTheComfortLimits",
-        "S26_TheLeadVehicleBrakesWhileBeingFollowed_Ex1",
-        "S27_TheLeadVehicleBrakesWhileBeingFollowed_Ex2",
-        "S28_TheLeadVehicleBrakesWhileBeingFollowed_Ex3",
-        "S29_ASlowerVehicleCutsIn25MAhead"
+        "S27_TheLeadVehicleBrakesWhileBeingFollowed_Ex1",
+        "S28_TheLeadVehicleBrakesWhileBeingFollowed_Ex2",
+        "S29_TheLeadVehicleBrakesWhileBeingFollowed_Ex3",
+        "S30_ASlowerVehicleCutsIn25MAhead"
       ],
       "text": "The AccController shall limit the requested acceleration to 2.0 m/s2 and the requested deceleration to 3.5 m/s2.",
       "verification": [
@@ -273,7 +276,7 @@
       ],
       "tests": [
         "S18_AccelerateToAHigherSetSpeedWithinTheComfortLimits",
-        "S29_ASlowerVehicleCutsIn25MAhead"
+        "S30_ASlowerVehicleCutsIn25MAhead"
       ],
       "text": "While ACTIVE, the AccController shall limit the change of the requested longitudinal acceleration to 2.5 m/s3 when it increases and 5.0 m/s3 when it decreases.",
       "verification": [
@@ -288,10 +291,10 @@
         "logic"
       ],
       "tests": [
-        "S26_TheLeadVehicleBrakesWhileBeingFollowed_Ex1",
-        "S27_TheLeadVehicleBrakesWhileBeingFollowed_Ex2",
-        "S28_TheLeadVehicleBrakesWhileBeingFollowed_Ex3",
-        "S29_ASlowerVehicleCutsIn25MAhead"
+        "S27_TheLeadVehicleBrakesWhileBeingFollowed_Ex1",
+        "S28_TheLeadVehicleBrakesWhileBeingFollowed_Ex2",
+        "S29_TheLeadVehicleBrakesWhileBeingFollowed_Ex3",
+        "S30_ASlowerVehicleCutsIn25MAhead"
       ],
       "text": "If a relevant target that is followed at the selected time gap decelerates at up to 3 m/s2, or a slower vehicle cuts in at 25 m or more, then the AccController shall keep the distance above 5 m.",
       "verification": [
@@ -307,9 +310,9 @@
       ],
       "tests": [
         "S18_AccelerateToAHigherSetSpeedWithinTheComfortLimits",
-        "S26_TheLeadVehicleBrakesWhileBeingFollowed_Ex1",
-        "S27_TheLeadVehicleBrakesWhileBeingFollowed_Ex2",
-        "S28_TheLeadVehicleBrakesWhileBeingFollowed_Ex3"
+        "S27_TheLeadVehicleBrakesWhileBeingFollowed_Ex1",
+        "S28_TheLeadVehicleBrakesWhileBeingFollowed_Ex2",
+        "S29_TheLeadVehicleBrakesWhileBeingFollowed_Ex3"
       ],
       "text": "The AccController shall never request acceleration and braking at the same time.",
       "verification": [
@@ -325,7 +328,7 @@
       ],
       "tests": [
         "S18_AccelerateToAHigherSetSpeedWithinTheComfortLimits",
-        "S31_EveryCommandFrameIsE2EProtectedAndSentEveryCycle"
+        "S32_EveryCommandFrameIsE2EProtectedAndSentEveryCycle"
       ],
       "text": "The AccController shall always request a steering angle of 0 deg.",
       "verification": [
@@ -343,8 +346,8 @@
         "S01_MainSwitchOnEntersSTANDBYWithoutRequestingAccelerationOrBrak",
         "S11_TheBrakePedalDisengagesWithinOneCycle",
         "S15_MainSwitchOffClearsTheSetSpeed",
-        "S34_RadarFramesMissingFor120MsLeadToFAULT_Ex1",
-        "S35_RadarFramesMissingFor120MsLeadToFAULT_Ex2"
+        "S35_RadarFramesMissingFor120MsLeadToFAULT_Ex1",
+        "S36_RadarFramesMissingFor120MsLeadToFAULT_Ex2"
       ],
       "text": "While not ACTIVE, the AccController shall request neither acceleration nor braking.",
       "verification": [
@@ -360,7 +363,7 @@
       ],
       "tests": [
         "S02_SetEngagesAtTheCurrentSpeedRoundedToTheNearestKmH",
-        "S31_EveryCommandFrameIsE2EProtectedAndSentEveryCycle"
+        "S32_EveryCommandFrameIsE2EProtectedAndSentEveryCycle"
       ],
       "text": "The AccController shall send the AccCommand message every 20 ms with E2E protection and report its mode, set speed and time gap setting in it.",
       "verification": [
@@ -377,20 +380,20 @@
         "rx:RadarObject"
       ],
       "tests": [
-        "S32_LostRadarFramesBelowTheTimeoutAreTolerated_Ex1",
-        "S33_LostRadarFramesBelowTheTimeoutAreTolerated_Ex2",
-        "S34_RadarFramesMissingFor120MsLeadToFAULT_Ex1",
-        "S35_RadarFramesMissingFor120MsLeadToFAULT_Ex2",
-        "S36_VehicleFramesMissingFor60MsLeadToFAULT_Ex1",
-        "S37_VehicleFramesMissingFor60MsLeadToFAULT_Ex2",
-        "S38_VehicleFramesMissingFor60MsLeadToFAULT_Ex3",
-        "S39_VehicleFramesMissingFor60MsLeadToFAULT_Ex4",
-        "S40_APausedSenderIsDetectedExactlyAtTheTimeout_Ex1",
-        "S41_APausedSenderIsDetectedExactlyAtTheTimeout_Ex2",
-        "S42_APausedSenderIsDetectedExactlyAtTheTimeout_Ex3",
-        "S43_APausedSenderIsDetectedExactlyAtTheTimeout_Ex4",
-        "S44_APausedSenderIsDetectedExactlyAtTheTimeout_Ex5",
-        "S45_APausedSenderIsDetectedExactlyAtTheTimeout_Ex6"
+        "S33_LostRadarFramesBelowTheTimeoutAreTolerated_Ex1",
+        "S34_LostRadarFramesBelowTheTimeoutAreTolerated_Ex2",
+        "S35_RadarFramesMissingFor120MsLeadToFAULT_Ex1",
+        "S36_RadarFramesMissingFor120MsLeadToFAULT_Ex2",
+        "S37_VehicleFramesMissingFor60MsLeadToFAULT_Ex1",
+        "S38_VehicleFramesMissingFor60MsLeadToFAULT_Ex2",
+        "S39_VehicleFramesMissingFor60MsLeadToFAULT_Ex3",
+        "S40_VehicleFramesMissingFor60MsLeadToFAULT_Ex4",
+        "S41_APausedSenderIsDetectedExactlyAtTheTimeout_Ex1",
+        "S42_APausedSenderIsDetectedExactlyAtTheTimeout_Ex2",
+        "S43_APausedSenderIsDetectedExactlyAtTheTimeout_Ex3",
+        "S44_APausedSenderIsDetectedExactlyAtTheTimeout_Ex4",
+        "S45_APausedSenderIsDetectedExactlyAtTheTimeout_Ex5",
+        "S46_APausedSenderIsDetectedExactlyAtTheTimeout_Ex6"
       ],
       "text": "If no valid RadarObject frame is received for 120 ms, or no valid EgoState or DriverInput frame for 60 ms, then the AccController shall enter FAULT, where frames failing the E2E check count as not received.",
       "verification": [
@@ -405,7 +408,7 @@
         "logic"
       ],
       "tests": [
-        "S46_FAULTIsLatchedUntilTheMainSwitchIsTurnedOff"
+        "S47_FAULTIsLatchedUntilTheMainSwitchIsTurnedOff"
       ],
       "text": "While in FAULT, the AccController shall remain in FAULT until the driver switches the ACC main switch off.",
       "verification": [
@@ -1620,6 +1623,48 @@
       ]
     },
     {
+      "example": [],
+      "feature": "examples/acc/features/control.feature",
+      "line": 70,
+      "name": "S26_AVehicleJustInside200MIsATarget",
+      "requirements": [
+        "REQ-ACC-013"
+      ],
+      "scenario": "A vehicle just inside 200 m is a target",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(180.0);",
+          "text": "Given the ego vehicle drives at 180 km/h"
+        },
+        {
+          "catalogue": "FN-S11",
+          "cpp": "sil_.plant().set_lead(215.0, 0.0, 0.0);",
+          "text": "And a lead vehicle drives 215 m ahead at 0 km/h"
+        },
+        {
+          "catalogue": "ACC-S03",
+          "cpp": "sil_.engage();",
+          "text": "And ACC is engaged"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "When 0.2 s pass"
+        },
+        {
+          "catalogue": "ACC-S25",
+          "cpp": "EXPECT_GT(sil_.feature().last_command().brake_raw, 0);",
+          "text": "Then braking is requested"
+        },
+        {
+          "catalogue": "FN-S43",
+          "cpp": "ASSERT_TRUE(sil_.plant().lead_present()); EXPECT_NEAR(sil_.plant().distance_m(), 185.0, 2.0);",
+          "text": "And the distance to the lead vehicle is 185 m within 2 m"
+        }
+      ]
+    },
+    {
       "example": [
         [
           "target",
@@ -1631,8 +1676,8 @@
         ]
       ],
       "feature": "examples/acc/features/control.feature",
-      "line": 70,
-      "name": "S26_TheLeadVehicleBrakesWhileBeingFollowed_Ex1",
+      "line": 79,
+      "name": "S27_TheLeadVehicleBrakesWhileBeingFollowed_Ex1",
       "requirements": [
         "REQ-ACC-016",
         "REQ-ACC-014",
@@ -1699,8 +1744,8 @@
         ]
       ],
       "feature": "examples/acc/features/control.feature",
-      "line": 70,
-      "name": "S27_TheLeadVehicleBrakesWhileBeingFollowed_Ex2",
+      "line": 79,
+      "name": "S28_TheLeadVehicleBrakesWhileBeingFollowed_Ex2",
       "requirements": [
         "REQ-ACC-016",
         "REQ-ACC-014",
@@ -1767,8 +1812,8 @@
         ]
       ],
       "feature": "examples/acc/features/control.feature",
-      "line": 70,
-      "name": "S28_TheLeadVehicleBrakesWhileBeingFollowed_Ex3",
+      "line": 79,
+      "name": "S29_TheLeadVehicleBrakesWhileBeingFollowed_Ex3",
       "requirements": [
         "REQ-ACC-016",
         "REQ-ACC-014",
@@ -1826,8 +1871,8 @@
     {
       "example": [],
       "feature": "examples/acc/features/control.feature",
-      "line": 88,
-      "name": "S29_ASlowerVehicleCutsIn25MAhead",
+      "line": 97,
+      "name": "S30_ASlowerVehicleCutsIn25MAhead",
       "requirements": [
         "REQ-ACC-016",
         "REQ-ACC-014",
@@ -1880,8 +1925,8 @@
     {
       "example": [],
       "feature": "examples/acc/features/control.feature",
-      "line": 99,
-      "name": "S30_TheLeadVehicleLeavesAndTheEgoVehicleResumesTheSetSpeed",
+      "line": 108,
+      "name": "S31_TheLeadVehicleLeavesAndTheEgoVehicleResumesTheSetSpeed",
       "requirements": [
         "REQ-ACC-011"
       ],
@@ -1927,8 +1972,8 @@
     {
       "example": [],
       "feature": "examples/acc/features/control.feature",
-      "line": 109,
-      "name": "S31_EveryCommandFrameIsE2EProtectedAndSentEveryCycle",
+      "line": 118,
+      "name": "S32_EveryCommandFrameIsE2EProtectedAndSentEveryCycle",
       "requirements": [
         "REQ-ACC-020",
         "REQ-ACC-018"
@@ -1985,7 +2030,7 @@
       ],
       "feature": "examples/acc/features/faults.feature",
       "line": 4,
-      "name": "S32_LostRadarFramesBelowTheTimeoutAreTolerated_Ex1",
+      "name": "S33_LostRadarFramesBelowTheTimeoutAreTolerated_Ex1",
       "requirements": [
         "REQ-ACC-021"
       ],
@@ -2031,7 +2076,7 @@
       ],
       "feature": "examples/acc/features/faults.feature",
       "line": 4,
-      "name": "S33_LostRadarFramesBelowTheTimeoutAreTolerated_Ex2",
+      "name": "S34_LostRadarFramesBelowTheTimeoutAreTolerated_Ex2",
       "requirements": [
         "REQ-ACC-021"
       ],
@@ -2077,7 +2122,7 @@
       ],
       "feature": "examples/acc/features/faults.feature",
       "line": 17,
-      "name": "S34_RadarFramesMissingFor120MsLeadToFAULT_Ex1",
+      "name": "S35_RadarFramesMissingFor120MsLeadToFAULT_Ex1",
       "requirements": [
         "REQ-ACC-021",
         "REQ-ACC-019"
@@ -2129,7 +2174,7 @@
       ],
       "feature": "examples/acc/features/faults.feature",
       "line": 17,
-      "name": "S35_RadarFramesMissingFor120MsLeadToFAULT_Ex2",
+      "name": "S36_RadarFramesMissingFor120MsLeadToFAULT_Ex2",
       "requirements": [
         "REQ-ACC-021",
         "REQ-ACC-019"
@@ -2185,7 +2230,7 @@
       ],
       "feature": "examples/acc/features/faults.feature",
       "line": 31,
-      "name": "S36_VehicleFramesMissingFor60MsLeadToFAULT_Ex1",
+      "name": "S37_VehicleFramesMissingFor60MsLeadToFAULT_Ex1",
       "requirements": [
         "REQ-ACC-021"
       ],
@@ -2235,7 +2280,7 @@
       ],
       "feature": "examples/acc/features/faults.feature",
       "line": 31,
-      "name": "S37_VehicleFramesMissingFor60MsLeadToFAULT_Ex2",
+      "name": "S38_VehicleFramesMissingFor60MsLeadToFAULT_Ex2",
       "requirements": [
         "REQ-ACC-021"
       ],
@@ -2285,7 +2330,7 @@
       ],
       "feature": "examples/acc/features/faults.feature",
       "line": 31,
-      "name": "S38_VehicleFramesMissingFor60MsLeadToFAULT_Ex3",
+      "name": "S39_VehicleFramesMissingFor60MsLeadToFAULT_Ex3",
       "requirements": [
         "REQ-ACC-021"
       ],
@@ -2335,7 +2380,7 @@
       ],
       "feature": "examples/acc/features/faults.feature",
       "line": 31,
-      "name": "S39_VehicleFramesMissingFor60MsLeadToFAULT_Ex4",
+      "name": "S40_VehicleFramesMissingFor60MsLeadToFAULT_Ex4",
       "requirements": [
         "REQ-ACC-021"
       ],
@@ -2385,7 +2430,7 @@
       ],
       "feature": "examples/acc/features/faults.feature",
       "line": 46,
-      "name": "S40_APausedSenderIsDetectedExactlyAtTheTimeout_Ex1",
+      "name": "S41_APausedSenderIsDetectedExactlyAtTheTimeout_Ex1",
       "requirements": [
         "REQ-ACC-021"
       ],
@@ -2435,7 +2480,7 @@
       ],
       "feature": "examples/acc/features/faults.feature",
       "line": 46,
-      "name": "S41_APausedSenderIsDetectedExactlyAtTheTimeout_Ex2",
+      "name": "S42_APausedSenderIsDetectedExactlyAtTheTimeout_Ex2",
       "requirements": [
         "REQ-ACC-021"
       ],
@@ -2485,7 +2530,7 @@
       ],
       "feature": "examples/acc/features/faults.feature",
       "line": 46,
-      "name": "S42_APausedSenderIsDetectedExactlyAtTheTimeout_Ex3",
+      "name": "S43_APausedSenderIsDetectedExactlyAtTheTimeout_Ex3",
       "requirements": [
         "REQ-ACC-021"
       ],
@@ -2535,7 +2580,7 @@
       ],
       "feature": "examples/acc/features/faults.feature",
       "line": 46,
-      "name": "S43_APausedSenderIsDetectedExactlyAtTheTimeout_Ex4",
+      "name": "S44_APausedSenderIsDetectedExactlyAtTheTimeout_Ex4",
       "requirements": [
         "REQ-ACC-021"
       ],
@@ -2585,7 +2630,7 @@
       ],
       "feature": "examples/acc/features/faults.feature",
       "line": 46,
-      "name": "S44_APausedSenderIsDetectedExactlyAtTheTimeout_Ex5",
+      "name": "S45_APausedSenderIsDetectedExactlyAtTheTimeout_Ex5",
       "requirements": [
         "REQ-ACC-021"
       ],
@@ -2635,7 +2680,7 @@
       ],
       "feature": "examples/acc/features/faults.feature",
       "line": 46,
-      "name": "S45_APausedSenderIsDetectedExactlyAtTheTimeout_Ex6",
+      "name": "S46_APausedSenderIsDetectedExactlyAtTheTimeout_Ex6",
       "requirements": [
         "REQ-ACC-021"
       ],
@@ -2672,7 +2717,7 @@
       "example": [],
       "feature": "examples/acc/features/faults.feature",
       "line": 63,
-      "name": "S46_FAULTIsLatchedUntilTheMainSwitchIsTurnedOff",
+      "name": "S47_FAULTIsLatchedUntilTheMainSwitchIsTurnedOff",
       "requirements": [
         "REQ-ACC-022"
       ],

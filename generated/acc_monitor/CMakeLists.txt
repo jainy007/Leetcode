@@ -1,7 +1,7 @@
 # GENERATED FILE - DO NOT EDIT. Changes are overwritten and rejected by CI.
 # Generator: ea-gen 0.1.0 (rule-based, deterministic; no AI in this path)
 # Project:   acc_monitor (pattern: can_function)
-# Inputs:    sha256:fd01fad24aac30e6912b9e2458a96cc1c9827a4af69c82078bba92de97606ff7
+# Inputs:    sha256:870db9709bc2042a12245115be83e147f59dcb471925f63ce067348e3f85098c
 # Regenerate: python3 -m tools.gen
 
 add_library(acc_monitor STATIC
@@ -16,4 +16,7 @@ if(EA_BUILD_TESTS)
         SOURCES sil/acc_monitor_sil_test.cpp
         LIBS acc_monitor ea::plant)
     target_include_directories(acc_monitor_sil PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    ea_add_gtest(acc_monitor_codec_test
+        SOURCES sil/acc_monitor_codec_test.cpp sil/acc_monitor_component_test.cpp
+        LIBS acc_monitor)
 endif()

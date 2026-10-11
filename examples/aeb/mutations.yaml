@@ -14,6 +14,9 @@ mutations:
   - {name: "warning release 3.3 -> 2.9 s", file: examples/aeb/model.yaml, old: "warning_release_ttc_s: {value: 3.3", new: "warning_release_ttc_s: {value: 2.9"}
   - {name: "partial above FCW threshold", file: examples/aeb/model.yaml, old: "partial_brake_ttc_s: {value: 1.8", new: "partial_brake_ttc_s: {value: 2.9"}
   - {name: "radar timeout 120 -> 160 ms", file: examples/aeb/model.yaml, old: "period_ms: 40, timeout_ms: 120", new: "period_ms: 40, timeout_ms: 160"}
+  - {name: "max target range 150 -> 100 m", file: examples/aeb/model.yaml, old: "max_target_range_m: {value: 150", new: "max_target_range_m: {value: 100"}
+  - {name: "min closing speed 0.5 -> 2.5 m/s", file: examples/aeb/model.yaml, old: "min_closing_speed_mps: {value: 0.5", new: "min_closing_speed_mps: {value: 2.5"}
+  - {name: "standstill speed 1 -> 5 km/h", file: examples/aeb/model.yaml, old: "standstill_speed_kph: {value: 1.0", new: "standstill_speed_kph: {value: 5.0"}
   # ---- inputs: DBC ----
   - {name: "AebBrakeRequest factor 0.01 -> 0.02", file: examples/aeb/interfaces/aeb.dbc, old: "AebBrakeRequest : 16|10@1+ (0.01,0)", new: "AebBrakeRequest : 16|10@1+ (0.02,0)"}
   - {name: "FcwWarning overlaps AebStatus", file: examples/aeb/interfaces/aeb.dbc, old: "FcwWarning : 15|1@1+", new: "FcwWarning : 14|1@1+"}

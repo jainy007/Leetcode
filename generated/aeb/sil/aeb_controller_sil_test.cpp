@@ -1,7 +1,7 @@
 // GENERATED FILE - DO NOT EDIT. Changes are overwritten and rejected by CI.
 // Generator: ea-gen 0.1.0 (rule-based, deterministic; no AI in this path)
 // Project:   aeb (pattern: can_function)
-// Inputs:    sha256:6606fd57f798610e5c596e91f29bec679e2b42414be7c909658cc37bce340b0d
+// Inputs:    sha256:b615ac7a70c66498145a1cce61803118d779529b0bce381de5d78fc6a4940003
 // Regenerate: python3 -m tools.gen
 
 #include <gtest/gtest.h>
@@ -272,11 +272,53 @@ TEST_F(AebControllerSilTest, S11_TheDriverSBrakePedalDoesNotCancelEmergencyBraki
     EXPECT_LT(sil_.plant().ego_speed_kph(), 0.5);
 }
 
+// Scenario: The warning ends when the target leaves the lane
+// Source:   examples/aeb/features/cascade.feature:117
+// Verifies: REQ-AEB-004
+TEST_F(AebControllerSilTest, S12_TheWarningEndsWhenTheTargetLeavesTheLane) {
+    // Given the ego vehicle drives at 50 km/h  [FN-S01]
+    sil_.plant().set_ego_speed_kph(50.0);
+    // And a stationary vehicle stands 60 m ahead  [FN-S19]
+    sil_.plant().set_lead(60.0, 0.0, 0.0);
+    // When 1.6 s pass  [FN-S10]
+    sil_.run(1.6);
+    // Then the AEB state is WARNING  [AEB-S01]
+    EXPECT_EQ(sil_.feature().last_command().status, ea::plant::AebStatus::kWarning);
+    // When the lead vehicle leaves the lane  [FN-S15]
+    sil_.plant().remove_lead();
+    // And 0.1 s pass  [FN-S10]
+    sil_.run(0.1);
+    // Then the AEB state is STANDBY  [AEB-S01]
+    EXPECT_EQ(sil_.feature().last_command().status, ea::plant::AebStatus::kStandby);
+    // And the warning is off  [AEB-S09]
+    EXPECT_EQ(sil_.feature().last_command().warning, false);
+}
+
+// Scenario: Kickdown during a warning ends the warning
+// Source:   examples/aeb/features/cascade.feature:128
+// Verifies: REQ-AEB-006
+TEST_F(AebControllerSilTest, S13_KickdownDuringAWarningEndsTheWarning) {
+    // Given the ego vehicle drives at 50 km/h  [FN-S01]
+    sil_.plant().set_ego_speed_kph(50.0);
+    // And a stationary vehicle stands 60 m ahead  [FN-S19]
+    sil_.plant().set_lead(60.0, 0.0, 0.0);
+    // When 1.6 s pass  [FN-S10]
+    sil_.run(1.6);
+    // Then the AEB state is WARNING  [AEB-S01]
+    EXPECT_EQ(sil_.feature().last_command().status, ea::plant::AebStatus::kWarning);
+    // When the driver presses the accelerator pedal to 90 %  [FN-S07]
+    sil_.accelerator(90.0);
+    // Then the AEB state is STANDBY  [AEB-S01]
+    EXPECT_EQ(sil_.feature().last_command().status, ea::plant::AebStatus::kStandby);
+    // And the warning is off  [AEB-S09]
+    EXPECT_EQ(sil_.feature().last_command().warning, false);
+}
+
 // Scenario: A stationary vehicle is avoided from 20 km/h to 60 km/h #1
 // Source:   examples/aeb/features/performance.feature:4
 // Verifies: REQ-AEB-010
 // Example:  speed=20
-TEST_F(AebControllerSilTest, S12_AStationaryVehicleIsAvoidedFrom20KmHTo60KmH_Ex1) {
+TEST_F(AebControllerSilTest, S14_AStationaryVehicleIsAvoidedFrom20KmHTo60KmH_Ex1) {
     // Given the ego vehicle drives at 20 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(20.0);
     // And a stationary vehicle stands 100 m ahead  [FN-S19]
@@ -293,7 +335,7 @@ TEST_F(AebControllerSilTest, S12_AStationaryVehicleIsAvoidedFrom20KmHTo60KmH_Ex1
 // Source:   examples/aeb/features/performance.feature:4
 // Verifies: REQ-AEB-010
 // Example:  speed=40
-TEST_F(AebControllerSilTest, S13_AStationaryVehicleIsAvoidedFrom20KmHTo60KmH_Ex2) {
+TEST_F(AebControllerSilTest, S15_AStationaryVehicleIsAvoidedFrom20KmHTo60KmH_Ex2) {
     // Given the ego vehicle drives at 40 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(40.0);
     // And a stationary vehicle stands 100 m ahead  [FN-S19]
@@ -310,7 +352,7 @@ TEST_F(AebControllerSilTest, S13_AStationaryVehicleIsAvoidedFrom20KmHTo60KmH_Ex2
 // Source:   examples/aeb/features/performance.feature:4
 // Verifies: REQ-AEB-010
 // Example:  speed=60
-TEST_F(AebControllerSilTest, S14_AStationaryVehicleIsAvoidedFrom20KmHTo60KmH_Ex3) {
+TEST_F(AebControllerSilTest, S16_AStationaryVehicleIsAvoidedFrom20KmHTo60KmH_Ex3) {
     // Given the ego vehicle drives at 60 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(60.0);
     // And a stationary vehicle stands 100 m ahead  [FN-S19]
@@ -326,7 +368,7 @@ TEST_F(AebControllerSilTest, S14_AStationaryVehicleIsAvoidedFrom20KmHTo60KmH_Ex3
 // Scenario: The impact speed on a stationary vehicle at 80 km/h is at most 40 km/h
 // Source:   examples/aeb/features/performance.feature:18
 // Verifies: REQ-AEB-011
-TEST_F(AebControllerSilTest, S15_TheImpactSpeedOnAStationaryVehicleAt80KmHIsAtMost40KmH) {
+TEST_F(AebControllerSilTest, S17_TheImpactSpeedOnAStationaryVehicleAt80KmHIsAtMost40KmH) {
     // Given the ego vehicle drives at 80 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(80.0);
     // And a stationary vehicle stands 100 m ahead  [FN-S19]
@@ -341,7 +383,7 @@ TEST_F(AebControllerSilTest, S15_TheImpactSpeedOnAStationaryVehicleAt80KmHIsAtMo
 // Source:   examples/aeb/features/performance.feature:25
 // Verifies: REQ-AEB-012
 // Example:  speed=50
-TEST_F(AebControllerSilTest, S16_AVehicleAt20KmHIsAvoidedFromUpTo80KmH_Ex1) {
+TEST_F(AebControllerSilTest, S18_AVehicleAt20KmHIsAvoidedFromUpTo80KmH_Ex1) {
     // Given the ego vehicle drives at 50 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(50.0);
     // And a lead vehicle drives 100 m ahead at 20 km/h  [FN-S11]
@@ -356,7 +398,7 @@ TEST_F(AebControllerSilTest, S16_AVehicleAt20KmHIsAvoidedFromUpTo80KmH_Ex1) {
 // Source:   examples/aeb/features/performance.feature:25
 // Verifies: REQ-AEB-012
 // Example:  speed=80
-TEST_F(AebControllerSilTest, S17_AVehicleAt20KmHIsAvoidedFromUpTo80KmH_Ex2) {
+TEST_F(AebControllerSilTest, S19_AVehicleAt20KmHIsAvoidedFromUpTo80KmH_Ex2) {
     // Given the ego vehicle drives at 80 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(80.0);
     // And a lead vehicle drives 100 m ahead at 20 km/h  [FN-S11]
@@ -371,7 +413,7 @@ TEST_F(AebControllerSilTest, S17_AVehicleAt20KmHIsAvoidedFromUpTo80KmH_Ex2) {
 // Source:   examples/aeb/features/robustness.feature:4
 // Verifies: REQ-AEB-008
 // Example:  offset=2.0, result=no forward collision warning was issued
-TEST_F(AebControllerSilTest, S18_OnlyVehiclesWithin18MOfTheLaneCentreAreRelevant_Ex1) {
+TEST_F(AebControllerSilTest, S20_OnlyVehiclesWithin18MOfTheLaneCentreAreRelevant_Ex1) {
     // Given the ego vehicle drives at 50 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(50.0);
     // And a vehicle drives 60 m ahead at 0 km/h with 2.0 m lateral offset  [FN-S12]
@@ -386,7 +428,7 @@ TEST_F(AebControllerSilTest, S18_OnlyVehiclesWithin18MOfTheLaneCentreAreRelevant
 // Source:   examples/aeb/features/robustness.feature:4
 // Verifies: REQ-AEB-008
 // Example:  offset=1.6, result=a forward collision warning was issued at a time to collision between 2.7 s and 2.9 s
-TEST_F(AebControllerSilTest, S19_OnlyVehiclesWithin18MOfTheLaneCentreAreRelevant_Ex2) {
+TEST_F(AebControllerSilTest, S21_OnlyVehiclesWithin18MOfTheLaneCentreAreRelevant_Ex2) {
     // Given the ego vehicle drives at 50 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(50.0);
     // And a vehicle drives 60 m ahead at 0 km/h with 1.6 m lateral offset  [FN-S12]
@@ -400,7 +442,7 @@ TEST_F(AebControllerSilTest, S19_OnlyVehiclesWithin18MOfTheLaneCentreAreRelevant
 // Scenario: A vehicle followed at the same speed is not a hazard
 // Source:   examples/aeb/features/robustness.feature:16
 // Verifies: REQ-AEB-008
-TEST_F(AebControllerSilTest, S20_AVehicleFollowedAtTheSameSpeedIsNotAHazard) {
+TEST_F(AebControllerSilTest, S22_AVehicleFollowedAtTheSameSpeedIsNotAHazard) {
     // Given the ego vehicle drives at 80 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(80.0);
     // And a lead vehicle drives 10 m ahead at 80 km/h  [FN-S11]
@@ -417,7 +459,7 @@ TEST_F(AebControllerSilTest, S20_AVehicleFollowedAtTheSameSpeedIsNotAHazard) {
 // Source:   examples/aeb/features/robustness.feature:24
 // Verifies: REQ-AEB-009
 // Example:  speed=9, distance=20, time=5, result=no forward collision warning was issued
-TEST_F(AebControllerSilTest, S21_WarningsStartOnlyBetween10KmHAnd150KmH_Ex1) {
+TEST_F(AebControllerSilTest, S23_WarningsStartOnlyBetween10KmHAnd150KmH_Ex1) {
     // Given the ego vehicle drives at 9 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(9.0);
     // And a stationary vehicle stands 20 m ahead  [FN-S19]
@@ -432,7 +474,7 @@ TEST_F(AebControllerSilTest, S21_WarningsStartOnlyBetween10KmHAnd150KmH_Ex1) {
 // Source:   examples/aeb/features/robustness.feature:24
 // Verifies: REQ-AEB-009
 // Example:  speed=11, distance=20, time=5, result=a forward collision warning was issued at a time to collision between 2.7 s and 2.9 s
-TEST_F(AebControllerSilTest, S22_WarningsStartOnlyBetween10KmHAnd150KmH_Ex2) {
+TEST_F(AebControllerSilTest, S24_WarningsStartOnlyBetween10KmHAnd150KmH_Ex2) {
     // Given the ego vehicle drives at 11 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(11.0);
     // And a stationary vehicle stands 20 m ahead  [FN-S19]
@@ -447,7 +489,7 @@ TEST_F(AebControllerSilTest, S22_WarningsStartOnlyBetween10KmHAnd150KmH_Ex2) {
 // Source:   examples/aeb/features/robustness.feature:24
 // Verifies: REQ-AEB-009
 // Example:  speed=145, distance=140, time=2, result=a forward collision warning was issued at a time to collision between 2.7 s and 2.9 s
-TEST_F(AebControllerSilTest, S23_WarningsStartOnlyBetween10KmHAnd150KmH_Ex3) {
+TEST_F(AebControllerSilTest, S25_WarningsStartOnlyBetween10KmHAnd150KmH_Ex3) {
     // Given the ego vehicle drives at 145 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(145.0);
     // And a stationary vehicle stands 140 m ahead  [FN-S19]
@@ -462,7 +504,7 @@ TEST_F(AebControllerSilTest, S23_WarningsStartOnlyBetween10KmHAnd150KmH_Ex3) {
 // Source:   examples/aeb/features/robustness.feature:24
 // Verifies: REQ-AEB-009
 // Example:  speed=155, distance=140, time=2, result=no forward collision warning was issued
-TEST_F(AebControllerSilTest, S24_WarningsStartOnlyBetween10KmHAnd150KmH_Ex4) {
+TEST_F(AebControllerSilTest, S26_WarningsStartOnlyBetween10KmHAnd150KmH_Ex4) {
     // Given the ego vehicle drives at 155 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(155.0);
     // And a stationary vehicle stands 140 m ahead  [FN-S19]
@@ -476,7 +518,7 @@ TEST_F(AebControllerSilTest, S24_WarningsStartOnlyBetween10KmHAnd150KmH_Ex4) {
 // Scenario: A paused radar leads to FAULT without intervention, then recovers
 // Source:   examples/aeb/features/robustness.feature:38
 // Verifies: REQ-AEB-013
-TEST_F(AebControllerSilTest, S25_APausedRadarLeadsToFAULTWithoutInterventionThenRecovers) {
+TEST_F(AebControllerSilTest, S27_APausedRadarLeadsToFAULTWithoutInterventionThenRecovers) {
     // Given the ego vehicle drives at 50 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(50.0);
     // And a stationary vehicle stands 100 m ahead  [FN-S19]
@@ -503,7 +545,7 @@ TEST_F(AebControllerSilTest, S25_APausedRadarLeadsToFAULTWithoutInterventionThen
 // Source:   examples/aeb/features/robustness.feature:51
 // Verifies: REQ-AEB-013
 // Example:  message=ego state, n=2, state=STANDBY
-TEST_F(AebControllerSilTest, S26_VehicleInputTimeoutsLeadToFAULT_Ex1) {
+TEST_F(AebControllerSilTest, S28_VehicleInputTimeoutsLeadToFAULT_Ex1) {
     // Given the ego vehicle drives at 50 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(50.0);
     // When 1 s passes  [FN-S10]
@@ -520,7 +562,7 @@ TEST_F(AebControllerSilTest, S26_VehicleInputTimeoutsLeadToFAULT_Ex1) {
 // Source:   examples/aeb/features/robustness.feature:51
 // Verifies: REQ-AEB-013
 // Example:  message=ego state, n=3, state=FAULT
-TEST_F(AebControllerSilTest, S27_VehicleInputTimeoutsLeadToFAULT_Ex2) {
+TEST_F(AebControllerSilTest, S29_VehicleInputTimeoutsLeadToFAULT_Ex2) {
     // Given the ego vehicle drives at 50 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(50.0);
     // When 1 s passes  [FN-S10]
@@ -537,7 +579,7 @@ TEST_F(AebControllerSilTest, S27_VehicleInputTimeoutsLeadToFAULT_Ex2) {
 // Source:   examples/aeb/features/robustness.feature:51
 // Verifies: REQ-AEB-013
 // Example:  message=driver input, n=2, state=STANDBY
-TEST_F(AebControllerSilTest, S28_VehicleInputTimeoutsLeadToFAULT_Ex3) {
+TEST_F(AebControllerSilTest, S30_VehicleInputTimeoutsLeadToFAULT_Ex3) {
     // Given the ego vehicle drives at 50 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(50.0);
     // When 1 s passes  [FN-S10]
@@ -554,7 +596,7 @@ TEST_F(AebControllerSilTest, S28_VehicleInputTimeoutsLeadToFAULT_Ex3) {
 // Source:   examples/aeb/features/robustness.feature:51
 // Verifies: REQ-AEB-013
 // Example:  message=driver input, n=3, state=FAULT
-TEST_F(AebControllerSilTest, S29_VehicleInputTimeoutsLeadToFAULT_Ex4) {
+TEST_F(AebControllerSilTest, S31_VehicleInputTimeoutsLeadToFAULT_Ex4) {
     // Given the ego vehicle drives at 50 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(50.0);
     // When 1 s passes  [FN-S10]
@@ -565,6 +607,20 @@ TEST_F(AebControllerSilTest, S29_VehicleInputTimeoutsLeadToFAULT_Ex4) {
     sil_.run(0.06);
     // Then the AEB state is FAULT  [AEB-S01]
     EXPECT_EQ(sil_.feature().last_command().status, ea::plant::AebStatus::kFault);
+}
+
+// Scenario: A vehicle beyond 150 m is not relevant
+// Source:   examples/aeb/features/robustness.feature:66
+// Verifies: REQ-AEB-008
+TEST_F(AebControllerSilTest, S32_AVehicleBeyond150MIsNotRelevant) {
+    // Given the ego vehicle drives at 100 km/h  [FN-S01]
+    sil_.plant().set_ego_speed_kph(100.0);
+    // And a stationary vehicle stands 170 m ahead  [FN-S19]
+    sil_.plant().set_lead(170.0, 0.0, 0.0);
+    // When 0.5 s pass  [FN-S10]
+    sil_.run(0.5);
+    // Then no forward collision warning was issued  [AEB-S03]
+    EXPECT_FALSE(sil_.feature().metrics().warned);
 }
 
 }  // namespace

@@ -1,7 +1,7 @@
 // GENERATED FILE - DO NOT EDIT. Changes are overwritten and rejected by CI.
 // Generator: ea-gen 0.1.0 (rule-based, deterministic; no AI in this path)
 // Project:   adas_input_gate (pattern: input_gate)
-// Inputs:    sha256:806ba8401a33e8aaf8e2f047beee1d3d76f3fb698140f2dca39ffd748ea3c4b4
+// Inputs:    sha256:e0c4923740db7d928336d8abc9859ca05e37446222ba5a081ee7c47bc53cdec6
 // Regenerate: python3 -m tools.gen
 
 #pragma once
@@ -29,13 +29,11 @@ inline ea::Result<void> encode_object_summary_unchecked(const ObjectSummary& in,
         // object_count: start bit 103, 8 bit, big endian, unsigned, factor 1.0, offset 0.0, range [0.0, 64.0] 1
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kBigEndian, 103U, 8U, kObjectSummaryPayloadLength), "GEN-031");
         const double scaled = (in.object_count - 0.0) / 1.0;
-        if (!(scaled >= -0.5 && scaled <= 255.5)) {  // also rejects NaN
+        // Open interval: every value in it rounds (half away from zero) into [0, 255].
+        if (!(scaled > -0.5 && scaled < 255.5)) {  // also rejects NaN
             return ea::ErrorCode::kOutOfRange;
         }
         const std::int64_t value = ea::round_half_away(scaled);  // IPC-005, equals std::llround here
-        if (value < 0LL || value > 255LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
         // [0, 255] lies inside the 8-bit unsigned range (GEN-033), so the raw value fits.
         ea::codec::insert_fixed<ea::codec::ByteOrder::kBigEndian, 103U, 8U>(payload.data(), static_cast<std::uint64_t>(value));
     }
@@ -43,13 +41,11 @@ inline ea::Result<void> encode_object_summary_unchecked(const ObjectSummary& in,
         // nearest_distance: start bit 111, 16 bit, big endian, unsigned, factor 0.01, offset 0.0, range [0.0, 250.0] m
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kBigEndian, 111U, 16U, kObjectSummaryPayloadLength), "GEN-031");
         const double scaled = (in.nearest_distance - 0.0) / 0.01;
-        if (!(scaled >= -0.5 && scaled <= 65535.5)) {  // also rejects NaN
+        // Open interval: every value in it rounds (half away from zero) into [0, 65535].
+        if (!(scaled > -0.5 && scaled < 65535.5)) {  // also rejects NaN
             return ea::ErrorCode::kOutOfRange;
         }
         const std::int64_t value = ea::round_half_away(scaled);  // IPC-005, equals std::llround here
-        if (value < 0LL || value > 65535LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
         // [0, 65535] lies inside the 16-bit unsigned range (GEN-033), so the raw value fits.
         ea::codec::insert_fixed<ea::codec::ByteOrder::kBigEndian, 111U, 16U>(payload.data(), static_cast<std::uint64_t>(value));
     }
@@ -57,13 +53,11 @@ inline ea::Result<void> encode_object_summary_unchecked(const ObjectSummary& in,
         // nearest_rel_speed: start bit 127, 16 bit, big endian, signed, factor 0.01, offset 0.0, range [-80.0, 80.0] m/s
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kBigEndian, 127U, 16U, kObjectSummaryPayloadLength), "GEN-031");
         const double scaled = (in.nearest_rel_speed - 0.0) / 0.01;
-        if (!(scaled >= -32768.5 && scaled <= 32767.5)) {  // also rejects NaN
+        // Open interval: every value in it rounds (half away from zero) into [-32768, 32767].
+        if (!(scaled > -32768.5 && scaled < 32767.5)) {  // also rejects NaN
             return ea::ErrorCode::kOutOfRange;
         }
         const std::int64_t value = ea::round_half_away(scaled);  // IPC-005, equals std::llround here
-        if (value < -32768LL || value > 32767LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
         // [-32768, 32767] lies inside the 16-bit signed range (GEN-033), so the raw value fits.
         ea::codec::insert_fixed<ea::codec::ByteOrder::kBigEndian, 127U, 16U>(payload.data(), static_cast<std::uint64_t>(value) & 0xFFFFULL);
     }
@@ -71,13 +65,11 @@ inline ea::Result<void> encode_object_summary_unchecked(const ObjectSummary& in,
         // nearest_confidence: start bit 143, 8 bit, big endian, unsigned, factor 0.5, offset 0.0, range [0.0, 100.0] %
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kBigEndian, 143U, 8U, kObjectSummaryPayloadLength), "GEN-031");
         const double scaled = (in.nearest_confidence - 0.0) / 0.5;
-        if (!(scaled >= -0.5 && scaled <= 255.5)) {  // also rejects NaN
+        // Open interval: every value in it rounds (half away from zero) into [0, 255].
+        if (!(scaled > -0.5 && scaled < 255.5)) {  // also rejects NaN
             return ea::ErrorCode::kOutOfRange;
         }
         const std::int64_t value = ea::round_half_away(scaled);  // IPC-005, equals std::llround here
-        if (value < 0LL || value > 255LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
         // [0, 255] lies inside the 8-bit unsigned range (GEN-033), so the raw value fits.
         ea::codec::insert_fixed<ea::codec::ByteOrder::kBigEndian, 143U, 8U>(payload.data(), static_cast<std::uint64_t>(value));
     }

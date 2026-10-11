@@ -1,7 +1,7 @@
 // GENERATED FILE - DO NOT EDIT. Changes are overwritten and rejected by CI.
 // Generator: ea-gen 0.1.0 (rule-based, deterministic; no AI in this path)
 // Project:   aeb_monitor (pattern: can_function)
-// Inputs:    sha256:4edac0782e43a3effd02948398696bdcee44fdc1992b83dad1769ef283390f0c
+// Inputs:    sha256:31e2c7fbd93dd01fd60ce38fb1537e40edd8600b328b348b62317cb35b638c06
 // Regenerate: python3 -m tools.gen
 
 #include <gtest/gtest.h>
@@ -154,10 +154,33 @@ TEST_F(AebMonitorSilTest, S05_BrakingOnsetNeedsAnInLaneTargetWithinTTC21S_Ex4) {
     EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AebMonitorReason::kUnjustifiedBraking));
 }
 
+// Scenario: Braking onset needs an in-lane target within TTC 2.1 s #5
+// Source:   examples/aeb_monitor/features/justification.feature:30
+// Verifies: REQ-AEBM-005
+// Example:  d=160, lat=0.0, state=SAFE_STATE, reason=UNJUSTIFIED_BRAKING
+TEST_F(AebMonitorSilTest, S06_BrakingOnsetNeedsAnInLaneTargetWithinTTC21S_Ex5) {
+    // Given the ego vehicle drives at 50 km/h  [FN-S01]
+    sil_.plant().set_ego_speed_kph(50.0);
+    // And a vehicle drives 160 m ahead at 0 km/h with 0.0 m lateral offset  [FN-S12]
+    sil_.plant().set_lead(160.0, 0.0, 0.0);
+    // And the AEB controller is in STANDBY with 0 m/s2 braking  [AEBM-S01]
+    sil_.command(static_cast<double>(ea::plant::AebStatus::kStandby), 0.0);
+    // When 0.1 s pass  [FN-S10]
+    sil_.run(0.1);
+    // And the AEB controller is in PARTIAL_BRAKE with 4 m/s2 braking  [AEBM-S01]
+    sil_.command(static_cast<double>(ea::plant::AebStatus::kPartialBrake), 4.0);
+    // And 0.1 s pass  [FN-S10]
+    sil_.run(0.1);
+    // Then the monitor state is SAFE_STATE  [MON-S01]
+    EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kSafeState);
+    // And the monitor reports the fault reason UNJUSTIFIED_BRAKING  [AEBM-S02]
+    EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AebMonitorReason::kUnjustifiedBraking));
+}
+
 // Scenario: Braking without any target is never applied
-// Source:   examples/aeb_monitor/features/justification.feature:48
+// Source:   examples/aeb_monitor/features/justification.feature:49
 // Verifies: REQ-AEBM-005, REQ-AEBM-009
-TEST_F(AebMonitorSilTest, S06_BrakingWithoutAnyTargetIsNeverApplied) {
+TEST_F(AebMonitorSilTest, S07_BrakingWithoutAnyTargetIsNeverApplied) {
     // Given the ego vehicle drives at 50 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(50.0);
     // And the AEB controller is in STANDBY with 0 m/s2 braking  [AEBM-S01]
@@ -183,9 +206,9 @@ TEST_F(AebMonitorSilTest, S06_BrakingWithoutAnyTargetIsNeverApplied) {
 }
 
 // Scenario: A target receding is no reason to brake
-// Source:   examples/aeb_monitor/features/justification.feature:62
+// Source:   examples/aeb_monitor/features/justification.feature:63
 // Verifies: REQ-AEBM-005
-TEST_F(AebMonitorSilTest, S07_ATargetRecedingIsNoReasonToBrake) {
+TEST_F(AebMonitorSilTest, S08_ATargetRecedingIsNoReasonToBrake) {
     // Given the ego vehicle drives at 50 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(50.0);
     // And a lead vehicle drives 15 m ahead at 60 km/h  [FN-S11]
@@ -205,10 +228,10 @@ TEST_F(AebMonitorSilTest, S07_ATargetRecedingIsNoReasonToBrake) {
 }
 
 // Scenario: Full braking onset needs TTC 1.5 s #1
-// Source:   examples/aeb_monitor/features/justification.feature:73
+// Source:   examples/aeb_monitor/features/justification.feature:74
 // Verifies: REQ-AEBM-006
 // Example:  d=20, state=MONITORING, reason=NONE
-TEST_F(AebMonitorSilTest, S08_FullBrakingOnsetNeedsTTC15S_Ex1) {
+TEST_F(AebMonitorSilTest, S09_FullBrakingOnsetNeedsTTC15S_Ex1) {
     // Given the ego vehicle drives at 50 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(50.0);
     // And a stationary vehicle stands 20 m ahead  [FN-S19]
@@ -232,10 +255,10 @@ TEST_F(AebMonitorSilTest, S08_FullBrakingOnsetNeedsTTC15S_Ex1) {
 }
 
 // Scenario: Full braking onset needs TTC 1.5 s #2
-// Source:   examples/aeb_monitor/features/justification.feature:73
+// Source:   examples/aeb_monitor/features/justification.feature:74
 // Verifies: REQ-AEBM-006
 // Example:  d=25, state=SAFE_STATE, reason=UNJUSTIFIED_FULL_BRAKING
-TEST_F(AebMonitorSilTest, S09_FullBrakingOnsetNeedsTTC15S_Ex2) {
+TEST_F(AebMonitorSilTest, S10_FullBrakingOnsetNeedsTTC15S_Ex2) {
     // Given the ego vehicle drives at 50 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(50.0);
     // And a stationary vehicle stands 25 m ahead  [FN-S19]
@@ -259,10 +282,10 @@ TEST_F(AebMonitorSilTest, S09_FullBrakingOnsetNeedsTTC15S_Ex2) {
 }
 
 // Scenario: Deceleration limits per braking state #1
-// Source:   examples/aeb_monitor/features/justification.feature:91
+// Source:   examples/aeb_monitor/features/justification.feature:92
 // Verifies: REQ-AEBM-003
 // Example:  s=FULL_BRAKE, a=8.1, state=MONITORING, reason=NONE
-TEST_F(AebMonitorSilTest, S10_DecelerationLimitsPerBrakingState_Ex1) {
+TEST_F(AebMonitorSilTest, S11_DecelerationLimitsPerBrakingState_Ex1) {
     // Given the ego vehicle drives at 50 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(50.0);
     // And a stationary vehicle stands 15 m ahead  [FN-S19]
@@ -282,10 +305,10 @@ TEST_F(AebMonitorSilTest, S10_DecelerationLimitsPerBrakingState_Ex1) {
 }
 
 // Scenario: Deceleration limits per braking state #2
-// Source:   examples/aeb_monitor/features/justification.feature:91
+// Source:   examples/aeb_monitor/features/justification.feature:92
 // Verifies: REQ-AEBM-003
 // Example:  s=FULL_BRAKE, a=8.2, state=SAFE_STATE, reason=REQUEST_LIMIT
-TEST_F(AebMonitorSilTest, S11_DecelerationLimitsPerBrakingState_Ex2) {
+TEST_F(AebMonitorSilTest, S12_DecelerationLimitsPerBrakingState_Ex2) {
     // Given the ego vehicle drives at 50 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(50.0);
     // And a stationary vehicle stands 15 m ahead  [FN-S19]
@@ -305,10 +328,10 @@ TEST_F(AebMonitorSilTest, S11_DecelerationLimitsPerBrakingState_Ex2) {
 }
 
 // Scenario: Deceleration limits per braking state #3
-// Source:   examples/aeb_monitor/features/justification.feature:91
+// Source:   examples/aeb_monitor/features/justification.feature:92
 // Verifies: REQ-AEBM-003
 // Example:  s=PARTIAL_BRAKE, a=4.1, state=MONITORING, reason=NONE
-TEST_F(AebMonitorSilTest, S12_DecelerationLimitsPerBrakingState_Ex3) {
+TEST_F(AebMonitorSilTest, S13_DecelerationLimitsPerBrakingState_Ex3) {
     // Given the ego vehicle drives at 50 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(50.0);
     // And a stationary vehicle stands 15 m ahead  [FN-S19]
@@ -328,10 +351,10 @@ TEST_F(AebMonitorSilTest, S12_DecelerationLimitsPerBrakingState_Ex3) {
 }
 
 // Scenario: Deceleration limits per braking state #4
-// Source:   examples/aeb_monitor/features/justification.feature:91
+// Source:   examples/aeb_monitor/features/justification.feature:92
 // Verifies: REQ-AEBM-003
 // Example:  s=PARTIAL_BRAKE, a=4.2, state=SAFE_STATE, reason=REQUEST_LIMIT
-TEST_F(AebMonitorSilTest, S13_DecelerationLimitsPerBrakingState_Ex4) {
+TEST_F(AebMonitorSilTest, S14_DecelerationLimitsPerBrakingState_Ex4) {
     // Given the ego vehicle drives at 50 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(50.0);
     // And a stationary vehicle stands 15 m ahead  [FN-S19]
@@ -351,10 +374,10 @@ TEST_F(AebMonitorSilTest, S13_DecelerationLimitsPerBrakingState_Ex4) {
 }
 
 // Scenario: Braking is allowed only in a braking state #1
-// Source:   examples/aeb_monitor/features/justification.feature:109
+// Source:   examples/aeb_monitor/features/justification.feature:110
 // Verifies: REQ-AEBM-004
 // Example:  s=STANDBY
-TEST_F(AebMonitorSilTest, S14_BrakingIsAllowedOnlyInABrakingState_Ex1) {
+TEST_F(AebMonitorSilTest, S15_BrakingIsAllowedOnlyInABrakingState_Ex1) {
     // Given the ego vehicle drives at 50 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(50.0);
     // And a stationary vehicle stands 15 m ahead  [FN-S19]
@@ -374,10 +397,10 @@ TEST_F(AebMonitorSilTest, S14_BrakingIsAllowedOnlyInABrakingState_Ex1) {
 }
 
 // Scenario: Braking is allowed only in a braking state #2
-// Source:   examples/aeb_monitor/features/justification.feature:109
+// Source:   examples/aeb_monitor/features/justification.feature:110
 // Verifies: REQ-AEBM-004
 // Example:  s=WARNING
-TEST_F(AebMonitorSilTest, S15_BrakingIsAllowedOnlyInABrakingState_Ex2) {
+TEST_F(AebMonitorSilTest, S16_BrakingIsAllowedOnlyInABrakingState_Ex2) {
     // Given the ego vehicle drives at 50 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(50.0);
     // And a stationary vehicle stands 15 m ahead  [FN-S19]
@@ -397,10 +420,10 @@ TEST_F(AebMonitorSilTest, S15_BrakingIsAllowedOnlyInABrakingState_Ex2) {
 }
 
 // Scenario: Braking is allowed only in a braking state #3
-// Source:   examples/aeb_monitor/features/justification.feature:109
+// Source:   examples/aeb_monitor/features/justification.feature:110
 // Verifies: REQ-AEBM-004
 // Example:  s=FAULT
-TEST_F(AebMonitorSilTest, S16_BrakingIsAllowedOnlyInABrakingState_Ex3) {
+TEST_F(AebMonitorSilTest, S17_BrakingIsAllowedOnlyInABrakingState_Ex3) {
     // Given the ego vehicle drives at 50 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(50.0);
     // And a stationary vehicle stands 15 m ahead  [FN-S19]
@@ -420,9 +443,9 @@ TEST_F(AebMonitorSilTest, S16_BrakingIsAllowedOnlyInABrakingState_Ex3) {
 }
 
 // Scenario: Braking that continues after the target left the lane latches SAFE_STATE
-// Source:   examples/aeb_monitor/features/justification.feature:126
+// Source:   examples/aeb_monitor/features/justification.feature:127
 // Verifies: REQ-AEBM-007
-TEST_F(AebMonitorSilTest, S17_BrakingThatContinuesAfterTheTargetLeftTheLaneLatchesSAFESTAT) {
+TEST_F(AebMonitorSilTest, S18_BrakingThatContinuesAfterTheTargetLeftTheLaneLatchesSAFESTAT) {
     // Given the ego vehicle drives at 50 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(50.0);
     // And a stationary vehicle stands 22 m ahead  [FN-S19]
@@ -448,9 +471,9 @@ TEST_F(AebMonitorSilTest, S17_BrakingThatContinuesAfterTheTargetLeftTheLaneLatch
 }
 
 // Scenario: A new braking onset is justified again after braking ended
-// Source:   examples/aeb_monitor/features/justification.feature:140
+// Source:   examples/aeb_monitor/features/justification.feature:141
 // Verifies: REQ-AEBM-005
-TEST_F(AebMonitorSilTest, S18_ANewBrakingOnsetIsJustifiedAgainAfterBrakingEnded) {
+TEST_F(AebMonitorSilTest, S19_ANewBrakingOnsetIsJustifiedAgainAfterBrakingEnded) {
     // Given the ego vehicle drives at 50 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(50.0);
     // And a lead vehicle drives 15 m ahead at 20 km/h  [FN-S11]
@@ -481,11 +504,69 @@ TEST_F(AebMonitorSilTest, S18_ANewBrakingOnsetIsJustifiedAgainAfterBrakingEnded)
     EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AebMonitorReason::kUnjustifiedBraking));
 }
 
+// Scenario: Full braking requested for a receding target is unjustified
+// Source:   examples/aeb_monitor/features/justification.feature:158
+// Verifies: REQ-AEBM-006
+TEST_F(AebMonitorSilTest, S20_FullBrakingRequestedForARecedingTargetIsUnjustified) {
+    // Given the ego vehicle drives at 50 km/h  [FN-S01]
+    sil_.plant().set_ego_speed_kph(50.0);
+    // And a lead vehicle drives 15 m ahead at 20 km/h  [FN-S11]
+    sil_.plant().set_lead(15.0, 20.0, 0.0);
+    // And the AEB controller is in STANDBY with 0 m/s2 braking  [AEBM-S01]
+    sil_.command(static_cast<double>(ea::plant::AebStatus::kStandby), 0.0);
+    // When 0.1 s pass  [FN-S10]
+    sil_.run(0.1);
+    // And the AEB controller is in PARTIAL_BRAKE with 4 m/s2 braking  [AEBM-S01]
+    sil_.command(static_cast<double>(ea::plant::AebStatus::kPartialBrake), 4.0);
+    // And 0.1 s pass  [FN-S10]
+    sil_.run(0.1);
+    // And the lead vehicle changes speed to 80 km/h at 8 m/s2  [FN-S13]
+    sil_.plant().lead_change_speed(80.0, 8.0);
+    // And 1.5 s pass  [FN-S10]
+    sil_.run(1.5);
+    // Then the monitor state is MONITORING  [MON-S01]
+    EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kMonitoring);
+    // When the AEB controller is in FULL_BRAKE with 8 m/s2 braking  [AEBM-S01]
+    sil_.command(static_cast<double>(ea::plant::AebStatus::kFullBrake), 8.0);
+    // And 0.1 s pass  [FN-S10]
+    sil_.run(0.1);
+    // Then the monitor state is SAFE_STATE  [MON-S01]
+    EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kSafeState);
+    // And the monitor reports the fault reason UNJUSTIFIED_FULL_BRAKING  [AEBM-S02]
+    EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AebMonitorReason::kUnjustifiedFullBraking));
+}
+
+// Scenario: Braking that continues without a valid radar latches SAFE_STATE
+// Source:   examples/aeb_monitor/features/justification.feature:174
+// Verifies: REQ-AEBM-007
+TEST_F(AebMonitorSilTest, S21_BrakingThatContinuesWithoutAValidRadarLatchesSAFESTATE) {
+    // Given the ego vehicle drives at 50 km/h  [FN-S01]
+    sil_.plant().set_ego_speed_kph(50.0);
+    // And a stationary vehicle stands 22 m ahead  [FN-S19]
+    sil_.plant().set_lead(22.0, 0.0, 0.0);
+    // And the AEB controller is in STANDBY with 0 m/s2 braking  [AEBM-S01]
+    sil_.command(static_cast<double>(ea::plant::AebStatus::kStandby), 0.0);
+    // When 0.1 s pass  [FN-S10]
+    sil_.run(0.1);
+    // And the AEB controller is in PARTIAL_BRAKE with 4 m/s2 braking  [AEBM-S01]
+    sil_.command(static_cast<double>(ea::plant::AebStatus::kPartialBrake), 4.0);
+    // And 0.1 s pass  [FN-S10]
+    sil_.run(0.1);
+    // And the radar sender pauses for 10 frames  [FN-S18]
+    sil_.plant().skip_frames(ea::plant::Stream::kRadar, 10U);
+    // And 0.4 s pass  [FN-S10]
+    sil_.run(0.4);
+    // Then the monitor state is SAFE_STATE  [MON-S01]
+    EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kSafeState);
+    // And the monitor reports the fault reason UNJUSTIFIED_BRAKING  [AEBM-S02]
+    EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AebMonitorReason::kUnjustifiedBraking));
+}
+
 // Scenario: A stopped or frozen command sender latches SAFE_STATE within the timeout #1
 // Source:   examples/aeb_monitor/features/faults.feature:6
 // Verifies: REQ-AEBM-008, REQ-AEBM-009
 // Example:  f=stops
-TEST_F(AebMonitorSilTest, S19_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex1) {
+TEST_F(AebMonitorSilTest, S22_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex1) {
     // Given the ego vehicle drives at 50 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(50.0);
     // And the AEB controller is in STANDBY with 0 m/s2 braking  [AEBM-S01]
@@ -510,7 +591,7 @@ TEST_F(AebMonitorSilTest, S19_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithi
 // Source:   examples/aeb_monitor/features/faults.feature:6
 // Verifies: REQ-AEBM-008, REQ-AEBM-009
 // Example:  f=freezes
-TEST_F(AebMonitorSilTest, S20_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex2) {
+TEST_F(AebMonitorSilTest, S23_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex2) {
     // Given the ego vehicle drives at 50 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(50.0);
     // And the AEB controller is in STANDBY with 0 m/s2 braking  [AEBM-S01]
@@ -535,7 +616,7 @@ TEST_F(AebMonitorSilTest, S20_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithi
 // Source:   examples/aeb_monitor/features/faults.feature:23
 // Verifies: REQ-AEBM-008
 // Example:  f=lost
-TEST_F(AebMonitorSilTest, S21_UpToTwoLostOrCorruptedCommandFramesAreTolerated_Ex1) {
+TEST_F(AebMonitorSilTest, S24_UpToTwoLostOrCorruptedCommandFramesAreTolerated_Ex1) {
     // Given the ego vehicle drives at 50 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(50.0);
     // And the AEB controller is in STANDBY with 0 m/s2 braking  [AEBM-S01]
@@ -556,7 +637,7 @@ TEST_F(AebMonitorSilTest, S21_UpToTwoLostOrCorruptedCommandFramesAreTolerated_Ex
 // Source:   examples/aeb_monitor/features/faults.feature:23
 // Verifies: REQ-AEBM-008
 // Example:  f=corrupted
-TEST_F(AebMonitorSilTest, S22_UpToTwoLostOrCorruptedCommandFramesAreTolerated_Ex2) {
+TEST_F(AebMonitorSilTest, S25_UpToTwoLostOrCorruptedCommandFramesAreTolerated_Ex2) {
     // Given the ego vehicle drives at 50 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(50.0);
     // And the AEB controller is in STANDBY with 0 m/s2 braking  [AEBM-S01]
@@ -576,7 +657,7 @@ TEST_F(AebMonitorSilTest, S22_UpToTwoLostOrCorruptedCommandFramesAreTolerated_Ex
 // Scenario: Without any command the monitor stays in INIT and grants no permit
 // Source:   examples/aeb_monitor/features/faults.feature:38
 // Verifies: REQ-AEBM-001, REQ-AEBM-008
-TEST_F(AebMonitorSilTest, S23_WithoutAnyCommandTheMonitorStaysInINITAndGrantsNoPermit) {
+TEST_F(AebMonitorSilTest, S26_WithoutAnyCommandTheMonitorStaysInINITAndGrantsNoPermit) {
     // Given the ego vehicle drives at 50 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(50.0);
     // When the command sender stops  [MON-S20]
@@ -594,7 +675,7 @@ TEST_F(AebMonitorSilTest, S23_WithoutAnyCommandTheMonitorStaysInINITAndGrantsNoP
 // Scenario: A frozen monitor makes the actuator ramp out braking and request a takeover
 // Source:   examples/aeb_monitor/features/faults.feature:47
 // Verifies: REQ-AEBM-010
-TEST_F(AebMonitorSilTest, S24_AFrozenMonitorMakesTheActuatorRampOutBrakingAndRequestATakeo) {
+TEST_F(AebMonitorSilTest, S27_AFrozenMonitorMakesTheActuatorRampOutBrakingAndRequestATakeo) {
     // Given the ego vehicle drives at 50 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(50.0);
     // And a stationary vehicle stands 22 m ahead  [FN-S19]
@@ -619,6 +700,26 @@ TEST_F(AebMonitorSilTest, S24_AFrozenMonitorMakesTheActuatorRampOutBrakingAndReq
     ASSERT_GE(sil_.actuator().metrics().ramp_out_done_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().ramp_out_done_s - sil_.plant().metrics().first_fault_s) * 1000.0, 460 + 1e-6);
     // And the actuator applies no request  [MON-S08]
     EXPECT_FALSE(sil_.actuator().applying());
+}
+
+// Scenario: A radar pause without braking does not trigger the monitor
+// Source:   examples/aeb_monitor/features/faults.feature:62
+// Verifies: REQ-AEBM-001
+TEST_F(AebMonitorSilTest, S28_ARadarPauseWithoutBrakingDoesNotTriggerTheMonitor) {
+    // Given the ego vehicle drives at 50 km/h  [FN-S01]
+    sil_.plant().set_ego_speed_kph(50.0);
+    // And the AEB controller is in STANDBY with 0 m/s2 braking  [AEBM-S01]
+    sil_.command(static_cast<double>(ea::plant::AebStatus::kStandby), 0.0);
+    // When 0.2 s pass  [FN-S10]
+    sil_.run(0.2);
+    // And the radar sender pauses for 10 frames  [FN-S18]
+    sil_.plant().skip_frames(ea::plant::Stream::kRadar, 10U);
+    // And 1 s pass  [FN-S10]
+    sil_.run(1.0);
+    // Then the monitor state is MONITORING  [MON-S01]
+    EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kMonitoring);
+    // And the monitor never entered SAFE_STATE  [MON-S05]
+    EXPECT_LT(sil_.actuator().metrics().monitor_safe_state_s, 0.0);
 }
 
 }  // namespace

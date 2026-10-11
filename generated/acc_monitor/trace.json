@@ -11,6 +11,8 @@
     "generated/acc_monitor/include/acc_monitor/acc_monitor_codec.hpp",
     "generated/acc_monitor/include/acc_monitor/acc_monitor_logic.hpp",
     "generated/acc_monitor/include/acc_monitor/acc_monitor_types.hpp",
+    "generated/acc_monitor/sil/acc_monitor_codec_test.cpp",
+    "generated/acc_monitor/sil/acc_monitor_component_test.cpp",
     "generated/acc_monitor/sil/acc_monitor_sil.hpp",
     "generated/acc_monitor/sil/acc_monitor_sil_test.cpp",
     "generated/acc_monitor/src/acc_monitor.cpp",
@@ -18,7 +20,7 @@
     "generated/acc_monitor/src/acc_monitor_logic.cpp"
   ],
   "generator": "ea-gen 0.1.0",
-  "inputs_sha256": "fd01fad24aac30e6912b9e2458a96cc1c9827a4af69c82078bba92de97606ff7",
+  "inputs_sha256": "870db9709bc2042a12245115be83e147f59dcb471925f63ce067348e3f85098c",
   "pattern": "can_function",
   "project": "acc_monitor",
   "requirements": [
@@ -31,7 +33,7 @@
       ],
       "tests": [
         "S01_CommandsInsideTheEnvelopeAreApprovedAndApplied",
-        "S28_WithoutAnyCommandTheMonitorStaysInINITAndGrantsNoPermit"
+        "S29_WithoutAnyCommandTheMonitorStaysInINITAndGrantsNoPermit"
       ],
       "text": "When the first valid AccCommand frame is received, the AccMonitor shall enter MONITORING and check that command.",
       "verification": [
@@ -149,8 +151,9 @@
         "S19_AccelerationTowardACloseInLaneVehicleLatchesSAFESTATEAfter05",
         "S20_AccelerationIsAllowedWhenNoInLaneVehicleIsCloserThan2S_Ex1",
         "S21_AccelerationIsAllowedWhenNoInLaneVehicleIsCloserThan2S_Ex2",
-        "S22_AccelerationWithoutAValidRadarLatchesSAFESTATE",
-        "S23_ShortAccelerationBurstsTowardACloseVehicleDoNotAddUp"
+        "S22_AccelerationIsAllowedWhenNoInLaneVehicleIsCloserThan2S_Ex3",
+        "S23_AccelerationWithoutAValidRadarLatchesSAFESTATE",
+        "S24_ShortAccelerationBurstsTowardACloseVehicleDoNotAddUp"
       ],
       "text": "If acceleration is requested for 0.5 s while a valid radar target at most 200 m ahead and at most 1.8 m from the lane centre has a time to collision below 2 s, or while no valid RadarObject frame was received for 120 ms, then the AccMonitor shall enter SAFE_STATE with reason UNINTENDED_ACCEL.",
       "verification": [
@@ -166,11 +169,11 @@
         "rx:AccCommand"
       ],
       "tests": [
-        "S24_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex1",
-        "S25_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex2",
-        "S26_UpToTwoLostOrCorruptedCommandFramesAreTolerated_Ex1",
-        "S27_UpToTwoLostOrCorruptedCommandFramesAreTolerated_Ex2",
-        "S28_WithoutAnyCommandTheMonitorStaysInINITAndGrantsNoPermit"
+        "S25_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex1",
+        "S26_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex2",
+        "S27_UpToTwoLostOrCorruptedCommandFramesAreTolerated_Ex1",
+        "S28_UpToTwoLostOrCorruptedCommandFramesAreTolerated_Ex2",
+        "S29_WithoutAnyCommandTheMonitorStaysInINITAndGrantsNoPermit"
       ],
       "text": "If in MONITORING no valid AccCommand frame is received for 60 ms, then the AccMonitor shall enter SAFE_STATE with reason COMMAND_TIMEOUT.",
       "verification": [
@@ -186,8 +189,8 @@
       ],
       "tests": [
         "S06_ARequestAboveTheLimitIsNeverAppliedAndSAFESTATEStaysLatched",
-        "S24_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex1",
-        "S25_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex2"
+        "S25_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex1",
+        "S26_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex2"
       ],
       "text": "While in SAFE_STATE, the AccMonitor shall withdraw the permit and report the reason of the first violation until the next power cycle.",
       "verification": [
@@ -203,7 +206,7 @@
       ],
       "tests": [
         "S01_CommandsInsideTheEnvelopeAreApprovedAndApplied",
-        "S29_ALostMonitorMakesTheActuatorRampOutBrakingAndRequestATakeove"
+        "S30_ALostMonitorMakesTheActuatorRampOutBrakingAndRequestATakeove"
       ],
       "text": "The AccMonitor shall send the AccMonitorStatus message every 20 ms with E2E protection.",
       "verification": [
@@ -1575,10 +1578,71 @@
       ]
     },
     {
+      "example": [
+        [
+          "d",
+          "220"
+        ],
+        [
+          "lat",
+          "0.0"
+        ]
+      ],
+      "feature": "examples/acc_monitor/features/envelope.feature",
+      "line": 132,
+      "name": "S22_AccelerationIsAllowedWhenNoInLaneVehicleIsCloserThan2S_Ex3",
+      "requirements": [
+        "REQ-ACCM-007"
+      ],
+      "scenario": "Acceleration is allowed when no in-lane vehicle is closer than 2 s #3",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(60.0);",
+          "text": "Given the ego vehicle drives at 60 km/h"
+        },
+        {
+          "catalogue": "FN-S12",
+          "cpp": "sil_.plant().set_lead(220.0, 0.0, 0.0);",
+          "text": "And a vehicle drives 220 m ahead at 0 km/h with 0.0 m lateral offset"
+        },
+        {
+          "catalogue": "ACCM-S01",
+          "cpp": "sil_.command(static_cast<double>(ea::plant::AccStatus::kActive), 0.0);",
+          "text": "And the controller is ACTIVE without request"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "When 0.2 s pass"
+        },
+        {
+          "catalogue": "ACCM-S02",
+          "cpp": "sil_.ramp_request(static_cast<double>(ea::plant::AccStatus::kActive), 0.5, 2.5);",
+          "text": "And the controller ramps the acceleration request to 0.5 m/s2 at 2.5 m/s3"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(1.0);",
+          "text": "And 1 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kMonitoring);",
+          "text": "Then the monitor state is MONITORING"
+        },
+        {
+          "catalogue": "MON-S05",
+          "cpp": "EXPECT_LT(sil_.actuator().metrics().monitor_safe_state_s, 0.0);",
+          "text": "And the monitor never entered SAFE_STATE"
+        }
+      ]
+    },
+    {
       "example": [],
       "feature": "examples/acc_monitor/features/envelope.feature",
-      "line": 148,
-      "name": "S22_AccelerationWithoutAValidRadarLatchesSAFESTATE",
+      "line": 149,
+      "name": "S23_AccelerationWithoutAValidRadarLatchesSAFESTATE",
       "requirements": [
         "REQ-ACCM-007"
       ],
@@ -1629,8 +1693,8 @@
     {
       "example": [],
       "feature": "examples/acc_monitor/features/envelope.feature",
-      "line": 159,
-      "name": "S23_ShortAccelerationBurstsTowardACloseVehicleDoNotAddUp",
+      "line": 160,
+      "name": "S24_ShortAccelerationBurstsTowardACloseVehicleDoNotAddUp",
       "requirements": [
         "REQ-ACCM-007"
       ],
@@ -1717,7 +1781,7 @@
       ],
       "feature": "examples/acc_monitor/features/faults.feature",
       "line": 7,
-      "name": "S24_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex1",
+      "name": "S25_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex1",
       "requirements": [
         "REQ-ACCM-008",
         "REQ-ACCM-009"
@@ -1780,7 +1844,7 @@
       ],
       "feature": "examples/acc_monitor/features/faults.feature",
       "line": 7,
-      "name": "S25_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex2",
+      "name": "S26_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex2",
       "requirements": [
         "REQ-ACCM-008",
         "REQ-ACCM-009"
@@ -1843,7 +1907,7 @@
       ],
       "feature": "examples/acc_monitor/features/faults.feature",
       "line": 24,
-      "name": "S26_UpToTwoLostOrCorruptedCommandFramesAreTolerated_Ex1",
+      "name": "S27_UpToTwoLostOrCorruptedCommandFramesAreTolerated_Ex1",
       "requirements": [
         "REQ-ACCM-008"
       ],
@@ -1895,7 +1959,7 @@
       ],
       "feature": "examples/acc_monitor/features/faults.feature",
       "line": 24,
-      "name": "S27_UpToTwoLostOrCorruptedCommandFramesAreTolerated_Ex2",
+      "name": "S28_UpToTwoLostOrCorruptedCommandFramesAreTolerated_Ex2",
       "requirements": [
         "REQ-ACCM-008"
       ],
@@ -1942,7 +2006,7 @@
       "example": [],
       "feature": "examples/acc_monitor/features/faults.feature",
       "line": 39,
-      "name": "S28_WithoutAnyCommandTheMonitorStaysInINITAndGrantsNoPermit",
+      "name": "S29_WithoutAnyCommandTheMonitorStaysInINITAndGrantsNoPermit",
       "requirements": [
         "REQ-ACCM-001",
         "REQ-ACCM-008"
@@ -1990,7 +2054,7 @@
       "example": [],
       "feature": "examples/acc_monitor/features/faults.feature",
       "line": 49,
-      "name": "S29_ALostMonitorMakesTheActuatorRampOutBrakingAndRequestATakeove",
+      "name": "S30_ALostMonitorMakesTheActuatorRampOutBrakingAndRequestATakeove",
       "requirements": [
         "REQ-ACCM-010"
       ],

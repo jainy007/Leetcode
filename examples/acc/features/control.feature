@@ -66,6 +66,15 @@ Feature: ACC longitudinal control
     Then braking was never requested
     And the distance to the lead vehicle is 205 m within 2 m
 
+  @REQ-ACC-013
+  Scenario: A vehicle just inside 200 m is a target
+    Given the ego vehicle drives at 180 km/h
+    And a lead vehicle drives 215 m ahead at 0 km/h
+    And ACC is engaged
+    When 0.2 s pass
+    Then braking is requested
+    And the distance to the lead vehicle is 185 m within 2 m
+
   @REQ-ACC-016 @REQ-ACC-014 @REQ-ACC-017
   Scenario Outline: The lead vehicle brakes while being followed
     Given the ego vehicle drives at 100 km/h

@@ -34,3 +34,5 @@ mutations:
   - {name: "permit granted in SAFE_STATE", file: templates/features/acc_monitor/logic.cpp.j2, old: "    out.permit = monitoring ? 1.0 : 0.0;", new: "    out.permit = (state_ != State::kInit) ? 1.0 : 0.0;"}
   - {name: "violating command approved", file: templates/features/acc_monitor/logic.cpp.j2, old: "    } else {\n        last_counter_ = in.cmd_counter;\n    }", new: "    } else {\n    }\n    last_counter_ = in.cmd_counter;", expect: equivalent,
      note: "a violation withdraws the permit in the same cycle; the actuator needs permit AND counter (AoU-1), so the echoed counter is redundant protection"}
+  # ---- generator: shared codec template (caught by the generated codec test, not by SIL) ----
+  - {name: "decode range check off by one", file: templates/common/_codec_macros.j2, old: "        if (value < {{ s.raw_lo }}LL || value > {{ s.raw_hi }}LL) {", new: "        if (value < {{ s.raw_lo }}LL || value > {{ s.raw_hi }}LL + 1) {"}

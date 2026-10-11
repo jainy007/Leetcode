@@ -61,3 +61,10 @@ Feature: AEB relevance, speed range and input supervision
       | ego state    | 3 | FAULT   |
       | driver input | 2 | STANDBY |
       | driver input | 3 | FAULT   |
+
+  @REQ-AEB-008
+  Scenario: A vehicle beyond 150 m is not relevant
+    Given the ego vehicle drives at 100 km/h
+    And a stationary vehicle stands 170 m ahead
+    When 0.5 s pass
+    Then no forward collision warning was issued

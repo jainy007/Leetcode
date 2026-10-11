@@ -1,7 +1,7 @@
 // GENERATED FILE - DO NOT EDIT. Changes are overwritten and rejected by CI.
 // Generator: ea-gen 0.1.0 (rule-based, deterministic; no AI in this path)
 // Project:   acc (pattern: can_function)
-// Inputs:    sha256:7daf72a7ff67fdde3af69c03ce9ff58b4ecdb3b7244d701c28de0793bc835631
+// Inputs:    sha256:df14c530c502f140150ce4bf860cdd1e8018cd3a627d306d9073740480ad2f3b
 // Regenerate: python3 -m tools.gen
 
 #include "acc/acc_controller_codec.hpp"
@@ -23,10 +23,7 @@ ea::Result<AccCommand> decode_acc_command(ea::ConstByteSpan payload) noexcept {
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 0U, 8U, kAccCommandPayloadLength), "GEN-031");
         const std::uint64_t raw = ea::codec::extract_fixed<ea::codec::ByteOrder::kLittleEndian, 0U, 8U>(payload.data());
         const std::int64_t value = static_cast<std::int64_t>(raw);
-        // IPC-002: physical range, checked exactly in the raw domain.
-        if (value < 0LL || value > 255LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
+        // IPC-002: the physical range spans the whole 8-bit field, every raw value is valid.
         out.crc = static_cast<double>(value) * 1.0 + 0.0;
     }
     {
@@ -34,10 +31,7 @@ ea::Result<AccCommand> decode_acc_command(ea::ConstByteSpan payload) noexcept {
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 8U, 4U, kAccCommandPayloadLength), "GEN-031");
         const std::uint64_t raw = ea::codec::extract_fixed<ea::codec::ByteOrder::kLittleEndian, 8U, 4U>(payload.data());
         const std::int64_t value = static_cast<std::int64_t>(raw);
-        // IPC-002: physical range, checked exactly in the raw domain.
-        if (value < 0LL || value > 15LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
+        // IPC-002: the physical range spans the whole 4-bit field, every raw value is valid.
         out.counter = static_cast<double>(value) * 1.0 + 0.0;
     }
     {
@@ -45,8 +39,8 @@ ea::Result<AccCommand> decode_acc_command(ea::ConstByteSpan payload) noexcept {
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 12U, 3U, kAccCommandPayloadLength), "GEN-031");
         const std::uint64_t raw = ea::codec::extract_fixed<ea::codec::ByteOrder::kLittleEndian, 12U, 3U>(payload.data());
         const std::int64_t value = static_cast<std::int64_t>(raw);
-        // IPC-002: physical range, checked exactly in the raw domain.
-        if (value < 0LL || value > 4LL) {
+        // IPC-002: physical range, checked exactly in the raw domain (only bounds the field can exceed).
+        if (value > 4LL) {
             return ea::ErrorCode::kOutOfRange;
         }
         out.acc_status = static_cast<double>(value) * 1.0 + 0.0;
@@ -56,8 +50,8 @@ ea::Result<AccCommand> decode_acc_command(ea::ConstByteSpan payload) noexcept {
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 16U, 10U, kAccCommandPayloadLength), "GEN-031");
         const std::uint64_t raw = ea::codec::extract_fixed<ea::codec::ByteOrder::kLittleEndian, 16U, 10U>(payload.data());
         const std::int64_t value = static_cast<std::int64_t>(raw);
-        // IPC-002: physical range, checked exactly in the raw domain.
-        if (value < 0LL || value > 500LL) {
+        // IPC-002: physical range, checked exactly in the raw domain (only bounds the field can exceed).
+        if (value > 500LL) {
             return ea::ErrorCode::kOutOfRange;
         }
         out.accel_request = static_cast<double>(value) * 0.01 + 0.0;
@@ -67,8 +61,8 @@ ea::Result<AccCommand> decode_acc_command(ea::ConstByteSpan payload) noexcept {
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 26U, 10U, kAccCommandPayloadLength), "GEN-031");
         const std::uint64_t raw = ea::codec::extract_fixed<ea::codec::ByteOrder::kLittleEndian, 26U, 10U>(payload.data());
         const std::int64_t value = static_cast<std::int64_t>(raw);
-        // IPC-002: physical range, checked exactly in the raw domain.
-        if (value < 0LL || value > 1000LL) {
+        // IPC-002: physical range, checked exactly in the raw domain (only bounds the field can exceed).
+        if (value > 1000LL) {
             return ea::ErrorCode::kOutOfRange;
         }
         out.brake_request = static_cast<double>(value) * 0.01 + 0.0;
@@ -78,7 +72,7 @@ ea::Result<AccCommand> decode_acc_command(ea::ConstByteSpan payload) noexcept {
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 36U, 12U, kAccCommandPayloadLength), "GEN-031");
         const std::uint64_t raw = ea::codec::extract_fixed<ea::codec::ByteOrder::kLittleEndian, 36U, 12U>(payload.data());
         const std::int64_t value = ea::codec::sign_extend(raw, 12U);
-        // IPC-002: physical range, checked exactly in the raw domain.
+        // IPC-002: physical range, checked exactly in the raw domain (only bounds the field can exceed).
         if (value < -1800LL || value > 1800LL) {
             return ea::ErrorCode::kOutOfRange;
         }
@@ -89,8 +83,8 @@ ea::Result<AccCommand> decode_acc_command(ea::ConstByteSpan payload) noexcept {
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 48U, 8U, kAccCommandPayloadLength), "GEN-031");
         const std::uint64_t raw = ea::codec::extract_fixed<ea::codec::ByteOrder::kLittleEndian, 48U, 8U>(payload.data());
         const std::int64_t value = static_cast<std::int64_t>(raw);
-        // IPC-002: physical range, checked exactly in the raw domain.
-        if (value < 0LL || value > 250LL) {
+        // IPC-002: physical range, checked exactly in the raw domain (only bounds the field can exceed).
+        if (value > 250LL) {
             return ea::ErrorCode::kOutOfRange;
         }
         out.set_speed = static_cast<double>(value) * 1.0 + 0.0;
@@ -100,10 +94,7 @@ ea::Result<AccCommand> decode_acc_command(ea::ConstByteSpan payload) noexcept {
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 56U, 2U, kAccCommandPayloadLength), "GEN-031");
         const std::uint64_t raw = ea::codec::extract_fixed<ea::codec::ByteOrder::kLittleEndian, 56U, 2U>(payload.data());
         const std::int64_t value = static_cast<std::int64_t>(raw);
-        // IPC-002: physical range, checked exactly in the raw domain.
-        if (value < 0LL || value > 3LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
+        // IPC-002: the physical range spans the whole 2-bit field, every raw value is valid.
         out.time_gap_setting = static_cast<double>(value) * 1.0 + 0.0;
     }
     return out;
@@ -117,13 +108,11 @@ ea::Result<void> encode_acc_command(const AccCommand& in, ea::ByteSpan payload) 
         // crc: start bit 0, 8 bit, little endian, unsigned, factor 1.0, offset 0.0, range [0.0, 255.0] 
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 0U, 8U, kAccCommandPayloadLength), "GEN-031");
         const double scaled = (in.crc - 0.0) / 1.0;
-        if (!(scaled >= -0.5 && scaled <= 255.5)) {  // also rejects NaN
+        // Open interval: every value in it rounds (half away from zero) into [0, 255].
+        if (!(scaled > -0.5 && scaled < 255.5)) {  // also rejects NaN
             return ea::ErrorCode::kOutOfRange;
         }
         const std::int64_t value = ea::round_half_away(scaled);  // IPC-005, equals std::llround here
-        if (value < 0LL || value > 255LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
         // [0, 255] lies inside the 8-bit unsigned range (GEN-033), so the raw value fits.
         ea::codec::insert_fixed<ea::codec::ByteOrder::kLittleEndian, 0U, 8U>(payload.data(), static_cast<std::uint64_t>(value));
     }
@@ -131,13 +120,11 @@ ea::Result<void> encode_acc_command(const AccCommand& in, ea::ByteSpan payload) 
         // counter: start bit 8, 4 bit, little endian, unsigned, factor 1.0, offset 0.0, range [0.0, 15.0] 
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 8U, 4U, kAccCommandPayloadLength), "GEN-031");
         const double scaled = (in.counter - 0.0) / 1.0;
-        if (!(scaled >= -0.5 && scaled <= 15.5)) {  // also rejects NaN
+        // Open interval: every value in it rounds (half away from zero) into [0, 15].
+        if (!(scaled > -0.5 && scaled < 15.5)) {  // also rejects NaN
             return ea::ErrorCode::kOutOfRange;
         }
         const std::int64_t value = ea::round_half_away(scaled);  // IPC-005, equals std::llround here
-        if (value < 0LL || value > 15LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
         // [0, 15] lies inside the 4-bit unsigned range (GEN-033), so the raw value fits.
         ea::codec::insert_fixed<ea::codec::ByteOrder::kLittleEndian, 8U, 4U>(payload.data(), static_cast<std::uint64_t>(value));
     }
@@ -145,13 +132,11 @@ ea::Result<void> encode_acc_command(const AccCommand& in, ea::ByteSpan payload) 
         // acc_status: start bit 12, 3 bit, little endian, unsigned, factor 1.0, offset 0.0, range [0.0, 4.0] 
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 12U, 3U, kAccCommandPayloadLength), "GEN-031");
         const double scaled = (in.acc_status - 0.0) / 1.0;
-        if (!(scaled >= -0.5 && scaled <= 4.5)) {  // also rejects NaN
+        // Open interval: every value in it rounds (half away from zero) into [0, 4].
+        if (!(scaled > -0.5 && scaled < 4.5)) {  // also rejects NaN
             return ea::ErrorCode::kOutOfRange;
         }
         const std::int64_t value = ea::round_half_away(scaled);  // IPC-005, equals std::llround here
-        if (value < 0LL || value > 4LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
         // [0, 4] lies inside the 3-bit unsigned range (GEN-033), so the raw value fits.
         ea::codec::insert_fixed<ea::codec::ByteOrder::kLittleEndian, 12U, 3U>(payload.data(), static_cast<std::uint64_t>(value));
     }
@@ -159,13 +144,11 @@ ea::Result<void> encode_acc_command(const AccCommand& in, ea::ByteSpan payload) 
         // accel_request: start bit 16, 10 bit, little endian, unsigned, factor 0.01, offset 0.0, range [0.0, 5.0] m/s2
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 16U, 10U, kAccCommandPayloadLength), "GEN-031");
         const double scaled = (in.accel_request - 0.0) / 0.01;
-        if (!(scaled >= -0.5 && scaled <= 500.5)) {  // also rejects NaN
+        // Open interval: every value in it rounds (half away from zero) into [0, 500].
+        if (!(scaled > -0.5 && scaled < 500.5)) {  // also rejects NaN
             return ea::ErrorCode::kOutOfRange;
         }
         const std::int64_t value = ea::round_half_away(scaled);  // IPC-005, equals std::llround here
-        if (value < 0LL || value > 500LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
         // [0, 500] lies inside the 10-bit unsigned range (GEN-033), so the raw value fits.
         ea::codec::insert_fixed<ea::codec::ByteOrder::kLittleEndian, 16U, 10U>(payload.data(), static_cast<std::uint64_t>(value));
     }
@@ -173,13 +156,11 @@ ea::Result<void> encode_acc_command(const AccCommand& in, ea::ByteSpan payload) 
         // brake_request: start bit 26, 10 bit, little endian, unsigned, factor 0.01, offset 0.0, range [0.0, 10.0] m/s2
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 26U, 10U, kAccCommandPayloadLength), "GEN-031");
         const double scaled = (in.brake_request - 0.0) / 0.01;
-        if (!(scaled >= -0.5 && scaled <= 1000.5)) {  // also rejects NaN
+        // Open interval: every value in it rounds (half away from zero) into [0, 1000].
+        if (!(scaled > -0.5 && scaled < 1000.5)) {  // also rejects NaN
             return ea::ErrorCode::kOutOfRange;
         }
         const std::int64_t value = ea::round_half_away(scaled);  // IPC-005, equals std::llround here
-        if (value < 0LL || value > 1000LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
         // [0, 1000] lies inside the 10-bit unsigned range (GEN-033), so the raw value fits.
         ea::codec::insert_fixed<ea::codec::ByteOrder::kLittleEndian, 26U, 10U>(payload.data(), static_cast<std::uint64_t>(value));
     }
@@ -187,13 +168,11 @@ ea::Result<void> encode_acc_command(const AccCommand& in, ea::ByteSpan payload) 
         // steering_angle_request: start bit 36, 12 bit, little endian, signed, factor 0.1, offset 0.0, range [-180.0, 180.0] deg
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 36U, 12U, kAccCommandPayloadLength), "GEN-031");
         const double scaled = (in.steering_angle_request - 0.0) / 0.1;
-        if (!(scaled >= -1800.5 && scaled <= 1800.5)) {  // also rejects NaN
+        // Open interval: every value in it rounds (half away from zero) into [-1800, 1800].
+        if (!(scaled > -1800.5 && scaled < 1800.5)) {  // also rejects NaN
             return ea::ErrorCode::kOutOfRange;
         }
         const std::int64_t value = ea::round_half_away(scaled);  // IPC-005, equals std::llround here
-        if (value < -1800LL || value > 1800LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
         // [-1800, 1800] lies inside the 12-bit signed range (GEN-033), so the raw value fits.
         ea::codec::insert_fixed<ea::codec::ByteOrder::kLittleEndian, 36U, 12U>(payload.data(), static_cast<std::uint64_t>(value) & 0xFFFULL);
     }
@@ -201,13 +180,11 @@ ea::Result<void> encode_acc_command(const AccCommand& in, ea::ByteSpan payload) 
         // set_speed: start bit 48, 8 bit, little endian, unsigned, factor 1.0, offset 0.0, range [0.0, 250.0] km/h
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 48U, 8U, kAccCommandPayloadLength), "GEN-031");
         const double scaled = (in.set_speed - 0.0) / 1.0;
-        if (!(scaled >= -0.5 && scaled <= 250.5)) {  // also rejects NaN
+        // Open interval: every value in it rounds (half away from zero) into [0, 250].
+        if (!(scaled > -0.5 && scaled < 250.5)) {  // also rejects NaN
             return ea::ErrorCode::kOutOfRange;
         }
         const std::int64_t value = ea::round_half_away(scaled);  // IPC-005, equals std::llround here
-        if (value < 0LL || value > 250LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
         // [0, 250] lies inside the 8-bit unsigned range (GEN-033), so the raw value fits.
         ea::codec::insert_fixed<ea::codec::ByteOrder::kLittleEndian, 48U, 8U>(payload.data(), static_cast<std::uint64_t>(value));
     }
@@ -215,13 +192,11 @@ ea::Result<void> encode_acc_command(const AccCommand& in, ea::ByteSpan payload) 
         // time_gap_setting: start bit 56, 2 bit, little endian, unsigned, factor 1.0, offset 0.0, range [0.0, 3.0] 
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 56U, 2U, kAccCommandPayloadLength), "GEN-031");
         const double scaled = (in.time_gap_setting - 0.0) / 1.0;
-        if (!(scaled >= -0.5 && scaled <= 3.5)) {  // also rejects NaN
+        // Open interval: every value in it rounds (half away from zero) into [0, 3].
+        if (!(scaled > -0.5 && scaled < 3.5)) {  // also rejects NaN
             return ea::ErrorCode::kOutOfRange;
         }
         const std::int64_t value = ea::round_half_away(scaled);  // IPC-005, equals std::llround here
-        if (value < 0LL || value > 3LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
         // [0, 3] lies inside the 2-bit unsigned range (GEN-033), so the raw value fits.
         ea::codec::insert_fixed<ea::codec::ByteOrder::kLittleEndian, 56U, 2U>(payload.data(), static_cast<std::uint64_t>(value));
     }
@@ -238,10 +213,7 @@ ea::Result<DriverInput> decode_driver_input(ea::ConstByteSpan payload) noexcept 
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 0U, 8U, kDriverInputPayloadLength), "GEN-031");
         const std::uint64_t raw = ea::codec::extract_fixed<ea::codec::ByteOrder::kLittleEndian, 0U, 8U>(payload.data());
         const std::int64_t value = static_cast<std::int64_t>(raw);
-        // IPC-002: physical range, checked exactly in the raw domain.
-        if (value < 0LL || value > 255LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
+        // IPC-002: the physical range spans the whole 8-bit field, every raw value is valid.
         out.crc = static_cast<double>(value) * 1.0 + 0.0;
     }
     {
@@ -249,10 +221,7 @@ ea::Result<DriverInput> decode_driver_input(ea::ConstByteSpan payload) noexcept 
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 8U, 4U, kDriverInputPayloadLength), "GEN-031");
         const std::uint64_t raw = ea::codec::extract_fixed<ea::codec::ByteOrder::kLittleEndian, 8U, 4U>(payload.data());
         const std::int64_t value = static_cast<std::int64_t>(raw);
-        // IPC-002: physical range, checked exactly in the raw domain.
-        if (value < 0LL || value > 15LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
+        // IPC-002: the physical range spans the whole 4-bit field, every raw value is valid.
         out.counter = static_cast<double>(value) * 1.0 + 0.0;
     }
     {
@@ -260,10 +229,7 @@ ea::Result<DriverInput> decode_driver_input(ea::ConstByteSpan payload) noexcept 
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 12U, 1U, kDriverInputPayloadLength), "GEN-031");
         const std::uint64_t raw = ea::codec::extract_fixed<ea::codec::ByteOrder::kLittleEndian, 12U, 1U>(payload.data());
         const std::int64_t value = static_cast<std::int64_t>(raw);
-        // IPC-002: physical range, checked exactly in the raw domain.
-        if (value < 0LL || value > 1LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
+        // IPC-002: the physical range spans the whole 1-bit field, every raw value is valid.
         out.main_switch = static_cast<double>(value) * 1.0 + 0.0;
     }
     {
@@ -271,10 +237,7 @@ ea::Result<DriverInput> decode_driver_input(ea::ConstByteSpan payload) noexcept 
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 13U, 1U, kDriverInputPayloadLength), "GEN-031");
         const std::uint64_t raw = ea::codec::extract_fixed<ea::codec::ByteOrder::kLittleEndian, 13U, 1U>(payload.data());
         const std::int64_t value = static_cast<std::int64_t>(raw);
-        // IPC-002: physical range, checked exactly in the raw domain.
-        if (value < 0LL || value > 1LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
+        // IPC-002: the physical range spans the whole 1-bit field, every raw value is valid.
         out.set_button = static_cast<double>(value) * 1.0 + 0.0;
     }
     {
@@ -282,10 +245,7 @@ ea::Result<DriverInput> decode_driver_input(ea::ConstByteSpan payload) noexcept 
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 14U, 1U, kDriverInputPayloadLength), "GEN-031");
         const std::uint64_t raw = ea::codec::extract_fixed<ea::codec::ByteOrder::kLittleEndian, 14U, 1U>(payload.data());
         const std::int64_t value = static_cast<std::int64_t>(raw);
-        // IPC-002: physical range, checked exactly in the raw domain.
-        if (value < 0LL || value > 1LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
+        // IPC-002: the physical range spans the whole 1-bit field, every raw value is valid.
         out.resume_button = static_cast<double>(value) * 1.0 + 0.0;
     }
     {
@@ -293,10 +253,7 @@ ea::Result<DriverInput> decode_driver_input(ea::ConstByteSpan payload) noexcept 
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 15U, 1U, kDriverInputPayloadLength), "GEN-031");
         const std::uint64_t raw = ea::codec::extract_fixed<ea::codec::ByteOrder::kLittleEndian, 15U, 1U>(payload.data());
         const std::int64_t value = static_cast<std::int64_t>(raw);
-        // IPC-002: physical range, checked exactly in the raw domain.
-        if (value < 0LL || value > 1LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
+        // IPC-002: the physical range spans the whole 1-bit field, every raw value is valid.
         out.cancel_button = static_cast<double>(value) * 1.0 + 0.0;
     }
     {
@@ -304,10 +261,7 @@ ea::Result<DriverInput> decode_driver_input(ea::ConstByteSpan payload) noexcept 
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 16U, 1U, kDriverInputPayloadLength), "GEN-031");
         const std::uint64_t raw = ea::codec::extract_fixed<ea::codec::ByteOrder::kLittleEndian, 16U, 1U>(payload.data());
         const std::int64_t value = static_cast<std::int64_t>(raw);
-        // IPC-002: physical range, checked exactly in the raw domain.
-        if (value < 0LL || value > 1LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
+        // IPC-002: the physical range spans the whole 1-bit field, every raw value is valid.
         out.speed_up_button = static_cast<double>(value) * 1.0 + 0.0;
     }
     {
@@ -315,10 +269,7 @@ ea::Result<DriverInput> decode_driver_input(ea::ConstByteSpan payload) noexcept 
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 17U, 1U, kDriverInputPayloadLength), "GEN-031");
         const std::uint64_t raw = ea::codec::extract_fixed<ea::codec::ByteOrder::kLittleEndian, 17U, 1U>(payload.data());
         const std::int64_t value = static_cast<std::int64_t>(raw);
-        // IPC-002: physical range, checked exactly in the raw domain.
-        if (value < 0LL || value > 1LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
+        // IPC-002: the physical range spans the whole 1-bit field, every raw value is valid.
         out.speed_down_button = static_cast<double>(value) * 1.0 + 0.0;
     }
     {
@@ -326,8 +277,8 @@ ea::Result<DriverInput> decode_driver_input(ea::ConstByteSpan payload) noexcept 
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 18U, 2U, kDriverInputPayloadLength), "GEN-031");
         const std::uint64_t raw = ea::codec::extract_fixed<ea::codec::ByteOrder::kLittleEndian, 18U, 2U>(payload.data());
         const std::int64_t value = static_cast<std::int64_t>(raw);
-        // IPC-002: physical range, checked exactly in the raw domain.
-        if (value < 1LL || value > 3LL) {
+        // IPC-002: physical range, checked exactly in the raw domain (only bounds the field can exceed).
+        if (value < 1LL) {
             return ea::ErrorCode::kOutOfRange;
         }
         out.gap_setting = static_cast<double>(value) * 1.0 + 0.0;
@@ -337,10 +288,7 @@ ea::Result<DriverInput> decode_driver_input(ea::ConstByteSpan payload) noexcept 
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 20U, 1U, kDriverInputPayloadLength), "GEN-031");
         const std::uint64_t raw = ea::codec::extract_fixed<ea::codec::ByteOrder::kLittleEndian, 20U, 1U>(payload.data());
         const std::int64_t value = static_cast<std::int64_t>(raw);
-        // IPC-002: physical range, checked exactly in the raw domain.
-        if (value < 0LL || value > 1LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
+        // IPC-002: the physical range spans the whole 1-bit field, every raw value is valid.
         out.brake_pedal = static_cast<double>(value) * 1.0 + 0.0;
     }
     {
@@ -348,8 +296,8 @@ ea::Result<DriverInput> decode_driver_input(ea::ConstByteSpan payload) noexcept 
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 24U, 8U, kDriverInputPayloadLength), "GEN-031");
         const std::uint64_t raw = ea::codec::extract_fixed<ea::codec::ByteOrder::kLittleEndian, 24U, 8U>(payload.data());
         const std::int64_t value = static_cast<std::int64_t>(raw);
-        // IPC-002: physical range, checked exactly in the raw domain.
-        if (value < 0LL || value > 200LL) {
+        // IPC-002: physical range, checked exactly in the raw domain (only bounds the field can exceed).
+        if (value > 200LL) {
             return ea::ErrorCode::kOutOfRange;
         }
         out.accel_pedal_pos = static_cast<double>(value) * 0.5 + 0.0;
@@ -365,13 +313,11 @@ ea::Result<void> encode_driver_input(const DriverInput& in, ea::ByteSpan payload
         // crc: start bit 0, 8 bit, little endian, unsigned, factor 1.0, offset 0.0, range [0.0, 255.0] 
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 0U, 8U, kDriverInputPayloadLength), "GEN-031");
         const double scaled = (in.crc - 0.0) / 1.0;
-        if (!(scaled >= -0.5 && scaled <= 255.5)) {  // also rejects NaN
+        // Open interval: every value in it rounds (half away from zero) into [0, 255].
+        if (!(scaled > -0.5 && scaled < 255.5)) {  // also rejects NaN
             return ea::ErrorCode::kOutOfRange;
         }
         const std::int64_t value = ea::round_half_away(scaled);  // IPC-005, equals std::llround here
-        if (value < 0LL || value > 255LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
         // [0, 255] lies inside the 8-bit unsigned range (GEN-033), so the raw value fits.
         ea::codec::insert_fixed<ea::codec::ByteOrder::kLittleEndian, 0U, 8U>(payload.data(), static_cast<std::uint64_t>(value));
     }
@@ -379,13 +325,11 @@ ea::Result<void> encode_driver_input(const DriverInput& in, ea::ByteSpan payload
         // counter: start bit 8, 4 bit, little endian, unsigned, factor 1.0, offset 0.0, range [0.0, 15.0] 
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 8U, 4U, kDriverInputPayloadLength), "GEN-031");
         const double scaled = (in.counter - 0.0) / 1.0;
-        if (!(scaled >= -0.5 && scaled <= 15.5)) {  // also rejects NaN
+        // Open interval: every value in it rounds (half away from zero) into [0, 15].
+        if (!(scaled > -0.5 && scaled < 15.5)) {  // also rejects NaN
             return ea::ErrorCode::kOutOfRange;
         }
         const std::int64_t value = ea::round_half_away(scaled);  // IPC-005, equals std::llround here
-        if (value < 0LL || value > 15LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
         // [0, 15] lies inside the 4-bit unsigned range (GEN-033), so the raw value fits.
         ea::codec::insert_fixed<ea::codec::ByteOrder::kLittleEndian, 8U, 4U>(payload.data(), static_cast<std::uint64_t>(value));
     }
@@ -393,13 +337,11 @@ ea::Result<void> encode_driver_input(const DriverInput& in, ea::ByteSpan payload
         // main_switch: start bit 12, 1 bit, little endian, unsigned, factor 1.0, offset 0.0, range [0.0, 1.0] 
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 12U, 1U, kDriverInputPayloadLength), "GEN-031");
         const double scaled = (in.main_switch - 0.0) / 1.0;
-        if (!(scaled >= -0.5 && scaled <= 1.5)) {  // also rejects NaN
+        // Open interval: every value in it rounds (half away from zero) into [0, 1].
+        if (!(scaled > -0.5 && scaled < 1.5)) {  // also rejects NaN
             return ea::ErrorCode::kOutOfRange;
         }
         const std::int64_t value = ea::round_half_away(scaled);  // IPC-005, equals std::llround here
-        if (value < 0LL || value > 1LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
         // [0, 1] lies inside the 1-bit unsigned range (GEN-033), so the raw value fits.
         ea::codec::insert_fixed<ea::codec::ByteOrder::kLittleEndian, 12U, 1U>(payload.data(), static_cast<std::uint64_t>(value));
     }
@@ -407,13 +349,11 @@ ea::Result<void> encode_driver_input(const DriverInput& in, ea::ByteSpan payload
         // set_button: start bit 13, 1 bit, little endian, unsigned, factor 1.0, offset 0.0, range [0.0, 1.0] 
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 13U, 1U, kDriverInputPayloadLength), "GEN-031");
         const double scaled = (in.set_button - 0.0) / 1.0;
-        if (!(scaled >= -0.5 && scaled <= 1.5)) {  // also rejects NaN
+        // Open interval: every value in it rounds (half away from zero) into [0, 1].
+        if (!(scaled > -0.5 && scaled < 1.5)) {  // also rejects NaN
             return ea::ErrorCode::kOutOfRange;
         }
         const std::int64_t value = ea::round_half_away(scaled);  // IPC-005, equals std::llround here
-        if (value < 0LL || value > 1LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
         // [0, 1] lies inside the 1-bit unsigned range (GEN-033), so the raw value fits.
         ea::codec::insert_fixed<ea::codec::ByteOrder::kLittleEndian, 13U, 1U>(payload.data(), static_cast<std::uint64_t>(value));
     }
@@ -421,13 +361,11 @@ ea::Result<void> encode_driver_input(const DriverInput& in, ea::ByteSpan payload
         // resume_button: start bit 14, 1 bit, little endian, unsigned, factor 1.0, offset 0.0, range [0.0, 1.0] 
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 14U, 1U, kDriverInputPayloadLength), "GEN-031");
         const double scaled = (in.resume_button - 0.0) / 1.0;
-        if (!(scaled >= -0.5 && scaled <= 1.5)) {  // also rejects NaN
+        // Open interval: every value in it rounds (half away from zero) into [0, 1].
+        if (!(scaled > -0.5 && scaled < 1.5)) {  // also rejects NaN
             return ea::ErrorCode::kOutOfRange;
         }
         const std::int64_t value = ea::round_half_away(scaled);  // IPC-005, equals std::llround here
-        if (value < 0LL || value > 1LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
         // [0, 1] lies inside the 1-bit unsigned range (GEN-033), so the raw value fits.
         ea::codec::insert_fixed<ea::codec::ByteOrder::kLittleEndian, 14U, 1U>(payload.data(), static_cast<std::uint64_t>(value));
     }
@@ -435,13 +373,11 @@ ea::Result<void> encode_driver_input(const DriverInput& in, ea::ByteSpan payload
         // cancel_button: start bit 15, 1 bit, little endian, unsigned, factor 1.0, offset 0.0, range [0.0, 1.0] 
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 15U, 1U, kDriverInputPayloadLength), "GEN-031");
         const double scaled = (in.cancel_button - 0.0) / 1.0;
-        if (!(scaled >= -0.5 && scaled <= 1.5)) {  // also rejects NaN
+        // Open interval: every value in it rounds (half away from zero) into [0, 1].
+        if (!(scaled > -0.5 && scaled < 1.5)) {  // also rejects NaN
             return ea::ErrorCode::kOutOfRange;
         }
         const std::int64_t value = ea::round_half_away(scaled);  // IPC-005, equals std::llround here
-        if (value < 0LL || value > 1LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
         // [0, 1] lies inside the 1-bit unsigned range (GEN-033), so the raw value fits.
         ea::codec::insert_fixed<ea::codec::ByteOrder::kLittleEndian, 15U, 1U>(payload.data(), static_cast<std::uint64_t>(value));
     }
@@ -449,13 +385,11 @@ ea::Result<void> encode_driver_input(const DriverInput& in, ea::ByteSpan payload
         // speed_up_button: start bit 16, 1 bit, little endian, unsigned, factor 1.0, offset 0.0, range [0.0, 1.0] 
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 16U, 1U, kDriverInputPayloadLength), "GEN-031");
         const double scaled = (in.speed_up_button - 0.0) / 1.0;
-        if (!(scaled >= -0.5 && scaled <= 1.5)) {  // also rejects NaN
+        // Open interval: every value in it rounds (half away from zero) into [0, 1].
+        if (!(scaled > -0.5 && scaled < 1.5)) {  // also rejects NaN
             return ea::ErrorCode::kOutOfRange;
         }
         const std::int64_t value = ea::round_half_away(scaled);  // IPC-005, equals std::llround here
-        if (value < 0LL || value > 1LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
         // [0, 1] lies inside the 1-bit unsigned range (GEN-033), so the raw value fits.
         ea::codec::insert_fixed<ea::codec::ByteOrder::kLittleEndian, 16U, 1U>(payload.data(), static_cast<std::uint64_t>(value));
     }
@@ -463,13 +397,11 @@ ea::Result<void> encode_driver_input(const DriverInput& in, ea::ByteSpan payload
         // speed_down_button: start bit 17, 1 bit, little endian, unsigned, factor 1.0, offset 0.0, range [0.0, 1.0] 
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 17U, 1U, kDriverInputPayloadLength), "GEN-031");
         const double scaled = (in.speed_down_button - 0.0) / 1.0;
-        if (!(scaled >= -0.5 && scaled <= 1.5)) {  // also rejects NaN
+        // Open interval: every value in it rounds (half away from zero) into [0, 1].
+        if (!(scaled > -0.5 && scaled < 1.5)) {  // also rejects NaN
             return ea::ErrorCode::kOutOfRange;
         }
         const std::int64_t value = ea::round_half_away(scaled);  // IPC-005, equals std::llround here
-        if (value < 0LL || value > 1LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
         // [0, 1] lies inside the 1-bit unsigned range (GEN-033), so the raw value fits.
         ea::codec::insert_fixed<ea::codec::ByteOrder::kLittleEndian, 17U, 1U>(payload.data(), static_cast<std::uint64_t>(value));
     }
@@ -477,13 +409,11 @@ ea::Result<void> encode_driver_input(const DriverInput& in, ea::ByteSpan payload
         // gap_setting: start bit 18, 2 bit, little endian, unsigned, factor 1.0, offset 0.0, range [1.0, 3.0] 
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 18U, 2U, kDriverInputPayloadLength), "GEN-031");
         const double scaled = (in.gap_setting - 0.0) / 1.0;
-        if (!(scaled >= 0.5 && scaled <= 3.5)) {  // also rejects NaN
+        // Open interval: every value in it rounds (half away from zero) into [1, 3].
+        if (!(scaled > 0.5 && scaled < 3.5)) {  // also rejects NaN
             return ea::ErrorCode::kOutOfRange;
         }
         const std::int64_t value = ea::round_half_away(scaled);  // IPC-005, equals std::llround here
-        if (value < 1LL || value > 3LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
         // [1, 3] lies inside the 2-bit unsigned range (GEN-033), so the raw value fits.
         ea::codec::insert_fixed<ea::codec::ByteOrder::kLittleEndian, 18U, 2U>(payload.data(), static_cast<std::uint64_t>(value));
     }
@@ -491,13 +421,11 @@ ea::Result<void> encode_driver_input(const DriverInput& in, ea::ByteSpan payload
         // brake_pedal: start bit 20, 1 bit, little endian, unsigned, factor 1.0, offset 0.0, range [0.0, 1.0] 
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 20U, 1U, kDriverInputPayloadLength), "GEN-031");
         const double scaled = (in.brake_pedal - 0.0) / 1.0;
-        if (!(scaled >= -0.5 && scaled <= 1.5)) {  // also rejects NaN
+        // Open interval: every value in it rounds (half away from zero) into [0, 1].
+        if (!(scaled > -0.5 && scaled < 1.5)) {  // also rejects NaN
             return ea::ErrorCode::kOutOfRange;
         }
         const std::int64_t value = ea::round_half_away(scaled);  // IPC-005, equals std::llround here
-        if (value < 0LL || value > 1LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
         // [0, 1] lies inside the 1-bit unsigned range (GEN-033), so the raw value fits.
         ea::codec::insert_fixed<ea::codec::ByteOrder::kLittleEndian, 20U, 1U>(payload.data(), static_cast<std::uint64_t>(value));
     }
@@ -505,13 +433,11 @@ ea::Result<void> encode_driver_input(const DriverInput& in, ea::ByteSpan payload
         // accel_pedal_pos: start bit 24, 8 bit, little endian, unsigned, factor 0.5, offset 0.0, range [0.0, 100.0] %
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 24U, 8U, kDriverInputPayloadLength), "GEN-031");
         const double scaled = (in.accel_pedal_pos - 0.0) / 0.5;
-        if (!(scaled >= -0.5 && scaled <= 200.5)) {  // also rejects NaN
+        // Open interval: every value in it rounds (half away from zero) into [0, 200].
+        if (!(scaled > -0.5 && scaled < 200.5)) {  // also rejects NaN
             return ea::ErrorCode::kOutOfRange;
         }
         const std::int64_t value = ea::round_half_away(scaled);  // IPC-005, equals std::llround here
-        if (value < 0LL || value > 200LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
         // [0, 200] lies inside the 8-bit unsigned range (GEN-033), so the raw value fits.
         ea::codec::insert_fixed<ea::codec::ByteOrder::kLittleEndian, 24U, 8U>(payload.data(), static_cast<std::uint64_t>(value));
     }
@@ -528,10 +454,7 @@ ea::Result<EgoState> decode_ego_state(ea::ConstByteSpan payload) noexcept {
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 0U, 8U, kEgoStatePayloadLength), "GEN-031");
         const std::uint64_t raw = ea::codec::extract_fixed<ea::codec::ByteOrder::kLittleEndian, 0U, 8U>(payload.data());
         const std::int64_t value = static_cast<std::int64_t>(raw);
-        // IPC-002: physical range, checked exactly in the raw domain.
-        if (value < 0LL || value > 255LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
+        // IPC-002: the physical range spans the whole 8-bit field, every raw value is valid.
         out.crc = static_cast<double>(value) * 1.0 + 0.0;
     }
     {
@@ -539,10 +462,7 @@ ea::Result<EgoState> decode_ego_state(ea::ConstByteSpan payload) noexcept {
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 8U, 4U, kEgoStatePayloadLength), "GEN-031");
         const std::uint64_t raw = ea::codec::extract_fixed<ea::codec::ByteOrder::kLittleEndian, 8U, 4U>(payload.data());
         const std::int64_t value = static_cast<std::int64_t>(raw);
-        // IPC-002: physical range, checked exactly in the raw domain.
-        if (value < 0LL || value > 15LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
+        // IPC-002: the physical range spans the whole 4-bit field, every raw value is valid.
         out.counter = static_cast<double>(value) * 1.0 + 0.0;
     }
     {
@@ -550,10 +470,7 @@ ea::Result<EgoState> decode_ego_state(ea::ConstByteSpan payload) noexcept {
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 16U, 16U, kEgoStatePayloadLength), "GEN-031");
         const std::uint64_t raw = ea::codec::extract_fixed<ea::codec::ByteOrder::kLittleEndian, 16U, 16U>(payload.data());
         const std::int64_t value = static_cast<std::int64_t>(raw);
-        // IPC-002: physical range, checked exactly in the raw domain.
-        if (value < 0LL || value > 65535LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
+        // IPC-002: the physical range spans the whole 16-bit field, every raw value is valid.
         out.vehicle_speed = static_cast<double>(value) * 0.01 + 0.0;
     }
     return out;
@@ -567,13 +484,11 @@ ea::Result<void> encode_ego_state(const EgoState& in, ea::ByteSpan payload) noex
         // crc: start bit 0, 8 bit, little endian, unsigned, factor 1.0, offset 0.0, range [0.0, 255.0] 
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 0U, 8U, kEgoStatePayloadLength), "GEN-031");
         const double scaled = (in.crc - 0.0) / 1.0;
-        if (!(scaled >= -0.5 && scaled <= 255.5)) {  // also rejects NaN
+        // Open interval: every value in it rounds (half away from zero) into [0, 255].
+        if (!(scaled > -0.5 && scaled < 255.5)) {  // also rejects NaN
             return ea::ErrorCode::kOutOfRange;
         }
         const std::int64_t value = ea::round_half_away(scaled);  // IPC-005, equals std::llround here
-        if (value < 0LL || value > 255LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
         // [0, 255] lies inside the 8-bit unsigned range (GEN-033), so the raw value fits.
         ea::codec::insert_fixed<ea::codec::ByteOrder::kLittleEndian, 0U, 8U>(payload.data(), static_cast<std::uint64_t>(value));
     }
@@ -581,13 +496,11 @@ ea::Result<void> encode_ego_state(const EgoState& in, ea::ByteSpan payload) noex
         // counter: start bit 8, 4 bit, little endian, unsigned, factor 1.0, offset 0.0, range [0.0, 15.0] 
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 8U, 4U, kEgoStatePayloadLength), "GEN-031");
         const double scaled = (in.counter - 0.0) / 1.0;
-        if (!(scaled >= -0.5 && scaled <= 15.5)) {  // also rejects NaN
+        // Open interval: every value in it rounds (half away from zero) into [0, 15].
+        if (!(scaled > -0.5 && scaled < 15.5)) {  // also rejects NaN
             return ea::ErrorCode::kOutOfRange;
         }
         const std::int64_t value = ea::round_half_away(scaled);  // IPC-005, equals std::llround here
-        if (value < 0LL || value > 15LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
         // [0, 15] lies inside the 4-bit unsigned range (GEN-033), so the raw value fits.
         ea::codec::insert_fixed<ea::codec::ByteOrder::kLittleEndian, 8U, 4U>(payload.data(), static_cast<std::uint64_t>(value));
     }
@@ -595,13 +508,11 @@ ea::Result<void> encode_ego_state(const EgoState& in, ea::ByteSpan payload) noex
         // vehicle_speed: start bit 16, 16 bit, little endian, unsigned, factor 0.01, offset 0.0, range [0.0, 655.35] km/h
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 16U, 16U, kEgoStatePayloadLength), "GEN-031");
         const double scaled = (in.vehicle_speed - 0.0) / 0.01;
-        if (!(scaled >= -0.5 && scaled <= 65535.5)) {  // also rejects NaN
+        // Open interval: every value in it rounds (half away from zero) into [0, 65535].
+        if (!(scaled > -0.5 && scaled < 65535.5)) {  // also rejects NaN
             return ea::ErrorCode::kOutOfRange;
         }
         const std::int64_t value = ea::round_half_away(scaled);  // IPC-005, equals std::llround here
-        if (value < 0LL || value > 65535LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
         // [0, 65535] lies inside the 16-bit unsigned range (GEN-033), so the raw value fits.
         ea::codec::insert_fixed<ea::codec::ByteOrder::kLittleEndian, 16U, 16U>(payload.data(), static_cast<std::uint64_t>(value));
     }
@@ -618,10 +529,7 @@ ea::Result<RadarObject> decode_radar_object(ea::ConstByteSpan payload) noexcept 
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 0U, 8U, kRadarObjectPayloadLength), "GEN-031");
         const std::uint64_t raw = ea::codec::extract_fixed<ea::codec::ByteOrder::kLittleEndian, 0U, 8U>(payload.data());
         const std::int64_t value = static_cast<std::int64_t>(raw);
-        // IPC-002: physical range, checked exactly in the raw domain.
-        if (value < 0LL || value > 255LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
+        // IPC-002: the physical range spans the whole 8-bit field, every raw value is valid.
         out.crc = static_cast<double>(value) * 1.0 + 0.0;
     }
     {
@@ -629,10 +537,7 @@ ea::Result<RadarObject> decode_radar_object(ea::ConstByteSpan payload) noexcept 
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 8U, 4U, kRadarObjectPayloadLength), "GEN-031");
         const std::uint64_t raw = ea::codec::extract_fixed<ea::codec::ByteOrder::kLittleEndian, 8U, 4U>(payload.data());
         const std::int64_t value = static_cast<std::int64_t>(raw);
-        // IPC-002: physical range, checked exactly in the raw domain.
-        if (value < 0LL || value > 15LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
+        // IPC-002: the physical range spans the whole 4-bit field, every raw value is valid.
         out.counter = static_cast<double>(value) * 1.0 + 0.0;
     }
     {
@@ -640,10 +545,7 @@ ea::Result<RadarObject> decode_radar_object(ea::ConstByteSpan payload) noexcept 
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 12U, 1U, kRadarObjectPayloadLength), "GEN-031");
         const std::uint64_t raw = ea::codec::extract_fixed<ea::codec::ByteOrder::kLittleEndian, 12U, 1U>(payload.data());
         const std::int64_t value = static_cast<std::int64_t>(raw);
-        // IPC-002: physical range, checked exactly in the raw domain.
-        if (value < 0LL || value > 1LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
+        // IPC-002: the physical range spans the whole 1-bit field, every raw value is valid.
         out.obj_valid = static_cast<double>(value) * 1.0 + 0.0;
     }
     {
@@ -651,10 +553,7 @@ ea::Result<RadarObject> decode_radar_object(ea::ConstByteSpan payload) noexcept 
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 16U, 12U, kRadarObjectPayloadLength), "GEN-031");
         const std::uint64_t raw = ea::codec::extract_fixed<ea::codec::ByteOrder::kLittleEndian, 16U, 12U>(payload.data());
         const std::int64_t value = static_cast<std::int64_t>(raw);
-        // IPC-002: physical range, checked exactly in the raw domain.
-        if (value < 0LL || value > 4095LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
+        // IPC-002: the physical range spans the whole 12-bit field, every raw value is valid.
         out.obj_range = static_cast<double>(value) * 0.1 + 0.0;
     }
     {
@@ -662,10 +561,7 @@ ea::Result<RadarObject> decode_radar_object(ea::ConstByteSpan payload) noexcept 
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 28U, 12U, kRadarObjectPayloadLength), "GEN-031");
         const std::uint64_t raw = ea::codec::extract_fixed<ea::codec::ByteOrder::kLittleEndian, 28U, 12U>(payload.data());
         const std::int64_t value = ea::codec::sign_extend(raw, 12U);
-        // IPC-002: physical range, checked exactly in the raw domain.
-        if (value < -2048LL || value > 2047LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
+        // IPC-002: the physical range spans the whole 12-bit field, every raw value is valid.
         out.obj_range_rate = static_cast<double>(value) * 0.05 + 0.0;
     }
     {
@@ -673,10 +569,7 @@ ea::Result<RadarObject> decode_radar_object(ea::ConstByteSpan payload) noexcept 
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 40U, 10U, kRadarObjectPayloadLength), "GEN-031");
         const std::uint64_t raw = ea::codec::extract_fixed<ea::codec::ByteOrder::kLittleEndian, 40U, 10U>(payload.data());
         const std::int64_t value = ea::codec::sign_extend(raw, 10U);
-        // IPC-002: physical range, checked exactly in the raw domain.
-        if (value < -512LL || value > 511LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
+        // IPC-002: the physical range spans the whole 10-bit field, every raw value is valid.
         out.obj_lateral_pos = static_cast<double>(value) * 0.02 + 0.0;
     }
     return out;
@@ -690,13 +583,11 @@ ea::Result<void> encode_radar_object(const RadarObject& in, ea::ByteSpan payload
         // crc: start bit 0, 8 bit, little endian, unsigned, factor 1.0, offset 0.0, range [0.0, 255.0] 
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 0U, 8U, kRadarObjectPayloadLength), "GEN-031");
         const double scaled = (in.crc - 0.0) / 1.0;
-        if (!(scaled >= -0.5 && scaled <= 255.5)) {  // also rejects NaN
+        // Open interval: every value in it rounds (half away from zero) into [0, 255].
+        if (!(scaled > -0.5 && scaled < 255.5)) {  // also rejects NaN
             return ea::ErrorCode::kOutOfRange;
         }
         const std::int64_t value = ea::round_half_away(scaled);  // IPC-005, equals std::llround here
-        if (value < 0LL || value > 255LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
         // [0, 255] lies inside the 8-bit unsigned range (GEN-033), so the raw value fits.
         ea::codec::insert_fixed<ea::codec::ByteOrder::kLittleEndian, 0U, 8U>(payload.data(), static_cast<std::uint64_t>(value));
     }
@@ -704,13 +595,11 @@ ea::Result<void> encode_radar_object(const RadarObject& in, ea::ByteSpan payload
         // counter: start bit 8, 4 bit, little endian, unsigned, factor 1.0, offset 0.0, range [0.0, 15.0] 
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 8U, 4U, kRadarObjectPayloadLength), "GEN-031");
         const double scaled = (in.counter - 0.0) / 1.0;
-        if (!(scaled >= -0.5 && scaled <= 15.5)) {  // also rejects NaN
+        // Open interval: every value in it rounds (half away from zero) into [0, 15].
+        if (!(scaled > -0.5 && scaled < 15.5)) {  // also rejects NaN
             return ea::ErrorCode::kOutOfRange;
         }
         const std::int64_t value = ea::round_half_away(scaled);  // IPC-005, equals std::llround here
-        if (value < 0LL || value > 15LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
         // [0, 15] lies inside the 4-bit unsigned range (GEN-033), so the raw value fits.
         ea::codec::insert_fixed<ea::codec::ByteOrder::kLittleEndian, 8U, 4U>(payload.data(), static_cast<std::uint64_t>(value));
     }
@@ -718,13 +607,11 @@ ea::Result<void> encode_radar_object(const RadarObject& in, ea::ByteSpan payload
         // obj_valid: start bit 12, 1 bit, little endian, unsigned, factor 1.0, offset 0.0, range [0.0, 1.0] 
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 12U, 1U, kRadarObjectPayloadLength), "GEN-031");
         const double scaled = (in.obj_valid - 0.0) / 1.0;
-        if (!(scaled >= -0.5 && scaled <= 1.5)) {  // also rejects NaN
+        // Open interval: every value in it rounds (half away from zero) into [0, 1].
+        if (!(scaled > -0.5 && scaled < 1.5)) {  // also rejects NaN
             return ea::ErrorCode::kOutOfRange;
         }
         const std::int64_t value = ea::round_half_away(scaled);  // IPC-005, equals std::llround here
-        if (value < 0LL || value > 1LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
         // [0, 1] lies inside the 1-bit unsigned range (GEN-033), so the raw value fits.
         ea::codec::insert_fixed<ea::codec::ByteOrder::kLittleEndian, 12U, 1U>(payload.data(), static_cast<std::uint64_t>(value));
     }
@@ -732,13 +619,11 @@ ea::Result<void> encode_radar_object(const RadarObject& in, ea::ByteSpan payload
         // obj_range: start bit 16, 12 bit, little endian, unsigned, factor 0.1, offset 0.0, range [0.0, 409.5] m
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 16U, 12U, kRadarObjectPayloadLength), "GEN-031");
         const double scaled = (in.obj_range - 0.0) / 0.1;
-        if (!(scaled >= -0.5 && scaled <= 4095.5)) {  // also rejects NaN
+        // Open interval: every value in it rounds (half away from zero) into [0, 4095].
+        if (!(scaled > -0.5 && scaled < 4095.5)) {  // also rejects NaN
             return ea::ErrorCode::kOutOfRange;
         }
         const std::int64_t value = ea::round_half_away(scaled);  // IPC-005, equals std::llround here
-        if (value < 0LL || value > 4095LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
         // [0, 4095] lies inside the 12-bit unsigned range (GEN-033), so the raw value fits.
         ea::codec::insert_fixed<ea::codec::ByteOrder::kLittleEndian, 16U, 12U>(payload.data(), static_cast<std::uint64_t>(value));
     }
@@ -746,13 +631,11 @@ ea::Result<void> encode_radar_object(const RadarObject& in, ea::ByteSpan payload
         // obj_range_rate: start bit 28, 12 bit, little endian, signed, factor 0.05, offset 0.0, range [-102.4, 102.35] m/s
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 28U, 12U, kRadarObjectPayloadLength), "GEN-031");
         const double scaled = (in.obj_range_rate - 0.0) / 0.05;
-        if (!(scaled >= -2048.5 && scaled <= 2047.5)) {  // also rejects NaN
+        // Open interval: every value in it rounds (half away from zero) into [-2048, 2047].
+        if (!(scaled > -2048.5 && scaled < 2047.5)) {  // also rejects NaN
             return ea::ErrorCode::kOutOfRange;
         }
         const std::int64_t value = ea::round_half_away(scaled);  // IPC-005, equals std::llround here
-        if (value < -2048LL || value > 2047LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
         // [-2048, 2047] lies inside the 12-bit signed range (GEN-033), so the raw value fits.
         ea::codec::insert_fixed<ea::codec::ByteOrder::kLittleEndian, 28U, 12U>(payload.data(), static_cast<std::uint64_t>(value) & 0xFFFULL);
     }
@@ -760,13 +643,11 @@ ea::Result<void> encode_radar_object(const RadarObject& in, ea::ByteSpan payload
         // obj_lateral_pos: start bit 40, 10 bit, little endian, signed, factor 0.02, offset 0.0, range [-10.24, 10.22] m
         static_assert(ea::codec::signal_fits(ea::codec::ByteOrder::kLittleEndian, 40U, 10U, kRadarObjectPayloadLength), "GEN-031");
         const double scaled = (in.obj_lateral_pos - 0.0) / 0.02;
-        if (!(scaled >= -512.5 && scaled <= 511.5)) {  // also rejects NaN
+        // Open interval: every value in it rounds (half away from zero) into [-512, 511].
+        if (!(scaled > -512.5 && scaled < 511.5)) {  // also rejects NaN
             return ea::ErrorCode::kOutOfRange;
         }
         const std::int64_t value = ea::round_half_away(scaled);  // IPC-005, equals std::llround here
-        if (value < -512LL || value > 511LL) {
-            return ea::ErrorCode::kOutOfRange;
-        }
         // [-512, 511] lies inside the 10-bit signed range (GEN-033), so the raw value fits.
         ea::codec::insert_fixed<ea::codec::ByteOrder::kLittleEndian, 40U, 10U>(payload.data(), static_cast<std::uint64_t>(value) & 0x3FFULL);
     }

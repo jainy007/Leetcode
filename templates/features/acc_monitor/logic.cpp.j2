@@ -72,7 +72,8 @@ void {{ component.name }}Logic::step(const Inputs& in, Outputs& out) noexcept {
     const bool monitoring = state_ == State::kMonitoring;
     out.status = static_cast<double>(static_cast<std::uint8_t>(state_));
     out.permit = monitoring ? 1.0 : 0.0;
-    out.approved_counter = (monitoring && last_counter_ >= 0.0) ? last_counter_ : 0.0;
+    // MONITORING is entered only through a checked command, so last_counter_ is valid here.
+    out.approved_counter = monitoring ? last_counter_ : 0.0;
     out.fault_reason = static_cast<double>(static_cast<std::uint8_t>(reason_));
 }
 

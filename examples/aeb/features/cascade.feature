@@ -112,3 +112,24 @@ Feature: AEB warning and braking cascade
       | t   | stage         |
       | 3   | PARTIAL_BRAKE |
       | 3.6 | FULL_BRAKE    |
+
+  @REQ-AEB-004
+  Scenario: The warning ends when the target leaves the lane
+    Given the ego vehicle drives at 50 km/h
+    And a stationary vehicle stands 60 m ahead
+    When 1.6 s pass
+    Then the AEB state is WARNING
+    When the lead vehicle leaves the lane
+    And 0.1 s pass
+    Then the AEB state is STANDBY
+    And the warning is off
+
+  @REQ-AEB-006
+  Scenario: Kickdown during a warning ends the warning
+    Given the ego vehicle drives at 50 km/h
+    And a stationary vehicle stands 60 m ahead
+    When 1.6 s pass
+    Then the AEB state is WARNING
+    When the driver presses the accelerator pedal to 90 %
+    Then the AEB state is STANDBY
+    And the warning is off

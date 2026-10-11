@@ -11,6 +11,8 @@
     "generated/aeb/include/aeb/aeb_controller_codec.hpp",
     "generated/aeb/include/aeb/aeb_controller_logic.hpp",
     "generated/aeb/include/aeb/aeb_controller_types.hpp",
+    "generated/aeb/sil/aeb_controller_codec_test.cpp",
+    "generated/aeb/sil/aeb_controller_component_test.cpp",
     "generated/aeb/sil/aeb_controller_sil.hpp",
     "generated/aeb/sil/aeb_controller_sil_test.cpp",
     "generated/aeb/src/aeb_controller.cpp",
@@ -18,7 +20,7 @@
     "generated/aeb/src/aeb_controller_logic.cpp"
   ],
   "generator": "ea-gen 0.1.0",
-  "inputs_sha256": "6606fd57f798610e5c596e91f29bec679e2b42414be7c909658cc37bce340b0d",
+  "inputs_sha256": "b615ac7a70c66498145a1cce61803118d779529b0bce381de5d78fc6a4940003",
   "pattern": "can_function",
   "project": "aeb",
   "requirements": [
@@ -85,7 +87,8 @@
       ],
       "tests": [
         "S04_TheWarningEndsWhenTheTimeToCollisionRisesAbove33S",
-        "S05_TheWarningEndsWhenTheLeadVehiclePullsAway"
+        "S05_TheWarningEndsWhenTheLeadVehiclePullsAway",
+        "S12_TheWarningEndsWhenTheTargetLeavesTheLane"
       ],
       "text": "When during a warning without braking the time to collision rises above 3.3 s or the target is no longer relevant, the AebController shall end the warning.",
       "verification": [
@@ -120,7 +123,8 @@
       "tests": [
         "S07_KickdownCancelsTheInterventionALighterPedalDoesNot_Ex1",
         "S08_KickdownCancelsTheInterventionALighterPedalDoesNot_Ex2",
-        "S09_KickdownAlsoCancelsFullBraking"
+        "S09_KickdownAlsoCancelsFullBraking",
+        "S13_KickdownDuringAWarningEndsTheWarning"
       ],
       "text": "When the driver presses the accelerator pedal to 80 % or more during a warning or braking, the AebController shall cancel the intervention.",
       "verification": [
@@ -153,9 +157,10 @@
         "calibration:min_closing_speed_mps"
       ],
       "tests": [
-        "S18_OnlyVehiclesWithin18MOfTheLaneCentreAreRelevant_Ex1",
-        "S19_OnlyVehiclesWithin18MOfTheLaneCentreAreRelevant_Ex2",
-        "S20_AVehicleFollowedAtTheSameSpeedIsNotAHazard"
+        "S20_OnlyVehiclesWithin18MOfTheLaneCentreAreRelevant_Ex1",
+        "S21_OnlyVehiclesWithin18MOfTheLaneCentreAreRelevant_Ex2",
+        "S22_AVehicleFollowedAtTheSameSpeedIsNotAHazard",
+        "S32_AVehicleBeyond150MIsNotRelevant"
       ],
       "text": "The AebController shall treat a radar object as relevant only if it is valid, at most 150 m ahead, at most 1.8 m from the ego lane centre and approaching at more than 0.5 m/s.",
       "verification": [
@@ -171,10 +176,10 @@
         "calibration:min_speed_kph"
       ],
       "tests": [
-        "S21_WarningsStartOnlyBetween10KmHAnd150KmH_Ex1",
-        "S22_WarningsStartOnlyBetween10KmHAnd150KmH_Ex2",
-        "S23_WarningsStartOnlyBetween10KmHAnd150KmH_Ex3",
-        "S24_WarningsStartOnlyBetween10KmHAnd150KmH_Ex4"
+        "S23_WarningsStartOnlyBetween10KmHAnd150KmH_Ex1",
+        "S24_WarningsStartOnlyBetween10KmHAnd150KmH_Ex2",
+        "S25_WarningsStartOnlyBetween10KmHAnd150KmH_Ex3",
+        "S26_WarningsStartOnlyBetween10KmHAnd150KmH_Ex4"
       ],
       "text": "If the ego speed is below 10 km/h or above 150 km/h, then the AebController shall not start a warning.",
       "verification": [
@@ -189,9 +194,9 @@
         "logic"
       ],
       "tests": [
-        "S12_AStationaryVehicleIsAvoidedFrom20KmHTo60KmH_Ex1",
-        "S13_AStationaryVehicleIsAvoidedFrom20KmHTo60KmH_Ex2",
-        "S14_AStationaryVehicleIsAvoidedFrom20KmHTo60KmH_Ex3"
+        "S14_AStationaryVehicleIsAvoidedFrom20KmHTo60KmH_Ex1",
+        "S15_AStationaryVehicleIsAvoidedFrom20KmHTo60KmH_Ex2",
+        "S16_AStationaryVehicleIsAvoidedFrom20KmHTo60KmH_Ex3"
       ],
       "text": "If the ego vehicle approaches a stationary vehicle in its lane at 20 km/h to 60 km/h without driver reaction, then the AebController shall avoid the collision.",
       "verification": [
@@ -206,7 +211,7 @@
         "logic"
       ],
       "tests": [
-        "S15_TheImpactSpeedOnAStationaryVehicleAt80KmHIsAtMost40KmH"
+        "S17_TheImpactSpeedOnAStationaryVehicleAt80KmHIsAtMost40KmH"
       ],
       "text": "If the ego vehicle approaches a stationary vehicle in its lane at 80 km/h without driver reaction, then the AebController shall reduce the impact speed to 40 km/h or less.",
       "verification": [
@@ -221,8 +226,8 @@
         "logic"
       ],
       "tests": [
-        "S16_AVehicleAt20KmHIsAvoidedFromUpTo80KmH_Ex1",
-        "S17_AVehicleAt20KmHIsAvoidedFromUpTo80KmH_Ex2"
+        "S18_AVehicleAt20KmHIsAvoidedFromUpTo80KmH_Ex1",
+        "S19_AVehicleAt20KmHIsAvoidedFromUpTo80KmH_Ex2"
       ],
       "text": "If the ego vehicle approaches a vehicle driving at 20 km/h in its lane at up to 80 km/h without driver reaction, then the AebController shall avoid the collision.",
       "verification": [
@@ -240,11 +245,11 @@
         "rx:RadarObject"
       ],
       "tests": [
-        "S25_APausedRadarLeadsToFAULTWithoutInterventionThenRecovers",
-        "S26_VehicleInputTimeoutsLeadToFAULT_Ex1",
-        "S27_VehicleInputTimeoutsLeadToFAULT_Ex2",
-        "S28_VehicleInputTimeoutsLeadToFAULT_Ex3",
-        "S29_VehicleInputTimeoutsLeadToFAULT_Ex4"
+        "S27_APausedRadarLeadsToFAULTWithoutInterventionThenRecovers",
+        "S28_VehicleInputTimeoutsLeadToFAULT_Ex1",
+        "S29_VehicleInputTimeoutsLeadToFAULT_Ex2",
+        "S30_VehicleInputTimeoutsLeadToFAULT_Ex3",
+        "S31_VehicleInputTimeoutsLeadToFAULT_Ex4"
       ],
       "text": "If no valid RadarObject frame is received for 120 ms, or no valid EgoState or DriverInput frame for 60 ms, then the AebController shall enter FAULT, request no braking and issue no warning, until all inputs are valid again.",
       "verification": [
@@ -897,6 +902,105 @@
       ]
     },
     {
+      "example": [],
+      "feature": "examples/aeb/features/cascade.feature",
+      "line": 117,
+      "name": "S12_TheWarningEndsWhenTheTargetLeavesTheLane",
+      "requirements": [
+        "REQ-AEB-004"
+      ],
+      "scenario": "The warning ends when the target leaves the lane",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(50.0);",
+          "text": "Given the ego vehicle drives at 50 km/h"
+        },
+        {
+          "catalogue": "FN-S19",
+          "cpp": "sil_.plant().set_lead(60.0, 0.0, 0.0);",
+          "text": "And a stationary vehicle stands 60 m ahead"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(1.6);",
+          "text": "When 1.6 s pass"
+        },
+        {
+          "catalogue": "AEB-S01",
+          "cpp": "EXPECT_EQ(sil_.feature().last_command().status, ea::plant::AebStatus::kWarning);",
+          "text": "Then the AEB state is WARNING"
+        },
+        {
+          "catalogue": "FN-S15",
+          "cpp": "sil_.plant().remove_lead();",
+          "text": "When the lead vehicle leaves the lane"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.1);",
+          "text": "And 0.1 s pass"
+        },
+        {
+          "catalogue": "AEB-S01",
+          "cpp": "EXPECT_EQ(sil_.feature().last_command().status, ea::plant::AebStatus::kStandby);",
+          "text": "Then the AEB state is STANDBY"
+        },
+        {
+          "catalogue": "AEB-S09",
+          "cpp": "EXPECT_EQ(sil_.feature().last_command().warning, false);",
+          "text": "And the warning is off"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/aeb/features/cascade.feature",
+      "line": 128,
+      "name": "S13_KickdownDuringAWarningEndsTheWarning",
+      "requirements": [
+        "REQ-AEB-006"
+      ],
+      "scenario": "Kickdown during a warning ends the warning",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(50.0);",
+          "text": "Given the ego vehicle drives at 50 km/h"
+        },
+        {
+          "catalogue": "FN-S19",
+          "cpp": "sil_.plant().set_lead(60.0, 0.0, 0.0);",
+          "text": "And a stationary vehicle stands 60 m ahead"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(1.6);",
+          "text": "When 1.6 s pass"
+        },
+        {
+          "catalogue": "AEB-S01",
+          "cpp": "EXPECT_EQ(sil_.feature().last_command().status, ea::plant::AebStatus::kWarning);",
+          "text": "Then the AEB state is WARNING"
+        },
+        {
+          "catalogue": "FN-S07",
+          "cpp": "sil_.accelerator(90.0);",
+          "text": "When the driver presses the accelerator pedal to 90 %"
+        },
+        {
+          "catalogue": "AEB-S01",
+          "cpp": "EXPECT_EQ(sil_.feature().last_command().status, ea::plant::AebStatus::kStandby);",
+          "text": "Then the AEB state is STANDBY"
+        },
+        {
+          "catalogue": "AEB-S09",
+          "cpp": "EXPECT_EQ(sil_.feature().last_command().warning, false);",
+          "text": "And the warning is off"
+        }
+      ]
+    },
+    {
       "example": [
         [
           "speed",
@@ -905,7 +1009,7 @@
       ],
       "feature": "examples/aeb/features/performance.feature",
       "line": 4,
-      "name": "S12_AStationaryVehicleIsAvoidedFrom20KmHTo60KmH_Ex1",
+      "name": "S14_AStationaryVehicleIsAvoidedFrom20KmHTo60KmH_Ex1",
       "requirements": [
         "REQ-AEB-010"
       ],
@@ -947,7 +1051,7 @@
       ],
       "feature": "examples/aeb/features/performance.feature",
       "line": 4,
-      "name": "S13_AStationaryVehicleIsAvoidedFrom20KmHTo60KmH_Ex2",
+      "name": "S15_AStationaryVehicleIsAvoidedFrom20KmHTo60KmH_Ex2",
       "requirements": [
         "REQ-AEB-010"
       ],
@@ -989,7 +1093,7 @@
       ],
       "feature": "examples/aeb/features/performance.feature",
       "line": 4,
-      "name": "S14_AStationaryVehicleIsAvoidedFrom20KmHTo60KmH_Ex3",
+      "name": "S16_AStationaryVehicleIsAvoidedFrom20KmHTo60KmH_Ex3",
       "requirements": [
         "REQ-AEB-010"
       ],
@@ -1026,7 +1130,7 @@
       "example": [],
       "feature": "examples/aeb/features/performance.feature",
       "line": 18,
-      "name": "S15_TheImpactSpeedOnAStationaryVehicleAt80KmHIsAtMost40KmH",
+      "name": "S17_TheImpactSpeedOnAStationaryVehicleAt80KmHIsAtMost40KmH",
       "requirements": [
         "REQ-AEB-011"
       ],
@@ -1063,7 +1167,7 @@
       ],
       "feature": "examples/aeb/features/performance.feature",
       "line": 25,
-      "name": "S16_AVehicleAt20KmHIsAvoidedFromUpTo80KmH_Ex1",
+      "name": "S18_AVehicleAt20KmHIsAvoidedFromUpTo80KmH_Ex1",
       "requirements": [
         "REQ-AEB-012"
       ],
@@ -1100,7 +1204,7 @@
       ],
       "feature": "examples/aeb/features/performance.feature",
       "line": 25,
-      "name": "S17_AVehicleAt20KmHIsAvoidedFromUpTo80KmH_Ex2",
+      "name": "S19_AVehicleAt20KmHIsAvoidedFromUpTo80KmH_Ex2",
       "requirements": [
         "REQ-AEB-012"
       ],
@@ -1141,7 +1245,7 @@
       ],
       "feature": "examples/aeb/features/robustness.feature",
       "line": 4,
-      "name": "S18_OnlyVehiclesWithin18MOfTheLaneCentreAreRelevant_Ex1",
+      "name": "S20_OnlyVehiclesWithin18MOfTheLaneCentreAreRelevant_Ex1",
       "requirements": [
         "REQ-AEB-008"
       ],
@@ -1182,7 +1286,7 @@
       ],
       "feature": "examples/aeb/features/robustness.feature",
       "line": 4,
-      "name": "S19_OnlyVehiclesWithin18MOfTheLaneCentreAreRelevant_Ex2",
+      "name": "S21_OnlyVehiclesWithin18MOfTheLaneCentreAreRelevant_Ex2",
       "requirements": [
         "REQ-AEB-008"
       ],
@@ -1214,7 +1318,7 @@
       "example": [],
       "feature": "examples/aeb/features/robustness.feature",
       "line": 16,
-      "name": "S20_AVehicleFollowedAtTheSameSpeedIsNotAHazard",
+      "name": "S22_AVehicleFollowedAtTheSameSpeedIsNotAHazard",
       "requirements": [
         "REQ-AEB-008"
       ],
@@ -1268,7 +1372,7 @@
       ],
       "feature": "examples/aeb/features/robustness.feature",
       "line": 24,
-      "name": "S21_WarningsStartOnlyBetween10KmHAnd150KmH_Ex1",
+      "name": "S23_WarningsStartOnlyBetween10KmHAnd150KmH_Ex1",
       "requirements": [
         "REQ-AEB-009"
       ],
@@ -1317,7 +1421,7 @@
       ],
       "feature": "examples/aeb/features/robustness.feature",
       "line": 24,
-      "name": "S22_WarningsStartOnlyBetween10KmHAnd150KmH_Ex2",
+      "name": "S24_WarningsStartOnlyBetween10KmHAnd150KmH_Ex2",
       "requirements": [
         "REQ-AEB-009"
       ],
@@ -1366,7 +1470,7 @@
       ],
       "feature": "examples/aeb/features/robustness.feature",
       "line": 24,
-      "name": "S23_WarningsStartOnlyBetween10KmHAnd150KmH_Ex3",
+      "name": "S25_WarningsStartOnlyBetween10KmHAnd150KmH_Ex3",
       "requirements": [
         "REQ-AEB-009"
       ],
@@ -1415,7 +1519,7 @@
       ],
       "feature": "examples/aeb/features/robustness.feature",
       "line": 24,
-      "name": "S24_WarningsStartOnlyBetween10KmHAnd150KmH_Ex4",
+      "name": "S26_WarningsStartOnlyBetween10KmHAnd150KmH_Ex4",
       "requirements": [
         "REQ-AEB-009"
       ],
@@ -1447,7 +1551,7 @@
       "example": [],
       "feature": "examples/aeb/features/robustness.feature",
       "line": 38,
-      "name": "S25_APausedRadarLeadsToFAULTWithoutInterventionThenRecovers",
+      "name": "S27_APausedRadarLeadsToFAULTWithoutInterventionThenRecovers",
       "requirements": [
         "REQ-AEB-013"
       ],
@@ -1522,7 +1626,7 @@
       ],
       "feature": "examples/aeb/features/robustness.feature",
       "line": 51,
-      "name": "S26_VehicleInputTimeoutsLeadToFAULT_Ex1",
+      "name": "S28_VehicleInputTimeoutsLeadToFAULT_Ex1",
       "requirements": [
         "REQ-AEB-013"
       ],
@@ -1572,7 +1676,7 @@
       ],
       "feature": "examples/aeb/features/robustness.feature",
       "line": 51,
-      "name": "S27_VehicleInputTimeoutsLeadToFAULT_Ex2",
+      "name": "S29_VehicleInputTimeoutsLeadToFAULT_Ex2",
       "requirements": [
         "REQ-AEB-013"
       ],
@@ -1622,7 +1726,7 @@
       ],
       "feature": "examples/aeb/features/robustness.feature",
       "line": 51,
-      "name": "S28_VehicleInputTimeoutsLeadToFAULT_Ex3",
+      "name": "S30_VehicleInputTimeoutsLeadToFAULT_Ex3",
       "requirements": [
         "REQ-AEB-013"
       ],
@@ -1672,7 +1776,7 @@
       ],
       "feature": "examples/aeb/features/robustness.feature",
       "line": 51,
-      "name": "S29_VehicleInputTimeoutsLeadToFAULT_Ex4",
+      "name": "S31_VehicleInputTimeoutsLeadToFAULT_Ex4",
       "requirements": [
         "REQ-AEB-013"
       ],
@@ -1702,6 +1806,38 @@
           "catalogue": "AEB-S01",
           "cpp": "EXPECT_EQ(sil_.feature().last_command().status, ea::plant::AebStatus::kFault);",
           "text": "Then the AEB state is FAULT"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/aeb/features/robustness.feature",
+      "line": 66,
+      "name": "S32_AVehicleBeyond150MIsNotRelevant",
+      "requirements": [
+        "REQ-AEB-008"
+      ],
+      "scenario": "A vehicle beyond 150 m is not relevant",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "FN-S19",
+          "cpp": "sil_.plant().set_lead(170.0, 0.0, 0.0);",
+          "text": "And a stationary vehicle stands 170 m ahead"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.5);",
+          "text": "When 0.5 s pass"
+        },
+        {
+          "catalogue": "AEB-S03",
+          "cpp": "EXPECT_FALSE(sil_.feature().metrics().warned);",
+          "text": "Then no forward collision warning was issued"
         }
       ]
     }

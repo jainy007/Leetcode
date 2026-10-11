@@ -11,6 +11,7 @@
     "generated/adas_input_gate/include/adas_input_gate/adas_input_gate_codec.hpp",
     "generated/adas_input_gate/include/adas_input_gate/adas_input_gate_task.hpp",
     "generated/adas_input_gate/include/adas_input_gate/adas_input_gate_types.hpp",
+    "generated/adas_input_gate/sil/adas_input_gate_codec_test.cpp",
     "generated/adas_input_gate/sil/adas_input_gate_sil.hpp",
     "generated/adas_input_gate/sil/adas_input_gate_sil_test.cpp",
     "generated/adas_input_gate/src/adas_input_gate.cpp",
@@ -18,7 +19,7 @@
     "generated/adas_input_gate/src/adas_input_gate_task.cpp"
   ],
   "generator": "ea-gen 0.1.0",
-  "inputs_sha256": "806ba8401a33e8aaf8e2f047beee1d3d76f3fb698140f2dca39ffd748ea3c4b4",
+  "inputs_sha256": "e0c4923740db7d928336d8abc9859ca05e37446222ba5a081ee7c47bc53cdec6",
   "pattern": "input_gate",
   "project": "adas_input_gate",
   "requirements": [

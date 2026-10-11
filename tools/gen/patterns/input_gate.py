@@ -6,7 +6,7 @@ from collections import deque
 
 from tools.gen import dbc, loader
 from tools.gen.errors import Diagnostics
-from tools.gen.patterns.codec import Message, build_message, to_camel, to_snake
+from tools.gen.patterns.codec import Message, build_message, codec_vectors, to_camel, to_snake
 
 CONDITIONS = ["valid", "e2e_error", "range_error", "missing"]
 STATUS_SOURCES = ("state", "qualifier", "alive_counter", "e2e_error_count")
@@ -140,6 +140,7 @@ def build(inputs, diags: Diagnostics):
         "ns": comp["namespace"],
         "inc": inputs.name,
         "messages": [messages[k] for k in sorted(messages)],
+        "codec_vectors": codec_vectors([messages[k] for k in sorted(messages)]),
         "input": inp,
         "status": status,
         "conditions": CONDITIONS,
@@ -161,6 +162,7 @@ def build(inputs, diags: Diagnostics):
         ("common/codec.cpp.j2", f"src/{snake}_codec.cpp"),
         ("sil_harness.hpp.j2", f"sil/{snake}_sil.hpp"),
         ("sil_test.cpp.j2", f"sil/{snake}_sil_test.cpp"),
+        ("common/codec_test.cpp.j2", f"sil/{snake}_codec_test.cpp"),
         ("CMakeLists.txt.j2", "CMakeLists.txt"),
     ]
 

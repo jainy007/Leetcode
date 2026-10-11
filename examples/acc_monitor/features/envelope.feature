@@ -140,9 +140,10 @@ Feature: ACC monitor safety envelope
     And the monitor never entered SAFE_STATE
 
     Examples:
-      | d  | lat |
-      | 80 | 0.0 |
-      | 30 | 2.0 |
+      | d   | lat |
+      | 80  | 0.0 |
+      | 30  | 2.0 |
+      | 220 | 0.0 |
 
   @REQ-ACCM-007
   Scenario: Acceleration without a valid radar latches SAFE_STATE

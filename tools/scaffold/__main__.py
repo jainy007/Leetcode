@@ -293,6 +293,8 @@ Feature: $Component basic behaviour
 MUTATIONS = Template('''# Deliberate defects the chain must detect (python3 -m tools.mutate $name).
 mutations:
   - {name: "activation speed 30 -> 31 km/h", file: examples/$name/model.yaml, old: "activation_speed_kph: {value: 30", new: "activation_speed_kph: {value: 31"}
+  - {name: "max speed 250 -> 240 km/h", file: examples/$name/model.yaml, old: "max_speed_kph: {value: 250", new: "max_speed_kph: {value: 240", expect: tolerated,
+     note: "scaffold placeholder that only sizes the ego_speed interface range (GEN-061); give it a requirement and a scenario"}
   - {name: "FAULT never entered", file: templates/features/$name/logic.cpp.j2, old: "if (!in.all_ok) {", new: "if (false) {"}
 ''')
 

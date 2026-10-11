@@ -1,7 +1,7 @@
 // GENERATED FILE - DO NOT EDIT. Changes are overwritten and rejected by CI.
 // Generator: ea-gen 0.1.0 (rule-based, deterministic; no AI in this path)
 // Project:   aeb_system (pattern: can_system)
-// Inputs:    sha256:178716b09b759745eca874eeb1b20fa3a3e080bfff379eaf556512fc8cfefc60
+// Inputs:    sha256:32e090c28d3d514ed5a60fa7ce31d19eb981ea3a5a9d3b6fd2c098d99209902a
 // Regenerate: python3 -m tools.gen
 
 #include <gtest/gtest.h>

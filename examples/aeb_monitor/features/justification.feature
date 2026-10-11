@@ -43,6 +43,7 @@ Feature: AEB monitor braking justification
       | 32 | 0.0 | SAFE_STATE | UNJUSTIFIED_BRAKING |
       | 27 | 2.0 | MONITORING | NONE                |
       | 27 | 2.2 | SAFE_STATE | UNJUSTIFIED_BRAKING |
+      | 160 | 0.0 | SAFE_STATE | UNJUSTIFIED_BRAKING |
 
   @REQ-AEBM-005 @REQ-AEBM-009
   Scenario: Braking without any target is never applied
@@ -150,5 +151,34 @@ Feature: AEB monitor braking justification
     Then the monitor state is MONITORING
     When the AEB controller is in PARTIAL_BRAKE with 4 m/s2 braking
     And 0.1 s pass
+    Then the monitor state is SAFE_STATE
+    And the monitor reports the fault reason UNJUSTIFIED_BRAKING
+
+  @REQ-AEBM-006
+  Scenario: Full braking requested for a receding target is unjustified
+    Given the ego vehicle drives at 50 km/h
+    And a lead vehicle drives 15 m ahead at 20 km/h
+    And the AEB controller is in STANDBY with 0 m/s2 braking
+    When 0.1 s pass
+    And the AEB controller is in PARTIAL_BRAKE with 4 m/s2 braking
+    And 0.1 s pass
+    And the lead vehicle changes speed to 80 km/h at 8 m/s2
+    And 1.5 s pass
+    Then the monitor state is MONITORING
+    When the AEB controller is in FULL_BRAKE with 8 m/s2 braking
+    And 0.1 s pass
+    Then the monitor state is SAFE_STATE
+    And the monitor reports the fault reason UNJUSTIFIED_FULL_BRAKING
+
+  @REQ-AEBM-007
+  Scenario: Braking that continues without a valid radar latches SAFE_STATE
+    Given the ego vehicle drives at 50 km/h
+    And a stationary vehicle stands 22 m ahead
+    And the AEB controller is in STANDBY with 0 m/s2 braking
+    When 0.1 s pass
+    And the AEB controller is in PARTIAL_BRAKE with 4 m/s2 braking
+    And 0.1 s pass
+    And the radar sender pauses for 10 frames
+    And 0.4 s pass
     Then the monitor state is SAFE_STATE
     And the monitor reports the fault reason UNJUSTIFIED_BRAKING

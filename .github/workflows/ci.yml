@@ -82,17 +82,40 @@ jobs:
       - run: cmake --preset linux-host-coverage -DCMAKE_C_COMPILER=clang-18 -DCMAKE_CXX_COMPILER=clang++-18
       - run: cmake --build --preset linux-host-coverage
       - run: LLVM_PROFILE_FILE="$PWD/build/cov/%p-%m.profraw" ctest --preset linux-host-coverage
-      - name: Statement / branch / MC-DC report
-        run: |
-          llvm-profdata-18 merge -sparse build/cov/*.profraw -o build/cov/merged.profdata
-          bins=$(find build/linux-host-coverage -name '*_sil' -type f -executable -o -name 'runtime_unit_tests' -type f -executable)
-          args=""; for b in $bins; do args="$args -object $b"; done
-          llvm-cov-18 report $args -instr-profile build/cov/merged.profdata --show-mcdc-summary \
-            -ignore-filename-regex='(_deps|tests/|sil/)' | tee coverage.txt
+      - name: Statement / branch / MC/DC gate (ASIL D-derived files 100 % MC/DC or justified; ratchet)
+        run: python3 -m tools.coverage --build-dir build/linux-host-coverage --profiles build/cov --report coverage.md
+        env:
+          LLVM_COV: llvm-cov-18
+          LLVM_PROFDATA: llvm-profdata-18
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: coverage
-          path: coverage.txt
+          path: coverage.md
+
+  # Every non-equivalent deliberate defect must be detected (generator rule, codec test or SIL),
+  # and every calibration value of the model must have a mutant.
+  mutation:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [acc, aeb, acc_monitor, aeb_monitor, acc_system]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r tools/requirements.txt
+      - run: sudo apt-get update && sudo apt-get install -y ninja-build
+      - run: cmake --preset linux-host
+      - run: cmake --build --preset linux-host
+      - run: python3 -m tools.mutate ${{ matrix.project }} --report mutation_${{ matrix.project }}.md
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mutation-${{ matrix.project }}
+          path: mutation_${{ matrix.project }}.md
 
   # Keeps the benchmarks compiling and gives a (noisy, informational) number per commit.
   benchmarks:

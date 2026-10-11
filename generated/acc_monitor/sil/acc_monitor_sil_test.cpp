@@ -1,7 +1,7 @@
 // GENERATED FILE - DO NOT EDIT. Changes are overwritten and rejected by CI.
 // Generator: ea-gen 0.1.0 (rule-based, deterministic; no AI in this path)
 // Project:   acc_monitor (pattern: can_function)
-// Inputs:    sha256:fd01fad24aac30e6912b9e2458a96cc1c9827a4af69c82078bba92de97606ff7
+// Inputs:    sha256:870db9709bc2042a12245115be83e147f59dcb471925f63ce067348e3f85098c
 // Regenerate: python3 -m tools.gen
 
 #include <gtest/gtest.h>
@@ -502,10 +502,33 @@ TEST_F(AccMonitorSilTest, S21_AccelerationIsAllowedWhenNoInLaneVehicleIsCloserTh
     EXPECT_LT(sil_.actuator().metrics().monitor_safe_state_s, 0.0);
 }
 
-// Scenario: Acceleration without a valid radar latches SAFE_STATE
-// Source:   examples/acc_monitor/features/envelope.feature:148
+// Scenario: Acceleration is allowed when no in-lane vehicle is closer than 2 s #3
+// Source:   examples/acc_monitor/features/envelope.feature:132
 // Verifies: REQ-ACCM-007
-TEST_F(AccMonitorSilTest, S22_AccelerationWithoutAValidRadarLatchesSAFESTATE) {
+// Example:  d=220, lat=0.0
+TEST_F(AccMonitorSilTest, S22_AccelerationIsAllowedWhenNoInLaneVehicleIsCloserThan2S_Ex3) {
+    // Given the ego vehicle drives at 60 km/h  [FN-S01]
+    sil_.plant().set_ego_speed_kph(60.0);
+    // And a vehicle drives 220 m ahead at 0 km/h with 0.0 m lateral offset  [FN-S12]
+    sil_.plant().set_lead(220.0, 0.0, 0.0);
+    // And the controller is ACTIVE without request  [ACCM-S01]
+    sil_.command(static_cast<double>(ea::plant::AccStatus::kActive), 0.0);
+    // When 0.2 s pass  [FN-S10]
+    sil_.run(0.2);
+    // And the controller ramps the acceleration request to 0.5 m/s2 at 2.5 m/s3  [ACCM-S02]
+    sil_.ramp_request(static_cast<double>(ea::plant::AccStatus::kActive), 0.5, 2.5);
+    // And 1 s pass  [FN-S10]
+    sil_.run(1.0);
+    // Then the monitor state is MONITORING  [MON-S01]
+    EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kMonitoring);
+    // And the monitor never entered SAFE_STATE  [MON-S05]
+    EXPECT_LT(sil_.actuator().metrics().monitor_safe_state_s, 0.0);
+}
+
+// Scenario: Acceleration without a valid radar latches SAFE_STATE
+// Source:   examples/acc_monitor/features/envelope.feature:149
+// Verifies: REQ-ACCM-007
+TEST_F(AccMonitorSilTest, S23_AccelerationWithoutAValidRadarLatchesSAFESTATE) {
     // Given the ego vehicle drives at 60 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(60.0);
     // And the controller is ACTIVE without request  [ACCM-S01]
@@ -525,9 +548,9 @@ TEST_F(AccMonitorSilTest, S22_AccelerationWithoutAValidRadarLatchesSAFESTATE) {
 }
 
 // Scenario: Short acceleration bursts toward a close vehicle do not add up
-// Source:   examples/acc_monitor/features/envelope.feature:159
+// Source:   examples/acc_monitor/features/envelope.feature:160
 // Verifies: REQ-ACCM-007
-TEST_F(AccMonitorSilTest, S23_ShortAccelerationBurstsTowardACloseVehicleDoNotAddUp) {
+TEST_F(AccMonitorSilTest, S24_ShortAccelerationBurstsTowardACloseVehicleDoNotAddUp) {
     // Given the ego vehicle drives at 60 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(60.0);
     // And a stationary vehicle stands 30 m ahead  [FN-S19]
@@ -562,7 +585,7 @@ TEST_F(AccMonitorSilTest, S23_ShortAccelerationBurstsTowardACloseVehicleDoNotAdd
 // Source:   examples/acc_monitor/features/faults.feature:7
 // Verifies: REQ-ACCM-008, REQ-ACCM-009
 // Example:  f=stops
-TEST_F(AccMonitorSilTest, S24_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex1) {
+TEST_F(AccMonitorSilTest, S25_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex1) {
     // Given the ego vehicle drives at 100 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(100.0);
     // And the controller is ACTIVE without request  [ACCM-S01]
@@ -587,7 +610,7 @@ TEST_F(AccMonitorSilTest, S24_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithi
 // Source:   examples/acc_monitor/features/faults.feature:7
 // Verifies: REQ-ACCM-008, REQ-ACCM-009
 // Example:  f=freezes
-TEST_F(AccMonitorSilTest, S25_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex2) {
+TEST_F(AccMonitorSilTest, S26_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex2) {
     // Given the ego vehicle drives at 100 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(100.0);
     // And the controller is ACTIVE without request  [ACCM-S01]
@@ -612,7 +635,7 @@ TEST_F(AccMonitorSilTest, S25_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithi
 // Source:   examples/acc_monitor/features/faults.feature:24
 // Verifies: REQ-ACCM-008
 // Example:  f=lost
-TEST_F(AccMonitorSilTest, S26_UpToTwoLostOrCorruptedCommandFramesAreTolerated_Ex1) {
+TEST_F(AccMonitorSilTest, S27_UpToTwoLostOrCorruptedCommandFramesAreTolerated_Ex1) {
     // Given the ego vehicle drives at 100 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(100.0);
     // And the controller is ACTIVE without request  [ACCM-S01]
@@ -633,7 +656,7 @@ TEST_F(AccMonitorSilTest, S26_UpToTwoLostOrCorruptedCommandFramesAreTolerated_Ex
 // Source:   examples/acc_monitor/features/faults.feature:24
 // Verifies: REQ-ACCM-008
 // Example:  f=corrupted
-TEST_F(AccMonitorSilTest, S27_UpToTwoLostOrCorruptedCommandFramesAreTolerated_Ex2) {
+TEST_F(AccMonitorSilTest, S28_UpToTwoLostOrCorruptedCommandFramesAreTolerated_Ex2) {
     // Given the ego vehicle drives at 100 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(100.0);
     // And the controller is ACTIVE without request  [ACCM-S01]
@@ -653,7 +676,7 @@ TEST_F(AccMonitorSilTest, S27_UpToTwoLostOrCorruptedCommandFramesAreTolerated_Ex
 // Scenario: Without any command the monitor stays in INIT and grants no permit
 // Source:   examples/acc_monitor/features/faults.feature:39
 // Verifies: REQ-ACCM-001, REQ-ACCM-008
-TEST_F(AccMonitorSilTest, S28_WithoutAnyCommandTheMonitorStaysInINITAndGrantsNoPermit) {
+TEST_F(AccMonitorSilTest, S29_WithoutAnyCommandTheMonitorStaysInINITAndGrantsNoPermit) {
     // Given the ego vehicle drives at 100 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(100.0);
     // When the command sender stops  [MON-S20]
@@ -673,7 +696,7 @@ TEST_F(AccMonitorSilTest, S28_WithoutAnyCommandTheMonitorStaysInINITAndGrantsNoP
 // Scenario: A lost monitor makes the actuator ramp out braking and request a takeover
 // Source:   examples/acc_monitor/features/faults.feature:49
 // Verifies: REQ-ACCM-010
-TEST_F(AccMonitorSilTest, S29_ALostMonitorMakesTheActuatorRampOutBrakingAndRequestATakeove) {
+TEST_F(AccMonitorSilTest, S30_ALostMonitorMakesTheActuatorRampOutBrakingAndRequestATakeove) {
     // Given the ego vehicle drives at 100 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(100.0);
     // And the controller is ACTIVE without request  [ACCM-S01]
