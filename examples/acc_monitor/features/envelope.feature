@@ -1,7 +1,7 @@
 # Component SIL of the ACC safety monitor. A stimulus node stands in for the controller; the
 # actuator ECU model (AoU) applies only commands the monitor approves. Expected values come from
 # examples/acc_monitor/requirements.yaml: limits 2.1 / 3.6 m/s2 (2.0 / 3.5 + 0.1 tolerance),
-# rate limits 3.5 / 6 m/s3, TTC 2 s, debounce 0.5 s.
+# rate limits 3.5 / 6 m/s3; while TTC < 3 s acceleration must decay by at least 4 m/s3.
 Feature: ACC monitor safety envelope
 
   @REQ-ACCM-001 @REQ-ACCM-002 @REQ-ACCM-010
@@ -116,7 +116,7 @@ Feature: ACC monitor safety envelope
     And the monitor never entered SAFE_STATE
 
   @REQ-ACCM-007
-  Scenario: Acceleration toward a close in-lane vehicle latches SAFE_STATE after 0.5 s
+  Scenario: Acceleration starting toward a close in-lane vehicle latches SAFE_STATE at once
     Given the ego vehicle drives at 60 km/h
     And a stationary vehicle stands 30 m ahead
     And the controller is ACTIVE without request
@@ -125,11 +125,47 @@ Feature: ACC monitor safety envelope
     And 1 s pass
     Then the monitor state is SAFE_STATE
     And the monitor reports the fault reason UNINTENDED_ACCEL
-    And the monitor entered SAFE_STATE between 0.68 s and 0.72 s
+    And the monitor entered SAFE_STATE between 0.2 s and 0.24 s
+    And the applied acceleration never exceeded 0 m/s2
     And the actuator requests a driver takeover
 
   @REQ-ACCM-007
-  Scenario Outline: Acceleration is allowed when no in-lane vehicle is closer than 2 s
+  Scenario Outline: After a cut-in the acceleration must decay by at least 4 m/s3
+    Given the ego vehicle drives at 60 km/h
+    And a stationary vehicle stands 200 m ahead
+    And the controller is ACTIVE without request
+    When 0.2 s pass
+    And the controller ramps the acceleration request to 1.0 m/s2 at 2.5 m/s3
+    And a vehicle cuts in 30 m ahead at 20 km/h
+    And the controller ramps the acceleration request to 0.0 m/s2 at <j> m/s3
+    And 0.2 s pass
+    Then the monitor state is <state>
+    And the monitor reports the fault reason <reason>
+
+    Examples:
+      | j   | state      | reason           |
+      | 5.0 | MONITORING | NONE             |
+      | 3.0 | SAFE_STATE | UNINTENDED_ACCEL |
+
+  @REQ-ACCM-007
+  Scenario Outline: The decay is required from TTC 3 s on
+    Given the ego vehicle drives at 60 km/h
+    And a stationary vehicle stands 200 m ahead
+    And the controller is ACTIVE without request
+    When 0.2 s pass
+    And the controller ramps the acceleration request to 0.3 m/s2 at 2.5 m/s3
+    And a vehicle cuts in <d> m ahead at 20 km/h
+    And the controller ramps the acceleration request to 0.0 m/s2 at 3.0 m/s3
+    And 0.2 s pass
+    Then the monitor state is <state>
+
+    Examples:
+      | d  | state      |
+      | 32 | SAFE_STATE |
+      | 36 | MONITORING |
+
+  @REQ-ACCM-007
+  Scenario Outline: Acceleration is allowed when no in-lane vehicle is closer than 3 s
     Given the ego vehicle drives at 60 km/h
     And a vehicle drives <d> m ahead at 0 km/h with <lat> m lateral offset
     And the controller is ACTIVE without request
@@ -155,20 +191,3 @@ Feature: ACC monitor safety envelope
     And 1 s pass
     Then the monitor state is SAFE_STATE
     And the monitor reports the fault reason UNINTENDED_ACCEL
-
-  @REQ-ACCM-007
-  Scenario: Short acceleration bursts toward a close vehicle do not add up
-    Given the ego vehicle drives at 60 km/h
-    And a stationary vehicle stands 30 m ahead
-    And the controller is ACTIVE without request
-    When 0.2 s pass
-    And the controller ramps the acceleration request to 0.1 m/s2 at 2.5 m/s3
-    And 0.3 s pass
-    And the controller ramps the acceleration request to 0.0 m/s2 at 5.0 m/s3
-    And 0.1 s pass
-    And the controller ramps the acceleration request to 0.1 m/s2 at 2.5 m/s3
-    And 0.3 s pass
-    And the controller ramps the acceleration request to 0.0 m/s2 at 5.0 m/s3
-    And 0.1 s pass
-    Then the monitor state is MONITORING
-    And the monitor never entered SAFE_STATE

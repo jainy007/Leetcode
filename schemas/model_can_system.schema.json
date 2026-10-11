@@ -28,7 +28,9 @@
       "additionalProperties": false,
       "required": [
         "requirements",
-        "features"
+        "features",
+        "hara",
+        "fta"
       ],
       "properties": {
         "requirements": {
@@ -40,6 +42,12 @@
           "items": {
             "$ref": "common.schema.json#/$defs/relpath"
           }
+        },
+        "hara": {
+          "$ref": "common.schema.json#/$defs/relpath"
+        },
+        "fta": {
+          "$ref": "common.schema.json#/$defs/relpath"
         }
       }
     },
@@ -63,7 +71,8 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "reaction_ms"
+        "reaction_ms",
+        "ramp_out_mps3"
       ],
       "properties": {
         "reaction_ms": {
@@ -74,6 +83,11 @@
         },
         "satisfies": {
           "$ref": "common.schema.json#/$defs/req_refs"
+        },
+        "ramp_out_mps3": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Brake ramp-out of the actuator's safe state (AoU-3); used by the FTTI derivation"
         }
       }
     },

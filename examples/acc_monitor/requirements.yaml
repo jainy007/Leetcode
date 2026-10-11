@@ -54,10 +54,11 @@ requirements:
     asil: B(D)
     ears: unwanted
     text: >-
-      If acceleration is requested for 0.5 s while a valid radar target at most 200 m ahead and
-      at most 1.8 m from the lane centre has a time to collision below 2 s, or while no valid
-      RadarObject frame was received for 120 ms, then the AccMonitor shall enter SAFE_STATE with
-      reason UNINTENDED_ACCEL.
+      If an AccCommand requests acceleration that did not decrease by at least 4 m/s3 since the
+      previous valid AccCommand while a valid radar target at most 200 m ahead and at most 1.8 m
+      from the lane centre has a time to collision below 3 s, or while no valid RadarObject frame
+      was received for 120 ms, then the AccMonitor shall enter SAFE_STATE with reason
+      UNINTENDED_ACCEL.
     verification: [sil]
   - id: REQ-ACCM-008
     asil: B(D)

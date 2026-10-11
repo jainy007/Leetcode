@@ -13,7 +13,7 @@ examples/acc/model.yaml          pattern can_function, feature acc: timing, E2E,
 examples/acc/features/*.feature  modes, control, faults; expected numbers derived from the requirements
         │  python3 -m tools.gen   (rules GEN-001..GEN-064, no AI)
         ▼
-generated/acc/                   codec, framework component, ACC logic, SIL harness, 46 SIL tests, trace.json
+generated/acc/                   codec, framework component, ACC logic, SIL harness, 47 SIL tests, codec and component tests, trace.json
         │
 sil/plant/                       hand-written plant: ego + lead vehicle, radar, driver, CAN timing,
                                  fault injection (lost / corrupted / paused frames), metrics
@@ -28,8 +28,8 @@ come from the requirements, for example a following distance of `5 m + T_gap · 
 ## Results
 | Item | Result |
 |---|---|
-| ACC requirements | 22 / 22 PASSED in the trace matrix (39 / 39 across all projects) |
-| Generated SIL tests | 46, all passing; 127 tests in the whole repository on host, ASan/UBSan and TSan |
+| ACC requirements | 22 / 22 PASSED in the trace matrix (84 / 84 across all projects) |
+| Generated SIL tests | 47, all passing; 297 tests in the whole repository on host, ASan/UBSan and TSan |
 | Generator qualification suite | passes; 15 new negative cases for GEN-060..GEN-064 |
 
 ## Findings made by the chain
@@ -52,7 +52,7 @@ come from the requirements, for example a following distance of `5 m + T_gap · 
 ## Mutation testing
 Each mutant is one deliberate defect. After each, the code was regenerated, rebuilt and SIL rerun.
 The campaign is reproducible: `python3 -m tools.mutate acc` (spec: `examples/acc/mutations.yaml`). The
-latest run detected 33 of 35 mutants, declared 2 equivalent, and had 0 unexpected results. It covers
+latest run detected 39 of 43 mutants, declared 2 equivalent and 2 tolerated, and had 0 unexpected results. It covers
 mutants in the input files, the feature template (`templates/features/acc/`) and the framework
 template (`templates/can_function/`).
 
@@ -101,6 +101,17 @@ Equivalent (no requirement-level observation can tell them apart):
   REQ-ACC-010 allows 1 km/h of speed error.
 - **Disengage check also in OVERRIDE:** practically unreachable, because OVERRIDE starts at
   25 km/h or more while the driver is accelerating.
+
+### Calibration values (every value has a mutant; `tools.mutate` enforces this)
+| Mutant | Result |
+|---|---|
+| min activation speed 30 → 35 km/h | detected |
+| max set speed 180 → 170 km/h | detected |
+| time gaps 2.0 → 2.1 s | detected |
+| max target range 200 → 180 m | detected, after adding the scenario "a vehicle just inside 200 m is a target" |
+| jerk decrease 5.0 → 6.0 m/s³ | detected |
+| gap gain 0.2 → 0.3 | detected (braking onset in the 200 m scenario) |
+| speed gain 0.3 → 0.4, range-rate gain 0.6 → 0.8 | **tolerated**: tuning gains without a requirement of their own; behaviour stays within the requirement tolerances |
 
 ## Limits of this evidence
 - **Plant model:** longitudinal point masses, first-order actuator lag, no road load, no grade.

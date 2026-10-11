@@ -57,4 +57,7 @@ RULES: dict[str, str] = {
     # can_system (decomposed ASIL D function: controller + monitor + actuator AoU)
     "GEN-065": "Every diagnostic mechanism of a safety goal must detect within the FTTI minus the actuator's reaction time",
     "GEN-066": "System nodes must be valid can_function projects with one cycle, identical message definitions and matching E2E on the command",
+    "GEN-067": "Each hazardous event is rated S/E/C; its ASIL follows ISO 26262-3 table 4 and its safety goal carries the highest ASIL",
+    "GEN-068": "No minimal cut set of a safety goal's fault tree may lie in elements not rated for the goal's ASIL",
+    "GEN-069": "A safety goal's FTTI must not exceed the FTTI derived from its hazardous events' situations",
 }

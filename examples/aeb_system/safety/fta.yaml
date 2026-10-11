@@ -1,0 +1,27 @@
+# Qualitative fault tree analysis of the AEB safety goals (see examples/acc_system/safety/fta.yaml).
+schema_version: 1
+
+elements:
+  controller: {asil: B(D), node: controller, text: "AebController node (generated, examples/aeb)"}
+  monitor: {asil: B(D), node: monitor, text: "AebMonitor node (generated, examples/aeb_monitor)"}
+  actuator: {asil: D, text: "brake ECU, assumptions of use AoU-1 to AoU-4"}
+  radar: {asil: D, text: "radar object list, assumption of use AoU-5 (both nodes trust the same object)"}
+  bus: {asil: D, text: "vehicle bus with E2E protection (residual error of the E2E check)"}
+
+events:
+  C-BRAKE-UNJUST: {element: controller, text: "controller requests braking without a justified target"}
+  C-BRAKE-STUCK: {element: controller, text: "controller keeps braking after the threat has gone, or its output freezes"}
+  M-APPROVE-UNJUST: {element: monitor, text: "monitor approves braking without a justified in-lane target"}
+  A-UNGATED: {element: actuator, text: "actuator applies a command the monitor did not approve (violates AoU-1)"}
+  A-HOLD: {element: actuator, text: "actuator keeps applying a request beyond 60 ms without a new approved command (violates AoU-2)"}
+  A-SPURIOUS: {element: actuator, text: "actuator brakes on its own"}
+  R-GHOST: {element: radar, text: "radar reports a non-existent in-lane object closing in"}
+  B-UNDETECTED: {element: bus, text: "bus corruption that the E2E check does not detect"}
+
+gates:
+  G-AEBS-001: {or: [{and: [C-BRAKE-UNJUST, {or: [M-APPROVE-UNJUST, A-UNGATED]}]}, R-GHOST, A-SPURIOUS, B-UNDETECTED]}
+  G-AEBS-002: {or: [{and: [C-BRAKE-STUCK, {or: [M-APPROVE-UNJUST, A-UNGATED, A-HOLD]}]}, A-SPURIOUS, B-UNDETECTED]}
+
+trees:
+  - {safety_goal: REQ-AEBS-001, top: unjustified automatic braking is applied, gate: G-AEBS-001}
+  - {safety_goal: REQ-AEBS-002, top: braking continues after the threat or on a frozen command, gate: G-AEBS-002}

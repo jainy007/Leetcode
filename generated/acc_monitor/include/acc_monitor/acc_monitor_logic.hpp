@@ -1,7 +1,7 @@
 // GENERATED FILE - DO NOT EDIT. Changes are overwritten and rejected by CI.
 // Generator: ea-gen 0.1.0 (rule-based, deterministic; no AI in this path)
 // Project:   acc_monitor (pattern: can_function)
-// Inputs:    sha256:870db9709bc2042a12245115be83e147f59dcb471925f63ce067348e3f85098c
+// Inputs:    sha256:7aee4feecefbc18e2ad7476e4d93efffab091cab221dd8b1b9699ac5d31b6524
 // Regenerate: python3 -m tools.gen
 
 #pragma once
@@ -34,10 +34,10 @@ public:
     static constexpr double kRequestToleranceMps2 = 0.1;
     static constexpr double kAccelRatePerCycle = 0.07;  // (jerk + tolerance) * cycle
     static constexpr double kBrakeRatePerCycle = 0.12;
-    static constexpr double kMinTtcForAccelS = 2.0;
+    static constexpr double kMinTtcForAccelS = 3.0;
     static constexpr double kMaxTargetRangeM = 200.0;
     static constexpr double kLaneHalfWidthM = 1.8;
-    static constexpr std::uint32_t kDebounceCycles = 25U;
+    static constexpr double kAccelDecayPerCycle = 0.08;  // minimum decay while endangered
 
     void step(const Inputs& in, Outputs& out) noexcept;
     State state() const noexcept { return state_; }
@@ -45,7 +45,7 @@ public:
 
 private:
     void check_command(const Inputs& in) noexcept;
-    void check_unintended_accel(const Inputs& in) noexcept;
+    bool endangered(const Inputs& in) const noexcept;
     void violation(Reason r) noexcept;
 
     State state_ = State::kInit;
@@ -54,7 +54,6 @@ private:
     double prev_accel_ = 0.0;
     double prev_brake_ = 0.0;
     std::uint32_t cycles_since_command_ = 1U;
-    std::uint32_t accel_toward_target_cycles_ = 0U;
 };
 
 }  // namespace adas::acc_monitor

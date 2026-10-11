@@ -1,7 +1,7 @@
 // GENERATED FILE - DO NOT EDIT. Changes are overwritten and rejected by CI.
 // Generator: ea-gen 0.1.0 (rule-based, deterministic; no AI in this path)
 // Project:   adas_input_gate (pattern: input_gate)
-// Inputs:    sha256:e0c4923740db7d928336d8abc9859ca05e37446222ba5a081ee7c47bc53cdec6
+// Inputs:    sha256:6b014bf1c6088b1ee8b025ad45997456f3661570e6db76f02157c9ff08730979
 // Regenerate: python3 -m tools.gen
 
 #pragma once

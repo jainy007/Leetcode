@@ -8,10 +8,16 @@ SIL that runs both generated nodes against the plant with faults injected on the
   - GEN-065: per safety goal, every diagnostic mechanism's fault detection time (from the monitor
     model) plus the actuator's reaction time (AoU) fits into the FTTI
   - GEN-066: the nodes are valid projects, share identical message definitions, the monitor
-    receives the controller's command with the same E2E data id, and both run at one cycle"""
+    receives the controller's command with the same E2E data id, and both run at one cycle
+  - GEN-067: the HARA rates every hazardous event with S, E and C; the ASIL follows from
+    ISO 26262-3 table 4, and each safety goal carries the highest ASIL of its hazardous events
+  - GEN-068: no minimal cut set of a safety goal's fault tree lies in elements that are not rated
+    for the goal's ASIL (single points need the full ASIL, decomposed pairs the X(Y) rating)
+  - GEN-069: each safety goal's FTTI does not exceed the FTTI derived from its hazardous events'
+    situations by the kinematic models of tools/gen/safety.py"""
 from __future__ import annotations
 
-from tools.gen import loader
+from tools.gen import loader, safety
 from tools.gen.errors import Diagnostics
 from tools.gen.features import load_features
 from tools.gen.patterns.codec import to_snake
@@ -120,6 +126,9 @@ def build(inputs, diags: Diagnostics):
             diags.error("GEN-066", display, f"{role} feature '{f.NAME}' declares no PLANT_TABLES for fault injection")
     if not diags.ok():
         return None
+    analysis = _safety_analysis(inputs, model, ctrl, mon, display, diags)
+    if analysis is None or not diags.ok():
+        return None
 
     def resolve_ref(kind: str, text: str) -> str | None:
         if kind == "safety_goal" and text in goals:
@@ -143,12 +152,14 @@ def build(inputs, diags: Diagnostics):
         "monitor_msg": {"name": mon_tx["cname"], "can_id": mon_tx["msg"].can_id, "e2e": mon_tx["e2e"],
                         "length": mon_tx["msg"].payload_length},
         "goals": [goals[k] for k in sorted(goals)], "reaction_ms": reaction, "cycle_ms": cycle,
+        "safety": analysis, "inputs_hara": model["inputs"]["hara"], "inputs_fta": model["inputs"]["fta"],
     }
     snake = variables["snake"]
     outputs = [
         ("sil_harness.hpp.j2", f"sil/{snake}_sil.hpp"),
         ("sil_test.cpp.j2", f"sil/{snake}_sil_test.cpp"),
         ("CMakeLists.txt.j2", "CMakeLists.txt"),
+        ("safety_analysis.md.j2", "safety_analysis.md"),
     ]
     # Node inputs and their tool files are inputs of this project (hash in every header).
     inputs.files.extend(ctrl["inputs"].files + mon["inputs"].files)
@@ -166,3 +177,128 @@ def build(inputs, diags: Diagnostics):
         step_catalogues=list(dict.fromkeys(catalogues)),
         extra_tool_files=sorted(set(node_tools)),
     )
+
+
+def _load(inputs, rel: str, schema_name: str, diags: Diagnostics):
+    from tools.gen.project import load_document
+
+    path = inputs.resolve_input(rel, diags)
+    if path is None:
+        return None
+    return load_document(path, schema_name, inputs.display(path), diags)
+
+
+def _safety_analysis(inputs, model: dict, ctrl: dict, mon: dict, display: str, diags: Diagnostics) -> dict | None:
+    """HARA (GEN-067), FTTI derivation (GEN-069) and fault tree check (GEN-068)."""
+    hara = _load(inputs, model["inputs"]["hara"], "hara.schema.json", diags)
+    fta = _load(inputs, model["inputs"]["fta"], "fta.schema.json", diags)
+    req_path = inputs.dir / model["inputs"]["requirements"]
+    reqs = {r["id"]: r for r in (loader.load_yaml(req_path, diags, inputs.display(req_path)) or {}).get("requirements", [])}
+    if hara is None or fta is None:
+        return None
+    goal_ids = [sg["requirement"] for sg in model["safety_goals"]]
+    ftti_model = {sg["requirement"]: sg["ftti_ms"] for sg in model["safety_goals"]}
+    hazards = {h["id"]: h for h in hara["hazards"]}
+
+    # GEN-067: ASIL from S, E, C; hazardous events with an ASIL need a safety goal of that ASIL.
+    events, by_goal = [], {g: [] for g in goal_ids}
+    for he in hara["hazardous_events"]:
+        level = safety.asil(he["severity"]["class"], he["exposure"]["class"], he["controllability"]["class"])
+        where = f"{he['id']}"
+        if he["hazard"] not in hazards:
+            diags.error("GEN-067", display, f"{where}: unknown hazard '{he['hazard']}'")
+        goal = he.get("safety_goal")
+        if level != "QM" and goal is None:
+            diags.error("GEN-067", display, f"{where}: ASIL {level} hazardous event without a safety goal")
+        if goal is not None and goal not in by_goal:
+            diags.error("GEN-067", display, f"{where}: safety goal {goal} is not a safety goal of the system model")
+        if goal is not None and level == "QM":
+            diags.error("GEN-067", display, f"{where}: rated QM but assigned to safety goal {goal}")
+        entry = {"he": he, "hazard": hazards.get(he["hazard"]), "asil": level, "ftti": []}
+        events.append(entry)
+        if goal in by_goal:
+            by_goal[goal].append(entry)
+    for g, hes in by_goal.items():
+        if not hes:
+            diags.error("GEN-067", display, f"{g}: safety goal without a hazardous event in the HARA")
+            continue
+        top = max((e["asil"] for e in hes), key=safety.asil_rank)
+        stated = reqs.get(g, {}).get("asil")
+        if stated != top:
+            diags.error("GEN-067", display, f"{g}: requirement ASIL {stated} != highest ASIL {top} of its hazardous events")
+
+    # GEN-069: derived FTTI per situation; the model's FTTI must not exceed the smallest.
+    ramp = model["actuator"]["ramp_out_mps3"]
+    derived: dict[str, int] = {}
+    for e in events:
+        spec = e["he"].get("ftti")
+        if spec is None:
+            continue
+        needed = safety.MODELS[spec["model"]][1]
+        for i, sit in enumerate(spec["situations"]):
+            params = {**hara.get("ftti_defaults", {}), **sit}
+            missing = sorted(needed - set(params))
+            if missing:
+                diags.error("GEN-069", display, f"{e['he']['id']} situation {i + 1}: missing {', '.join(missing)}")
+                continue
+            if spec["model"] == "rear_end_by_follower" and params["ramp_out_mps3"] != ramp:
+                diags.error("GEN-069", display, f"{e['he']['id']}: ramp-out {params['ramp_out_mps3']} m/s3 differs from "
+                                                f"the actuator's {ramp} m/s3")
+            ms = safety.derive_ftti_ms(spec["model"], params)
+            if ms is None:
+                diags.error("GEN-069", display, f"{e['he']['id']} situation {i + 1}: collision even without a fault; "
+                                                f"not a valid reference situation")
+                continue
+            e["ftti"].append({"params": params, "ms": ms})
+            g = e["he"].get("safety_goal")
+            if g is not None:
+                derived[g] = min(derived.get(g, ms), ms)
+    for g in goal_ids:
+        if g not in derived:
+            diags.error("GEN-069", display, f"{g}: no FTTI derivation in the HARA")
+        elif ftti_model[g] > derived[g]:
+            diags.error("GEN-069", display, f"{g}: FTTI {ftti_model[g]} ms exceeds the derived FTTI of {derived[g]} ms")
+
+    # GEN-068: fault trees.
+    elements = fta["elements"]
+    node_asil = {"controller": ctrl["v"]["component"]["asil"], "monitor": mon["v"]["component"]["asil"]}
+    for name, el in elements.items():
+        if "node" in el and el["asil"] != node_asil[el["node"]]:
+            diags.error("GEN-068", display, f"element {name}: ASIL {el['asil']} != {el['node']} component ASIL "
+                                            f"{node_asil[el['node']]}")
+    for eid, ev in fta["events"].items():
+        if ev["element"] not in elements:
+            diags.error("GEN-068", display, f"event {eid}: unknown element '{ev['element']}'")
+    trees = {t["safety_goal"]: t for t in fta["trees"]}
+    fault_trees = []
+    for g in goal_ids:
+        t = trees.get(g)
+        if t is None:
+            diags.error("GEN-068", display, f"{g}: no fault tree")
+            continue
+        if t["gate"] not in fta["gates"]:
+            diags.error("GEN-068", display, f"{g}: unknown gate '{t['gate']}'")
+            continue
+        try:
+            cuts = safety.minimal_cut_sets(t["gate"], fta["events"], fta["gates"])
+        except (KeyError, ValueError) as exc:
+            diags.error("GEN-068", display, f"{g}: invalid fault tree ({exc})")
+            continue
+        goal_asil = reqs.get(g, {}).get("asil", "D")
+        rows = []
+        for cut in cuts:
+            els = sorted({fta["events"][ev]["element"] for ev in cut if ev in fta["events"]})
+            ratings = [elements[x]["asil"] for x in els if x in elements]
+            full = any(safety.asil_rank(r) >= safety.asil_rank(goal_asil) for r in ratings)
+            decomposed = len(els) >= 2 and all("(" in r and safety.asil_rank(r.split("(")[1].rstrip(")")) >=
+                                               safety.asil_rank(goal_asil) for r in ratings)
+            ok = full or decomposed
+            if not ok:
+                where = ", ".join(x + " (" + elements[x]["asil"] + ")" for x in els)
+                diags.error("GEN-068", display, f"{g} (ASIL {goal_asil}): cut set {sorted(cut)} lies in {where}, "
+                                                f"not rated for it")
+            rows.append({"events": sorted(cut), "elements": els, "ratings": ratings,
+                         "basis": "element rated for the goal" if full else "decomposition" if decomposed else "VIOLATION"})
+        fault_trees.append({"goal": g, "asil": goal_asil, "top": t["top"], "cuts": rows})
+    return {"hara": hara, "events": events, "derived": derived, "ftti_model": ftti_model, "fta": fta,
+            "trees": fault_trees, "goal_asil": {g: reqs.get(g, {}).get("asil") for g in goal_ids}, "reqs": reqs}

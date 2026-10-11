@@ -7,16 +7,17 @@
   },
   "generated_files": [
     "generated/acc_system/CMakeLists.txt",
+    "generated/acc_system/safety_analysis.md",
     "generated/acc_system/sil/acc_system_sil.hpp",
     "generated/acc_system/sil/acc_system_sil_test.cpp"
   ],
   "generator": "ea-gen 0.1.0",
-  "inputs_sha256": "bcf75ddb317884072eb7fb43b43c3450882edb36edd84b7a99e749e56ad81f26",
+  "inputs_sha256": "23346b03d4046c6dcd8a3513aba427631a7d11a306ae3f61a7a6d60428b173b5",
   "pattern": "can_system",
   "project": "acc_system",
   "requirements": [
     {
-      "asil": "D",
+      "asil": "B",
       "ears": "unwanted",
       "id": "REQ-ACCS-001",
       "satisfied_by": [
@@ -26,7 +27,7 @@
         "S01_AnAccelerationRequestAboveTheLimitIsNeverApplied",
         "S02_AnAccelerationStepWithinTheLimitButAboveTheJerkEnvelopeIsNev"
       ],
-      "text": "If the ACC function requests an acceleration above 2.1 m/s2 or an acceleration step above the jerk envelope, then the AccSystem shall prevent its application and reach the safe state within the FTTI of 200 ms.",
+      "text": "If the ACC function requests an acceleration above 2.1 m/s2 or an acceleration step above the jerk envelope, then the AccSystem shall prevent its application and reach the safe state within the FTTI of 2200 ms.",
       "verification": [
         "sil",
         "analysis"
@@ -42,14 +43,14 @@
       "tests": [
         "S03_ADecelerationRequestAboveTheLimitIsNeverApplied"
       ],
-      "text": "If the ACC function requests a deceleration above 3.6 m/s2 or a deceleration step above the jerk envelope, then the AccSystem shall prevent its application and reach the safe state within the FTTI of 200 ms.",
+      "text": "If the ACC function requests a deceleration above 3.6 m/s2 or a deceleration step above the jerk envelope, then the AccSystem shall prevent its application and reach the safe state within the FTTI of 490 ms.",
       "verification": [
         "sil",
         "analysis"
       ]
     },
     {
-      "asil": "D",
+      "asil": "B",
       "ears": "unwanted",
       "id": "REQ-ACCS-003",
       "satisfied_by": [
@@ -58,14 +59,14 @@
       "tests": [
         "S04_AccelerationKeptUpWhileTheControllerBrakesForACutInIsCaught"
       ],
-      "text": "If the ACC function keeps requesting acceleration toward an in-lane vehicle with a time to collision below 2 s, or requests acceleration and braking together, then the AccSystem shall reach the safe state within the FTTI of 1000 ms.",
+      "text": "If the ACC function requests acceleration that does not decay by at least 4 m/s3 toward an in-lane vehicle with a time to collision below 3 s, or requests acceleration and braking together, then the AccSystem shall reach the safe state within the FTTI of 370 ms.",
       "verification": [
         "sil",
         "analysis"
       ]
     },
     {
-      "asil": "D",
+      "asil": "B",
       "ears": "unwanted",
       "id": "REQ-ACCS-004",
       "satisfied_by": [
@@ -76,7 +77,7 @@
         "S06_AStoppedOrFrozenControllerWhileBrakingBehindASlowerVehicle_Ex2",
         "S07_AControllerReportingSTANDBYWhileRequestingBrakingIsCaught"
       ],
-      "text": "If the ACC commands stop, freeze or come from a non-ACTIVE function, then the AccSystem shall reach the safe state within the FTTI of 200 ms.",
+      "text": "If the ACC commands stop, freeze or come from a non-ACTIVE function, then the AccSystem shall reach the safe state within the FTTI of 380 ms.",
       "verification": [
         "sil",
         "analysis"
@@ -94,7 +95,7 @@
         "S06_AStoppedOrFrozenControllerWhileBrakingBehindASlowerVehicle_Ex2",
         "S08_ALostMonitorMakesTheActuatorRampOutAndRequestATakeover"
       ],
-      "text": "The AccSystem shall apply a controller command only if the AccMonitor grants the permit and echoes that command's E2E counter; on monitor SAFE_STATE or 60 ms without a valid monitor frame it shall cut acceleration, ramp braking out at 5 m/s3 and request a driver takeover.",
+      "text": "The AccSystem shall apply a controller command only if the AccMonitor grants the permit and echoes that command's E2E counter; on monitor SAFE_STATE or 60 ms without a valid monitor frame it shall cut acceleration, ramp braking out at 20 m/s3 and request a driver takeover.",
       "verification": [
         "sil"
       ]
@@ -117,6 +118,23 @@
       "text": "If no fault is present, then the AccSystem shall not let the AccMonitor intervene and shall apply every command of the AccController.",
       "verification": [
         "sil"
+      ]
+    },
+    {
+      "asil": "A",
+      "ears": "unwanted",
+      "id": "REQ-ACCS-007",
+      "satisfied_by": [
+        "safety_goal:REQ-ACCS-007"
+      ],
+      "tests": [
+        "S05_AStoppedOrFrozenControllerWhileBrakingBehindASlowerVehicle_Ex1",
+        "S06_AStoppedOrFrozenControllerWhileBrakingBehindASlowerVehicle_Ex2"
+      ],
+      "text": "If the ACC commands stop while ACC is braking, then the AccSystem shall request a driver takeover within the FTTI of 590 ms.",
+      "verification": [
+        "sil",
+        "analysis"
       ]
     }
   ],
@@ -169,7 +187,7 @@
         },
         {
           "catalogue": "SYS-S02",
-          "cpp": "ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 100.0 + 1e-6);",
+          "cpp": "ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 2100.0 + 1e-6);",
           "text": "And the actuator entered its safe state within the fault detection budget of REQ-ACCS-001"
         },
         {
@@ -236,7 +254,7 @@
         },
         {
           "catalogue": "SYS-S02",
-          "cpp": "ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 100.0 + 1e-6);",
+          "cpp": "ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 2100.0 + 1e-6);",
           "text": "And the actuator entered its safe state within the fault detection budget of REQ-ACCS-001"
         },
         {
@@ -293,7 +311,7 @@
         },
         {
           "catalogue": "SYS-S02",
-          "cpp": "ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 100.0 + 1e-6);",
+          "cpp": "ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 390.0 + 1e-6);",
           "text": "And the actuator entered its safe state within the fault detection budget of REQ-ACCS-002"
         },
         {
@@ -355,7 +373,7 @@
         },
         {
           "catalogue": "SYS-S02",
-          "cpp": "ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 900.0 + 1e-6);",
+          "cpp": "ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 270.0 + 1e-6);",
           "text": "And the actuator entered its safe state within the fault detection budget of REQ-ACCS-003"
         },
         {
@@ -382,7 +400,8 @@
       "name": "S05_AStoppedOrFrozenControllerWhileBrakingBehindASlowerVehicle_Ex1",
       "requirements": [
         "REQ-ACCS-004",
-        "REQ-ACCS-005"
+        "REQ-ACCS-005",
+        "REQ-ACCS-007"
       ],
       "scenario": "A stopped or frozen controller while braking behind a slower vehicle #1",
       "steps": [
@@ -443,13 +462,13 @@
         },
         {
           "catalogue": "SYS-S02",
-          "cpp": "ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 100.0 + 1e-6);",
+          "cpp": "ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 280.0 + 1e-6);",
           "text": "And the actuator entered its safe state within the fault detection budget of REQ-ACCS-004"
         },
         {
           "catalogue": "MON-S13",
-          "cpp": "ASSERT_GE(sil_.actuator().metrics().ramp_out_done_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().ramp_out_done_s - sil_.plant().metrics().first_fault_s) * 1000.0, 800 + 1e-6);",
-          "text": "And the request was ramped out within 800 ms of the first fault"
+          "cpp": "ASSERT_GE(sil_.actuator().metrics().ramp_out_done_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().ramp_out_done_s - sil_.plant().metrics().first_fault_s) * 1000.0, 240 + 1e-6);",
+          "text": "And the request was ramped out within 240 ms of the first fault"
         },
         {
           "catalogue": "MON-S09",
@@ -470,7 +489,8 @@
       "name": "S06_AStoppedOrFrozenControllerWhileBrakingBehindASlowerVehicle_Ex2",
       "requirements": [
         "REQ-ACCS-004",
-        "REQ-ACCS-005"
+        "REQ-ACCS-005",
+        "REQ-ACCS-007"
       ],
       "scenario": "A stopped or frozen controller while braking behind a slower vehicle #2",
       "steps": [
@@ -531,13 +551,13 @@
         },
         {
           "catalogue": "SYS-S02",
-          "cpp": "ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 100.0 + 1e-6);",
+          "cpp": "ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 280.0 + 1e-6);",
           "text": "And the actuator entered its safe state within the fault detection budget of REQ-ACCS-004"
         },
         {
           "catalogue": "MON-S13",
-          "cpp": "ASSERT_GE(sil_.actuator().metrics().ramp_out_done_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().ramp_out_done_s - sil_.plant().metrics().first_fault_s) * 1000.0, 800 + 1e-6);",
-          "text": "And the request was ramped out within 800 ms of the first fault"
+          "cpp": "ASSERT_GE(sil_.actuator().metrics().ramp_out_done_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().ramp_out_done_s - sil_.plant().metrics().first_fault_s) * 1000.0, 240 + 1e-6);",
+          "text": "And the request was ramped out within 240 ms of the first fault"
         },
         {
           "catalogue": "MON-S09",
@@ -608,7 +628,7 @@
         },
         {
           "catalogue": "SYS-S02",
-          "cpp": "ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 100.0 + 1e-6);",
+          "cpp": "ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 280.0 + 1e-6);",
           "text": "And the actuator entered its safe state within the fault detection budget of REQ-ACCS-004"
         }
       ]

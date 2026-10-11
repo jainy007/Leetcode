@@ -56,7 +56,7 @@ Feature: ACC safety goals under node faults
     And the applied acceleration never exceeded 0.06 m/s2
     And the actuator requests a driver takeover
 
-  @REQ-ACCS-004 @REQ-ACCS-005
+  @REQ-ACCS-004 @REQ-ACCS-005 @REQ-ACCS-007
   Scenario Outline: A stopped or frozen controller while braking behind a slower vehicle
     Given the ego vehicle drives at 100 km/h
     And a lead vehicle drives 50 m ahead at 100 km/h
@@ -70,7 +70,7 @@ Feature: ACC safety goals under node faults
     Then the monitor state is SAFE_STATE
     And the monitor reports the fault reason COMMAND_TIMEOUT
     And the actuator entered its safe state within the fault detection budget of REQ-ACCS-004
-    And the request was ramped out within 800 ms of the first fault
+    And the request was ramped out within 240 ms of the first fault
     And the actuator requests a driver takeover
 
     Examples:

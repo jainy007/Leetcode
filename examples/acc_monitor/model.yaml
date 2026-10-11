@@ -53,7 +53,7 @@ calibration:
   jerk_increase_max_mps3: {value: 2.5, satisfies: [REQ-ACCM-006]}
   jerk_decrease_max_mps3: {value: 5.0, satisfies: [REQ-ACCM-006]}
   jerk_tolerance_mps3: {value: 1.0, satisfies: [REQ-ACCM-006]}
-  min_ttc_for_accel_s: {value: 2.0, satisfies: [REQ-ACCM-007]}
+  min_ttc_for_accel_s: {value: 3.0, satisfies: [REQ-ACCM-007]}
   max_target_range_m: {value: 200, satisfies: [REQ-ACCM-007]}
   lane_half_width_m: {value: 1.8, satisfies: [REQ-ACCM-007]}
-  unintended_accel_debounce_s: {value: 0.5, satisfies: [REQ-ACCM-007]}
+  accel_decay_min_mps3: {value: 4.0, satisfies: [REQ-ACCM-007]}

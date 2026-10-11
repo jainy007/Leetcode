@@ -20,7 +20,7 @@ CALIBRATION = {
     "active_status_code": "number", "accel_max_mps2": "number", "decel_max_mps2": "number",
     "request_tolerance_mps2": "number", "jerk_increase_max_mps3": "number", "jerk_decrease_max_mps3": "number",
     "jerk_tolerance_mps3": "number", "min_ttc_for_accel_s": "number", "max_target_range_m": "number",
-    "lane_half_width_m": "number", "unintended_accel_debounce_s": "number",
+    "lane_half_width_m": "number", "accel_decay_min_mps3": "number",
 }
 
 INTERFACE = {
@@ -51,16 +51,16 @@ MECHANISMS = {
     "accel_and_brake": _cycle,
     "request_outside_active": _cycle,
     "request_rate": _cycle,
-    "unintended_accel": lambda cal, timeout_of, cycle_ms: cal["unintended_accel_debounce_s"] * 1000.0 + cycle_ms,
+    "unintended_accel": _cycle,  # every new command must show the decay
 }
 
 
 def check(cal: dict) -> list[str]:
     positive = ("accel_max_mps2", "decel_max_mps2", "request_tolerance_mps2", "jerk_increase_max_mps3",
                 "jerk_decrease_max_mps3", "jerk_tolerance_mps3", "min_ttc_for_accel_s", "max_target_range_m",
-                "lane_half_width_m", "unintended_accel_debounce_s")
+                "lane_half_width_m", "accel_decay_min_mps3")
     rules = [
-        (all(cal[k] > 0 for k in positive), "limits, tolerances, TTC and debounce must be positive"),
+        (all(cal[k] > 0 for k in positive), "limits, tolerances, TTC and decay must be positive"),
         (cal["active_status_code"] in (0, 1, 2, 3, 4), "active_status_code must be a controller state code (0..4)"),
         (cal["request_tolerance_mps2"] < min(cal["accel_max_mps2"], cal["decel_max_mps2"]),
          "the request tolerance must be smaller than the limits"),
@@ -69,14 +69,11 @@ def check(cal: dict) -> list[str]:
 
 
 def derive(cal: dict, bound: dict, cycle_ms: int) -> tuple[dict, list[str]]:
-    """Per-cycle rate limits in m/s2 and the debounce in whole cycles."""
+    """Per-cycle rate limits and the minimum acceleration decay per cycle, in m/s2."""
     errors: list[str] = []
-    cycles = cal["unintended_accel_debounce_s"] * 1000.0 / cycle_ms
-    if abs(cycles - round(cycles)) > 1e-6:
-        errors.append(f"unintended_accel_debounce_s must be a whole number of {cycle_ms} ms cycles")
     dt = cycle_ms / 1000.0
     return {
-        "debounce_cycles": int(round(cycles)),
+        "accel_decay_per_cycle": cal["accel_decay_min_mps3"] * dt,
         "accel_rate_per_cycle": (cal["jerk_increase_max_mps3"] + cal["jerk_tolerance_mps3"]) * dt,
         "brake_rate_per_cycle": (cal["jerk_decrease_max_mps3"] + cal["jerk_tolerance_mps3"]) * dt,
         "reasons": REASONS,

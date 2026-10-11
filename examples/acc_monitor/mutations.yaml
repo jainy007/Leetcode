@@ -7,9 +7,9 @@ mutations:
   - {name: "jerk increase 2.5 -> 3.0 m/s3", file: examples/acc_monitor/model.yaml, old: "jerk_increase_max_mps3: {value: 2.5", new: "jerk_increase_max_mps3: {value: 3.0"}
   - {name: "jerk decrease 5.0 -> 5.5 m/s3", file: examples/acc_monitor/model.yaml, old: "jerk_decrease_max_mps3: {value: 5.0", new: "jerk_decrease_max_mps3: {value: 5.5"}
   - {name: "jerk tolerance 1.0 -> 0.5 m/s3", file: examples/acc_monitor/model.yaml, old: "jerk_tolerance_mps3: {value: 1.0", new: "jerk_tolerance_mps3: {value: 0.5"}
-  - {name: "min TTC 2.0 -> 1.5 s", file: examples/acc_monitor/model.yaml, old: "min_ttc_for_accel_s: {value: 2.0", new: "min_ttc_for_accel_s: {value: 1.5"}
+  - {name: "min TTC 3.0 -> 2.5 s", file: examples/acc_monitor/model.yaml, old: "min_ttc_for_accel_s: {value: 3.0", new: "min_ttc_for_accel_s: {value: 2.5"}
   - {name: "lane half width 1.8 -> 2.1 m", file: examples/acc_monitor/model.yaml, old: "lane_half_width_m: {value: 1.8", new: "lane_half_width_m: {value: 2.1"}
-  - {name: "debounce 0.5 -> 0.6 s", file: examples/acc_monitor/model.yaml, old: "unintended_accel_debounce_s: {value: 0.5", new: "unintended_accel_debounce_s: {value: 0.6"}
+  - {name: "decay 4.0 -> 5.5 m/s3", file: examples/acc_monitor/model.yaml, old: "accel_decay_min_mps3: {value: 4.0", new: "accel_decay_min_mps3: {value: 5.5"}
   - {name: "active status code 2 -> 3", file: examples/acc_monitor/model.yaml, old: "active_status_code: {value: 2", new: "active_status_code: {value: 3"}
   - {name: "max target range 200 -> 150 m", file: examples/acc_monitor/model.yaml, old: "max_target_range_m: {value: 200", new: "max_target_range_m: {value: 150", expect: equivalent,
      note: "TTC < 2 s beyond 150 m needs a closing speed above 75 m/s; the check is defensive only"}
@@ -26,13 +26,13 @@ mutations:
   - {name: "status check dropped", file: templates/features/acc_monitor/logic.cpp.j2, old: "} else if (!active && (in.cmd_accel > 0.0 || in.cmd_brake > 0.0)) {", new: "} else if (false) {"}
   - {name: "rate check ignores lost frames", file: templates/features/acc_monitor/logic.cpp.j2, old: "    const double cycles = static_cast<double>(cycles_since_command_);", new: "    const double cycles = 1.0;"}
   - {name: "brake rate check dropped", file: templates/features/acc_monitor/logic.cpp.j2, old: " || brake_step > kBrakeRatePerCycle * cycles + kEps) {", new: ") { (void)brake_step;"}
-  - {name: "unintended accel ignores radar loss", file: templates/features/acc_monitor/logic.cpp.j2, old: "const bool endangered = !in.target_valid_ok || (", new: "const bool endangered = ("}
+  - {name: "unintended accel ignores radar loss", file: templates/features/acc_monitor/logic.cpp.j2, old: "return !in.target_valid_ok || (", new: "return ("}
   - {name: "unintended accel ignores lateral offset", file: templates/features/acc_monitor/logic.cpp.j2, old: " &&\n                         std::fabs(in.target_lateral) <= kLaneHalfWidthM;", new: ";"}
-  - {name: "debounce never resets", file: templates/features/acc_monitor/logic.cpp.j2, old: "    } else {\n        accel_toward_target_cycles_ = 0U;\n    }", new: "    } else {\n    }"}
+  - {name: "decay not required, only no increase", file: templates/features/acc_monitor/logic.cpp.j2, old: "accel_step > -kAccelDecayPerCycle * cycles + kEps", new: "accel_step > kEps"}
   - {name: "SAFE_STATE not latched", file: templates/features/acc_monitor/logic.cpp.j2, old: "    state_ = State::kSafeState;  // latched until the next power cycle", new: "    state_ = State::kSafeState;  // latched until the next power cycle\n    if (r == Reason::kRequestLimit) { state_ = State::kMonitoring; }"}
   - {name: "timeout not checked", file: templates/features/acc_monitor/logic.cpp.j2, old: "        if (!in.cmd_status_ok) {\n            violation(Reason::kCommandTimeout);", new: "        if (false) {\n            violation(Reason::kCommandTimeout);"}
   - {name: "permit granted in SAFE_STATE", file: templates/features/acc_monitor/logic.cpp.j2, old: "    out.permit = monitoring ? 1.0 : 0.0;", new: "    out.permit = (state_ != State::kInit) ? 1.0 : 0.0;"}
   - {name: "violating command approved", file: templates/features/acc_monitor/logic.cpp.j2, old: "    } else {\n        last_counter_ = in.cmd_counter;\n    }", new: "    } else {\n    }\n    last_counter_ = in.cmd_counter;", expect: equivalent,
      note: "a violation withdraws the permit in the same cycle; the actuator needs permit AND counter (AoU-1), so the echoed counter is redundant protection"}
   # ---- generator: shared codec template (caught by the generated codec test, not by SIL) ----
-  - {name: "decode range check off by one", file: templates/common/_codec_macros.j2, old: "        if (value < {{ s.raw_lo }}LL || value > {{ s.raw_hi }}LL) {", new: "        if (value < {{ s.raw_lo }}LL || value > {{ s.raw_hi }}LL + 1) {"}
+  - {name: "decode range check off by one", file: templates/common/_codec_macros.j2, old: "value > {{ s.raw_hi }}LL{% endif %}", new: "value > {{ s.raw_hi }}LL + 1{% endif %}"}

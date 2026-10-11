@@ -24,8 +24,8 @@ what the design meets with margin:
 | Item | Result |
 |---|---|
 | Requirements | 14 / 14 PASSED in the trace matrix |
-| Generated SIL tests | 29, all passing |
-| Mutation testing (`python3 -m tools.mutate aeb`) | 24 of 26 detected, 2 declared equivalent, 0 unexpected |
+| Generated SIL tests | 32, all passing (plus generated codec and component tests) |
+| Mutation testing (`python3 -m tools.mutate aeb`) | 27 of 29 detected, 2 declared equivalent, 0 unexpected; every calibration value has a mutant |
 
 ## How the tests were strengthened
 The first mutation run found 8 mutants that survived without being equivalent. Each one showed
@@ -39,6 +39,11 @@ a gap in the scenarios:
 | warning release 3.3 → 2.9 s | the warning ended because closing stopped, not because of TTC | lead accelerating at 2 m/s²: the warning ends by TTC (3.3 s) while still closing at 2.2 m/s |
 | kickdown ignored in FULL_BRAKE | kickdown was only tested during partial braking | kickdown during full braking after a cut-in |
 | driver brake cancels AEB | AEB re-triggered within two cycles, so the end result hid the cancellation | the braking stage must persist 40 ms after the brake press, for both PARTIAL and FULL |
+
+Calibration mutants added later (all detected): max target range 150 → 100 m, min closing speed
+0.5 → 2.5 m/s, standstill speed 1 → 5 km/h. Structural coverage (MC/DC) then led to scenarios for:
+- the end of a warning by lane loss and by kickdown;
+- the 150 m relevance limit.
 
 ## Equivalent mutants (with reasons)
 - **Closing-speed threshold dropped:** a closing speed below 0.5 m/s never reaches TTC 2.8 s

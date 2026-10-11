@@ -24,7 +24,7 @@ monitor requirements, for example:
 - the limit plus tolerance, 2.1 m/s²;
 - the rate limits, 3.5 / 6 m/s³;
 - the TTC thresholds plus margin, 2.1 / 1.5 s;
-- the debounce, 0.5 s;
+- the minimum acceleration decay below TTC 3 s, 4 m/s³;
 - the timeout, 60 ms.
 
 ## How the system is tested
@@ -60,7 +60,7 @@ never intervened and every command was applied.
    command timeout was not reached). The plant now remembers the last frame of every node tx id.
 3. **Mutation testing found weak monitor scenarios:**
    - a debounce counter that never reset survived, until a scenario with two short acceleration
-     bursts was added;
+     bursts was added. The debounce was later replaced by the decay check, see finding 6;
    - a braking justification that was never reset survived, until a scenario with a second braking
      onset after the target pulled away was added.
 4. **MC/DC found missing scenarios:**
@@ -76,6 +76,16 @@ never intervened and every command was applied.
    - `last_counter_ >= 0` in the monitors, which always holds while MONITORING.
 
    The templates now emit only feasible conditions, with the same behaviour.
+
+6. **The FTTI derivation from the HARA found two design gaps (GEN-069):**
+   - Acceleration toward a slower vehicle tolerates only 370 ms. The monitor's 0.5 s debounce at
+     TTC < 2 s was replaced by a check that needs no debounce: below TTC 3 s every command must
+     reduce the acceleration by at least 4 m/s³.
+   - A 5 m/s³ brake ramp-out in the actuator's safe state cannot prevent a rear-end collision by
+     a close follower. It is now 20 m/s³.
+
+   Both changes were verified in component and system SIL, including all availability
+   scenarios.
 
 ## Mutation campaigns
 MUTATION_TABLE

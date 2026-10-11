@@ -11,6 +11,8 @@ component:
 inputs:
   requirements: requirements.yaml
   features: [features/safety_goals.feature, features/availability.feature]
+  hara: safety/hara.yaml
+  fta: safety/fta.yaml
 
 nodes:
   controller: aeb
@@ -18,12 +20,13 @@ nodes:
 
 actuator:
   reaction_ms: 100
+  ramp_out_mps3: 20
   satisfies: [REQ-AEBS-003]
 
 allocation:
   satisfies: [REQ-AEBS-004]
 
-# FTTI values are assumptions pending the HARA (docs/safety/acc_aeb_safety_concept.md).
+# ASIL and FTTI come from safety/hara.yaml (GEN-067, GEN-069); fault trees in safety/fta.yaml (GEN-068).
 safety_goals:
-  - {requirement: REQ-AEBS-001, ftti_ms: 200, mechanisms: [braking_justification, request_limit, request_outside_braking]}
-  - {requirement: REQ-AEBS-002, ftti_ms: 200, mechanisms: [command_timeout]}
+  - {requirement: REQ-AEBS-001, ftti_ms: 780, mechanisms: [braking_justification, request_limit, request_outside_braking]}
+  - {requirement: REQ-AEBS-002, ftti_ms: 780, mechanisms: [command_timeout]}

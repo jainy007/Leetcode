@@ -1,7 +1,7 @@
 # GENERATED FILE - DO NOT EDIT. Changes are overwritten and rejected by CI.
 # Generator: ea-gen 0.1.0 (rule-based, deterministic; no AI in this path)
 # Project:   aeb_system (pattern: can_system)
-# Inputs:    sha256:32e090c28d3d514ed5a60fa7ce31d19eb981ea3a5a9d3b6fd2c098d99209902a
+# Inputs:    sha256:3c38374823eec23e9813f37d7d20dee2e10abbfc8a620b8f99e7ed929b104323
 # Regenerate: python3 -m tools.gen
 
 # System SIL only: the product code is in the node projects aeb and aeb_monitor.

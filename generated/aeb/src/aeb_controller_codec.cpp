@@ -1,7 +1,7 @@
 // GENERATED FILE - DO NOT EDIT. Changes are overwritten and rejected by CI.
 // Generator: ea-gen 0.1.0 (rule-based, deterministic; no AI in this path)
 // Project:   aeb (pattern: can_function)
-// Inputs:    sha256:b615ac7a70c66498145a1cce61803118d779529b0bce381de5d78fc6a4940003
+// Inputs:    sha256:e2c276a23aa546cd2244f6d98d18ebe94c32ea6672f5f82001d56e55370b3be5
 // Regenerate: python3 -m tools.gen
 
 #include "aeb/aeb_controller_codec.hpp"

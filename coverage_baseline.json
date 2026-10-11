@@ -20,7 +20,7 @@
     "mcdc": 100.0
   },
   "generated/acc_monitor/src/acc_monitor_logic.cpp": {
-    "branches": 98.33,
+    "branches": 100.0,
     "mcdc": 100.0
   },
   "generated/adas_input_gate/src/adas_input_gate.cpp": {

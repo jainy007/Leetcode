@@ -57,7 +57,7 @@ Feature: AEB safety goals under node faults
     Then the monitor state is SAFE_STATE
     And the monitor reports the fault reason COMMAND_TIMEOUT
     And the actuator entered its safe state within the fault detection budget of REQ-AEBS-002
-    And the request was ramped out within 900 ms of the first fault
+    And the request was ramped out within 460 ms of the first fault
     And the actuator requests a driver takeover
 
     Examples:

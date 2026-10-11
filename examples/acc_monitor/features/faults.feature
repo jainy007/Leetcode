@@ -55,5 +55,5 @@ Feature: ACC monitor faults
     And 1 s pass
     Then the actuator requests a driver takeover
     And the actuator entered its safe state within 40 ms of the first fault
-    And the request was ramped out within 460 ms of the first fault
+    And the request was ramped out within 160 ms of the first fault
     And the actuator applies no request

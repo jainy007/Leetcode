@@ -1,7 +1,7 @@
 # GENERATED FILE - DO NOT EDIT. Changes are overwritten and rejected by CI.
 # Generator: ea-gen 0.1.0 (rule-based, deterministic; no AI in this path)
 # Project:   acc_system (pattern: can_system)
-# Inputs:    sha256:bcf75ddb317884072eb7fb43b43c3450882edb36edd84b7a99e749e56ad81f26
+# Inputs:    sha256:23346b03d4046c6dcd8a3513aba427631a7d11a306ae3f61a7a6d60428b173b5
 # Regenerate: python3 -m tools.gen
 
 # System SIL only: the product code is in the node projects acc and acc_monitor.

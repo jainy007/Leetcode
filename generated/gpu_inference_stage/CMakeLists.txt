@@ -1,7 +1,7 @@
 # GENERATED FILE - DO NOT EDIT. Changes are overwritten and rejected by CI.
 # Generator: ea-gen 0.1.0 (rule-based, deterministic; no AI in this path)
 # Project:   gpu_inference_stage (pattern: gpu_stage)
-# Inputs:    sha256:fc3fc2669b7d7a8178527f959cb9d5c8e33a671595b25690ce99798b8499d060
+# Inputs:    sha256:8f100abd5d48e45bbdc692f79a474a0077f34d8c008e44abb1f2adfcc38e0c85
 # Regenerate: python3 -m tools.gen
 
 # Types shared by producer and monitor (the only coupling between the two processes).

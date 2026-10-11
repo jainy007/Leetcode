@@ -1,12 +1,19 @@
 # Deliberate defects the chain must detect (python3 -m tools.mutate acc_system).
 mutations:
   # ---- inputs: system and node models (FTTI budget, GEN-065 / GEN-066) ----
-  - {name: "actuator reaction 100 -> 150 ms", file: examples/acc_system/model.yaml, old: "reaction_ms: 100", new: "reaction_ms: 150"}
-  - {name: "FTTI of REQ-ACCS-001 200 -> 100 ms", file: examples/acc_system/model.yaml, old: "{requirement: REQ-ACCS-001, ftti_ms: 200", new: "{requirement: REQ-ACCS-001, ftti_ms: 100"}
-  - {name: "monitor debounce 0.5 -> 0.9 s", file: examples/acc_monitor/model.yaml, old: "unintended_accel_debounce_s: {value: 0.5", new: "unintended_accel_debounce_s: {value: 0.9"}
+  - {name: "actuator reaction 100 -> 360 ms", file: examples/acc_system/model.yaml, old: "reaction_ms: 100", new: "reaction_ms: 360"}
+  - {name: "FTTI of REQ-ACCS-001 200 -> 100 ms", file: examples/acc_system/model.yaml, old: "{requirement: REQ-ACCS-001, ftti_ms: 2200", new: "{requirement: REQ-ACCS-001, ftti_ms: 100"}
+  - {name: "FTTI of REQ-ACCS-004 below FDTI + FRTI", file: examples/acc_system/model.yaml, old: "{requirement: REQ-ACCS-004, ftti_ms: 380", new: "{requirement: REQ-ACCS-004, ftti_ms: 150"}
   - {name: "monitor expects another command E2E data id", file: examples/acc_monitor/model.yaml, old: "data_id: 0x0300", new: "data_id: 0x0302"}
   - {name: "monitor DBC: AccelRequest moved", file: examples/acc_monitor/interfaces/acc_monitor.dbc, old: "AccelRequest : 16|10@1+", new: "AccelRequest : 17|10@1+"}
   # ---- generator: system template ----
   - {name: "monitor steps before the controller", file: templates/can_system/sil_harness.hpp.j2, old: "nodes[] = {&controller_, &monitor_};", new: "nodes[] = {&monitor_, &controller_};"}
   - {name: "controller observer drives the vehicle", file: templates/can_system/sil_harness.hpp.j2, old: "                   1U, seconds);", new: "                   0U, seconds);"}
   - {name: "override fault hits the monitor message", file: templates/can_system/sil_harness.hpp.j2, old: "        plant_.inject_node_fault({{ controller.tables[2] }}, ea::plant::NodeFault::kOverride", new: "        plant_.inject_node_fault({{ monitor.tables[2] }}, ea::plant::NodeFault::kOverride"}
+  # ---- inputs: safety analysis (GEN-067 / GEN-068 / GEN-069) ----
+  - {name: "HARA: unintended braking rated C2 instead of C3", file: examples/acc_system/safety/hara.yaml, old: 'controllability: {class: C3, rationale: "The follower is at risk.', new: 'controllability: {class: C2, rationale: "The follower is at risk.'}
+  - {name: "HARA: follower reaction 1.25 -> 0.8 s", file: examples/acc_system/safety/hara.yaml, old: "  reaction_s: 1.25\n", new: "  reaction_s: 0.8\n", expect: tolerated,
+     note: "a faster reaction only lengthens the derived FTTI; the model FTTI stays below it (conservative)"}
+  - {name: "FTA: monitor removed from the braking goal", file: examples/acc_system/safety/fta.yaml, old: "{and: [C-DECEL-HIGH, {or: [M-APPROVE-LIMIT, A-UNGATED]}]}", new: "C-DECEL-HIGH"}
+  - {name: "actuator ramp-out 20 -> 5 m/s3", file: examples/acc_system/model.yaml, old: "  ramp_out_mps3: 20\n", new: "  ramp_out_mps3: 5\n"}
+  - {name: "plant actuator ramp-out 20 -> 5 m/s3", file: sil/plant/src/monitored_actuator.cpp, old: "&decode_acc, 3U, 20.0}", new: "&decode_acc, 3U, 5.0}"}

@@ -1,7 +1,7 @@
 // GENERATED FILE - DO NOT EDIT. Changes are overwritten and rejected by CI.
 // Generator: ea-gen 0.1.0 (rule-based, deterministic; no AI in this path)
 // Project:   acc_monitor (pattern: can_function)
-// Inputs:    sha256:870db9709bc2042a12245115be83e147f59dcb471925f63ce067348e3f85098c
+// Inputs:    sha256:7aee4feecefbc18e2ad7476e4d93efffab091cab221dd8b1b9699ac5d31b6524
 // Regenerate: python3 -m tools.gen
 
 #include <gtest/gtest.h>
@@ -430,10 +430,10 @@ TEST_F(AccMonitorSilTest, S18_TheRateLimitScalesWithTheTimeSinceTheLastValidComm
     EXPECT_LT(sil_.actuator().metrics().monitor_safe_state_s, 0.0);
 }
 
-// Scenario: Acceleration toward a close in-lane vehicle latches SAFE_STATE after 0.5 s
+// Scenario: Acceleration starting toward a close in-lane vehicle latches SAFE_STATE at once
 // Source:   examples/acc_monitor/features/envelope.feature:119
 // Verifies: REQ-ACCM-007
-TEST_F(AccMonitorSilTest, S19_AccelerationTowardACloseInLaneVehicleLatchesSAFESTATEAfter05) {
+TEST_F(AccMonitorSilTest, S19_AccelerationStartingTowardACloseInLaneVehicleLatchesSAFESTAT) {
     // Given the ego vehicle drives at 60 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(60.0);
     // And a stationary vehicle stands 30 m ahead  [FN-S19]
@@ -450,17 +450,123 @@ TEST_F(AccMonitorSilTest, S19_AccelerationTowardACloseInLaneVehicleLatchesSAFEST
     EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kSafeState);
     // And the monitor reports the fault reason UNINTENDED_ACCEL  [ACCM-S05]
     EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AccMonitorReason::kUnintendedAccel));
-    // And the monitor entered SAFE_STATE between 0.68 s and 0.72 s  [MON-S04]
-    EXPECT_GE(sil_.actuator().metrics().monitor_safe_state_s, 0.68 - 1e-9); EXPECT_LE(sil_.actuator().metrics().monitor_safe_state_s, 0.72 + 1e-9);
+    // And the monitor entered SAFE_STATE between 0.2 s and 0.24 s  [MON-S04]
+    EXPECT_GE(sil_.actuator().metrics().monitor_safe_state_s, 0.2 - 1e-9); EXPECT_LE(sil_.actuator().metrics().monitor_safe_state_s, 0.24 + 1e-9);
+    // And the applied acceleration never exceeded 0 m/s2  [MON-S11]
+    EXPECT_LE(sil_.actuator().metrics().max_applied_accel_mps2, 0.0 + 1e-9);
     // And the actuator requests a driver takeover  [MON-S09]
     EXPECT_EQ(sil_.actuator().takeover_request(), true);
 }
 
-// Scenario: Acceleration is allowed when no in-lane vehicle is closer than 2 s #1
-// Source:   examples/acc_monitor/features/envelope.feature:132
+// Scenario: After a cut-in the acceleration must decay by at least 4 m/s3 #1
+// Source:   examples/acc_monitor/features/envelope.feature:133
+// Verifies: REQ-ACCM-007
+// Example:  j=5.0, state=MONITORING, reason=NONE
+TEST_F(AccMonitorSilTest, S20_AfterACutInTheAccelerationMustDecayByAtLeast4MS3_Ex1) {
+    // Given the ego vehicle drives at 60 km/h  [FN-S01]
+    sil_.plant().set_ego_speed_kph(60.0);
+    // And a stationary vehicle stands 200 m ahead  [FN-S19]
+    sil_.plant().set_lead(200.0, 0.0, 0.0);
+    // And the controller is ACTIVE without request  [ACCM-S01]
+    sil_.command(static_cast<double>(ea::plant::AccStatus::kActive), 0.0);
+    // When 0.2 s pass  [FN-S10]
+    sil_.run(0.2);
+    // And the controller ramps the acceleration request to 1.0 m/s2 at 2.5 m/s3  [ACCM-S02]
+    sil_.ramp_request(static_cast<double>(ea::plant::AccStatus::kActive), 1.0, 2.5);
+    // And a vehicle cuts in 30 m ahead at 20 km/h  [FN-S14]
+    sil_.plant().cut_in(30.0, 20.0);
+    // And the controller ramps the acceleration request to 0.0 m/s2 at 5.0 m/s3  [ACCM-S02]
+    sil_.ramp_request(static_cast<double>(ea::plant::AccStatus::kActive), 0.0, 5.0);
+    // And 0.2 s pass  [FN-S10]
+    sil_.run(0.2);
+    // Then the monitor state is MONITORING  [MON-S01]
+    EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kMonitoring);
+    // And the monitor reports the fault reason NONE  [ACCM-S05]
+    EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AccMonitorReason::kNone));
+}
+
+// Scenario: After a cut-in the acceleration must decay by at least 4 m/s3 #2
+// Source:   examples/acc_monitor/features/envelope.feature:133
+// Verifies: REQ-ACCM-007
+// Example:  j=3.0, state=SAFE_STATE, reason=UNINTENDED_ACCEL
+TEST_F(AccMonitorSilTest, S21_AfterACutInTheAccelerationMustDecayByAtLeast4MS3_Ex2) {
+    // Given the ego vehicle drives at 60 km/h  [FN-S01]
+    sil_.plant().set_ego_speed_kph(60.0);
+    // And a stationary vehicle stands 200 m ahead  [FN-S19]
+    sil_.plant().set_lead(200.0, 0.0, 0.0);
+    // And the controller is ACTIVE without request  [ACCM-S01]
+    sil_.command(static_cast<double>(ea::plant::AccStatus::kActive), 0.0);
+    // When 0.2 s pass  [FN-S10]
+    sil_.run(0.2);
+    // And the controller ramps the acceleration request to 1.0 m/s2 at 2.5 m/s3  [ACCM-S02]
+    sil_.ramp_request(static_cast<double>(ea::plant::AccStatus::kActive), 1.0, 2.5);
+    // And a vehicle cuts in 30 m ahead at 20 km/h  [FN-S14]
+    sil_.plant().cut_in(30.0, 20.0);
+    // And the controller ramps the acceleration request to 0.0 m/s2 at 3.0 m/s3  [ACCM-S02]
+    sil_.ramp_request(static_cast<double>(ea::plant::AccStatus::kActive), 0.0, 3.0);
+    // And 0.2 s pass  [FN-S10]
+    sil_.run(0.2);
+    // Then the monitor state is SAFE_STATE  [MON-S01]
+    EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kSafeState);
+    // And the monitor reports the fault reason UNINTENDED_ACCEL  [ACCM-S05]
+    EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AccMonitorReason::kUnintendedAccel));
+}
+
+// Scenario: The decay is required from TTC 3 s on #1
+// Source:   examples/acc_monitor/features/envelope.feature:151
+// Verifies: REQ-ACCM-007
+// Example:  d=32, state=SAFE_STATE
+TEST_F(AccMonitorSilTest, S22_TheDecayIsRequiredFromTTC3SOn_Ex1) {
+    // Given the ego vehicle drives at 60 km/h  [FN-S01]
+    sil_.plant().set_ego_speed_kph(60.0);
+    // And a stationary vehicle stands 200 m ahead  [FN-S19]
+    sil_.plant().set_lead(200.0, 0.0, 0.0);
+    // And the controller is ACTIVE without request  [ACCM-S01]
+    sil_.command(static_cast<double>(ea::plant::AccStatus::kActive), 0.0);
+    // When 0.2 s pass  [FN-S10]
+    sil_.run(0.2);
+    // And the controller ramps the acceleration request to 0.3 m/s2 at 2.5 m/s3  [ACCM-S02]
+    sil_.ramp_request(static_cast<double>(ea::plant::AccStatus::kActive), 0.3, 2.5);
+    // And a vehicle cuts in 32 m ahead at 20 km/h  [FN-S14]
+    sil_.plant().cut_in(32.0, 20.0);
+    // And the controller ramps the acceleration request to 0.0 m/s2 at 3.0 m/s3  [ACCM-S02]
+    sil_.ramp_request(static_cast<double>(ea::plant::AccStatus::kActive), 0.0, 3.0);
+    // And 0.2 s pass  [FN-S10]
+    sil_.run(0.2);
+    // Then the monitor state is SAFE_STATE  [MON-S01]
+    EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kSafeState);
+}
+
+// Scenario: The decay is required from TTC 3 s on #2
+// Source:   examples/acc_monitor/features/envelope.feature:151
+// Verifies: REQ-ACCM-007
+// Example:  d=36, state=MONITORING
+TEST_F(AccMonitorSilTest, S23_TheDecayIsRequiredFromTTC3SOn_Ex2) {
+    // Given the ego vehicle drives at 60 km/h  [FN-S01]
+    sil_.plant().set_ego_speed_kph(60.0);
+    // And a stationary vehicle stands 200 m ahead  [FN-S19]
+    sil_.plant().set_lead(200.0, 0.0, 0.0);
+    // And the controller is ACTIVE without request  [ACCM-S01]
+    sil_.command(static_cast<double>(ea::plant::AccStatus::kActive), 0.0);
+    // When 0.2 s pass  [FN-S10]
+    sil_.run(0.2);
+    // And the controller ramps the acceleration request to 0.3 m/s2 at 2.5 m/s3  [ACCM-S02]
+    sil_.ramp_request(static_cast<double>(ea::plant::AccStatus::kActive), 0.3, 2.5);
+    // And a vehicle cuts in 36 m ahead at 20 km/h  [FN-S14]
+    sil_.plant().cut_in(36.0, 20.0);
+    // And the controller ramps the acceleration request to 0.0 m/s2 at 3.0 m/s3  [ACCM-S02]
+    sil_.ramp_request(static_cast<double>(ea::plant::AccStatus::kActive), 0.0, 3.0);
+    // And 0.2 s pass  [FN-S10]
+    sil_.run(0.2);
+    // Then the monitor state is MONITORING  [MON-S01]
+    EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kMonitoring);
+}
+
+// Scenario: Acceleration is allowed when no in-lane vehicle is closer than 3 s #1
+// Source:   examples/acc_monitor/features/envelope.feature:168
 // Verifies: REQ-ACCM-007
 // Example:  d=80, lat=0.0
-TEST_F(AccMonitorSilTest, S20_AccelerationIsAllowedWhenNoInLaneVehicleIsCloserThan2S_Ex1) {
+TEST_F(AccMonitorSilTest, S24_AccelerationIsAllowedWhenNoInLaneVehicleIsCloserThan3S_Ex1) {
     // Given the ego vehicle drives at 60 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(60.0);
     // And a vehicle drives 80 m ahead at 0 km/h with 0.0 m lateral offset  [FN-S12]
@@ -479,11 +585,11 @@ TEST_F(AccMonitorSilTest, S20_AccelerationIsAllowedWhenNoInLaneVehicleIsCloserTh
     EXPECT_LT(sil_.actuator().metrics().monitor_safe_state_s, 0.0);
 }
 
-// Scenario: Acceleration is allowed when no in-lane vehicle is closer than 2 s #2
-// Source:   examples/acc_monitor/features/envelope.feature:132
+// Scenario: Acceleration is allowed when no in-lane vehicle is closer than 3 s #2
+// Source:   examples/acc_monitor/features/envelope.feature:168
 // Verifies: REQ-ACCM-007
 // Example:  d=30, lat=2.0
-TEST_F(AccMonitorSilTest, S21_AccelerationIsAllowedWhenNoInLaneVehicleIsCloserThan2S_Ex2) {
+TEST_F(AccMonitorSilTest, S25_AccelerationIsAllowedWhenNoInLaneVehicleIsCloserThan3S_Ex2) {
     // Given the ego vehicle drives at 60 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(60.0);
     // And a vehicle drives 30 m ahead at 0 km/h with 2.0 m lateral offset  [FN-S12]
@@ -502,11 +608,11 @@ TEST_F(AccMonitorSilTest, S21_AccelerationIsAllowedWhenNoInLaneVehicleIsCloserTh
     EXPECT_LT(sil_.actuator().metrics().monitor_safe_state_s, 0.0);
 }
 
-// Scenario: Acceleration is allowed when no in-lane vehicle is closer than 2 s #3
-// Source:   examples/acc_monitor/features/envelope.feature:132
+// Scenario: Acceleration is allowed when no in-lane vehicle is closer than 3 s #3
+// Source:   examples/acc_monitor/features/envelope.feature:168
 // Verifies: REQ-ACCM-007
 // Example:  d=220, lat=0.0
-TEST_F(AccMonitorSilTest, S22_AccelerationIsAllowedWhenNoInLaneVehicleIsCloserThan2S_Ex3) {
+TEST_F(AccMonitorSilTest, S26_AccelerationIsAllowedWhenNoInLaneVehicleIsCloserThan3S_Ex3) {
     // Given the ego vehicle drives at 60 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(60.0);
     // And a vehicle drives 220 m ahead at 0 km/h with 0.0 m lateral offset  [FN-S12]
@@ -526,9 +632,9 @@ TEST_F(AccMonitorSilTest, S22_AccelerationIsAllowedWhenNoInLaneVehicleIsCloserTh
 }
 
 // Scenario: Acceleration without a valid radar latches SAFE_STATE
-// Source:   examples/acc_monitor/features/envelope.feature:149
+// Source:   examples/acc_monitor/features/envelope.feature:185
 // Verifies: REQ-ACCM-007
-TEST_F(AccMonitorSilTest, S23_AccelerationWithoutAValidRadarLatchesSAFESTATE) {
+TEST_F(AccMonitorSilTest, S27_AccelerationWithoutAValidRadarLatchesSAFESTATE) {
     // Given the ego vehicle drives at 60 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(60.0);
     // And the controller is ACTIVE without request  [ACCM-S01]
@@ -547,45 +653,11 @@ TEST_F(AccMonitorSilTest, S23_AccelerationWithoutAValidRadarLatchesSAFESTATE) {
     EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AccMonitorReason::kUnintendedAccel));
 }
 
-// Scenario: Short acceleration bursts toward a close vehicle do not add up
-// Source:   examples/acc_monitor/features/envelope.feature:160
-// Verifies: REQ-ACCM-007
-TEST_F(AccMonitorSilTest, S24_ShortAccelerationBurstsTowardACloseVehicleDoNotAddUp) {
-    // Given the ego vehicle drives at 60 km/h  [FN-S01]
-    sil_.plant().set_ego_speed_kph(60.0);
-    // And a stationary vehicle stands 30 m ahead  [FN-S19]
-    sil_.plant().set_lead(30.0, 0.0, 0.0);
-    // And the controller is ACTIVE without request  [ACCM-S01]
-    sil_.command(static_cast<double>(ea::plant::AccStatus::kActive), 0.0);
-    // When 0.2 s pass  [FN-S10]
-    sil_.run(0.2);
-    // And the controller ramps the acceleration request to 0.1 m/s2 at 2.5 m/s3  [ACCM-S02]
-    sil_.ramp_request(static_cast<double>(ea::plant::AccStatus::kActive), 0.1, 2.5);
-    // And 0.3 s pass  [FN-S10]
-    sil_.run(0.3);
-    // And the controller ramps the acceleration request to 0.0 m/s2 at 5.0 m/s3  [ACCM-S02]
-    sil_.ramp_request(static_cast<double>(ea::plant::AccStatus::kActive), 0.0, 5.0);
-    // And 0.1 s pass  [FN-S10]
-    sil_.run(0.1);
-    // And the controller ramps the acceleration request to 0.1 m/s2 at 2.5 m/s3  [ACCM-S02]
-    sil_.ramp_request(static_cast<double>(ea::plant::AccStatus::kActive), 0.1, 2.5);
-    // And 0.3 s pass  [FN-S10]
-    sil_.run(0.3);
-    // And the controller ramps the acceleration request to 0.0 m/s2 at 5.0 m/s3  [ACCM-S02]
-    sil_.ramp_request(static_cast<double>(ea::plant::AccStatus::kActive), 0.0, 5.0);
-    // And 0.1 s pass  [FN-S10]
-    sil_.run(0.1);
-    // Then the monitor state is MONITORING  [MON-S01]
-    EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kMonitoring);
-    // And the monitor never entered SAFE_STATE  [MON-S05]
-    EXPECT_LT(sil_.actuator().metrics().monitor_safe_state_s, 0.0);
-}
-
 // Scenario: A stopped or frozen command sender latches SAFE_STATE within the timeout #1
 // Source:   examples/acc_monitor/features/faults.feature:7
 // Verifies: REQ-ACCM-008, REQ-ACCM-009
 // Example:  f=stops
-TEST_F(AccMonitorSilTest, S25_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex1) {
+TEST_F(AccMonitorSilTest, S28_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex1) {
     // Given the ego vehicle drives at 100 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(100.0);
     // And the controller is ACTIVE without request  [ACCM-S01]
@@ -610,7 +682,7 @@ TEST_F(AccMonitorSilTest, S25_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithi
 // Source:   examples/acc_monitor/features/faults.feature:7
 // Verifies: REQ-ACCM-008, REQ-ACCM-009
 // Example:  f=freezes
-TEST_F(AccMonitorSilTest, S26_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex2) {
+TEST_F(AccMonitorSilTest, S29_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex2) {
     // Given the ego vehicle drives at 100 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(100.0);
     // And the controller is ACTIVE without request  [ACCM-S01]
@@ -635,7 +707,7 @@ TEST_F(AccMonitorSilTest, S26_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithi
 // Source:   examples/acc_monitor/features/faults.feature:24
 // Verifies: REQ-ACCM-008
 // Example:  f=lost
-TEST_F(AccMonitorSilTest, S27_UpToTwoLostOrCorruptedCommandFramesAreTolerated_Ex1) {
+TEST_F(AccMonitorSilTest, S30_UpToTwoLostOrCorruptedCommandFramesAreTolerated_Ex1) {
     // Given the ego vehicle drives at 100 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(100.0);
     // And the controller is ACTIVE without request  [ACCM-S01]
@@ -656,7 +728,7 @@ TEST_F(AccMonitorSilTest, S27_UpToTwoLostOrCorruptedCommandFramesAreTolerated_Ex
 // Source:   examples/acc_monitor/features/faults.feature:24
 // Verifies: REQ-ACCM-008
 // Example:  f=corrupted
-TEST_F(AccMonitorSilTest, S28_UpToTwoLostOrCorruptedCommandFramesAreTolerated_Ex2) {
+TEST_F(AccMonitorSilTest, S31_UpToTwoLostOrCorruptedCommandFramesAreTolerated_Ex2) {
     // Given the ego vehicle drives at 100 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(100.0);
     // And the controller is ACTIVE without request  [ACCM-S01]
@@ -676,7 +748,7 @@ TEST_F(AccMonitorSilTest, S28_UpToTwoLostOrCorruptedCommandFramesAreTolerated_Ex
 // Scenario: Without any command the monitor stays in INIT and grants no permit
 // Source:   examples/acc_monitor/features/faults.feature:39
 // Verifies: REQ-ACCM-001, REQ-ACCM-008
-TEST_F(AccMonitorSilTest, S29_WithoutAnyCommandTheMonitorStaysInINITAndGrantsNoPermit) {
+TEST_F(AccMonitorSilTest, S32_WithoutAnyCommandTheMonitorStaysInINITAndGrantsNoPermit) {
     // Given the ego vehicle drives at 100 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(100.0);
     // When the command sender stops  [MON-S20]
@@ -696,7 +768,7 @@ TEST_F(AccMonitorSilTest, S29_WithoutAnyCommandTheMonitorStaysInINITAndGrantsNoP
 // Scenario: A lost monitor makes the actuator ramp out braking and request a takeover
 // Source:   examples/acc_monitor/features/faults.feature:49
 // Verifies: REQ-ACCM-010
-TEST_F(AccMonitorSilTest, S30_ALostMonitorMakesTheActuatorRampOutBrakingAndRequestATakeove) {
+TEST_F(AccMonitorSilTest, S33_ALostMonitorMakesTheActuatorRampOutBrakingAndRequestATakeove) {
     // Given the ego vehicle drives at 100 km/h  [FN-S01]
     sil_.plant().set_ego_speed_kph(100.0);
     // And the controller is ACTIVE without request  [ACCM-S01]
@@ -713,8 +785,8 @@ TEST_F(AccMonitorSilTest, S30_ALostMonitorMakesTheActuatorRampOutBrakingAndReque
     EXPECT_EQ(sil_.actuator().takeover_request(), true);
     // And the actuator entered its safe state within 40 ms of the first fault  [MON-S10]
     ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 40 + 1e-6);
-    // And the request was ramped out within 460 ms of the first fault  [MON-S13]
-    ASSERT_GE(sil_.actuator().metrics().ramp_out_done_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().ramp_out_done_s - sil_.plant().metrics().first_fault_s) * 1000.0, 460 + 1e-6);
+    // And the request was ramped out within 160 ms of the first fault  [MON-S13]
+    ASSERT_GE(sil_.actuator().metrics().ramp_out_done_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().ramp_out_done_s - sil_.plant().metrics().first_fault_s) * 1000.0, 160 + 1e-6);
     // And the actuator applies no request  [MON-S08]
     EXPECT_FALSE(sil_.actuator().applying());
 }

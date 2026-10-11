@@ -20,7 +20,7 @@
     "generated/acc_monitor/src/acc_monitor_logic.cpp"
   ],
   "generator": "ea-gen 0.1.0",
-  "inputs_sha256": "870db9709bc2042a12245115be83e147f59dcb471925f63ce067348e3f85098c",
+  "inputs_sha256": "7aee4feecefbc18e2ad7476e4d93efffab091cab221dd8b1b9699ac5d31b6524",
   "pattern": "can_function",
   "project": "acc_monitor",
   "requirements": [
@@ -33,7 +33,7 @@
       ],
       "tests": [
         "S01_CommandsInsideTheEnvelopeAreApprovedAndApplied",
-        "S29_WithoutAnyCommandTheMonitorStaysInINITAndGrantsNoPermit"
+        "S32_WithoutAnyCommandTheMonitorStaysInINITAndGrantsNoPermit"
       ],
       "text": "When the first valid AccCommand frame is received, the AccMonitor shall enter MONITORING and check that command.",
       "verification": [
@@ -140,22 +140,25 @@
       "ears": "unwanted",
       "id": "REQ-ACCM-007",
       "satisfied_by": [
+        "calibration:accel_decay_min_mps3",
         "calibration:lane_half_width_m",
         "calibration:max_target_range_m",
         "calibration:min_ttc_for_accel_s",
-        "calibration:unintended_accel_debounce_s",
         "logic",
         "rx:RadarObject"
       ],
       "tests": [
-        "S19_AccelerationTowardACloseInLaneVehicleLatchesSAFESTATEAfter05",
-        "S20_AccelerationIsAllowedWhenNoInLaneVehicleIsCloserThan2S_Ex1",
-        "S21_AccelerationIsAllowedWhenNoInLaneVehicleIsCloserThan2S_Ex2",
-        "S22_AccelerationIsAllowedWhenNoInLaneVehicleIsCloserThan2S_Ex3",
-        "S23_AccelerationWithoutAValidRadarLatchesSAFESTATE",
-        "S24_ShortAccelerationBurstsTowardACloseVehicleDoNotAddUp"
+        "S19_AccelerationStartingTowardACloseInLaneVehicleLatchesSAFESTAT",
+        "S20_AfterACutInTheAccelerationMustDecayByAtLeast4MS3_Ex1",
+        "S21_AfterACutInTheAccelerationMustDecayByAtLeast4MS3_Ex2",
+        "S22_TheDecayIsRequiredFromTTC3SOn_Ex1",
+        "S23_TheDecayIsRequiredFromTTC3SOn_Ex2",
+        "S24_AccelerationIsAllowedWhenNoInLaneVehicleIsCloserThan3S_Ex1",
+        "S25_AccelerationIsAllowedWhenNoInLaneVehicleIsCloserThan3S_Ex2",
+        "S26_AccelerationIsAllowedWhenNoInLaneVehicleIsCloserThan3S_Ex3",
+        "S27_AccelerationWithoutAValidRadarLatchesSAFESTATE"
       ],
-      "text": "If acceleration is requested for 0.5 s while a valid radar target at most 200 m ahead and at most 1.8 m from the lane centre has a time to collision below 2 s, or while no valid RadarObject frame was received for 120 ms, then the AccMonitor shall enter SAFE_STATE with reason UNINTENDED_ACCEL.",
+      "text": "If an AccCommand requests acceleration that did not decrease by at least 4 m/s3 since the previous valid AccCommand while a valid radar target at most 200 m ahead and at most 1.8 m from the lane centre has a time to collision below 3 s, or while no valid RadarObject frame was received for 120 ms, then the AccMonitor shall enter SAFE_STATE with reason UNINTENDED_ACCEL.",
       "verification": [
         "sil"
       ]
@@ -169,11 +172,11 @@
         "rx:AccCommand"
       ],
       "tests": [
-        "S25_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex1",
-        "S26_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex2",
-        "S27_UpToTwoLostOrCorruptedCommandFramesAreTolerated_Ex1",
-        "S28_UpToTwoLostOrCorruptedCommandFramesAreTolerated_Ex2",
-        "S29_WithoutAnyCommandTheMonitorStaysInINITAndGrantsNoPermit"
+        "S28_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex1",
+        "S29_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex2",
+        "S30_UpToTwoLostOrCorruptedCommandFramesAreTolerated_Ex1",
+        "S31_UpToTwoLostOrCorruptedCommandFramesAreTolerated_Ex2",
+        "S32_WithoutAnyCommandTheMonitorStaysInINITAndGrantsNoPermit"
       ],
       "text": "If in MONITORING no valid AccCommand frame is received for 60 ms, then the AccMonitor shall enter SAFE_STATE with reason COMMAND_TIMEOUT.",
       "verification": [
@@ -189,8 +192,8 @@
       ],
       "tests": [
         "S06_ARequestAboveTheLimitIsNeverAppliedAndSAFESTATEStaysLatched",
-        "S25_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex1",
-        "S26_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex2"
+        "S28_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex1",
+        "S29_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex2"
       ],
       "text": "While in SAFE_STATE, the AccMonitor shall withdraw the permit and report the reason of the first violation until the next power cycle.",
       "verification": [
@@ -206,7 +209,7 @@
       ],
       "tests": [
         "S01_CommandsInsideTheEnvelopeAreApprovedAndApplied",
-        "S30_ALostMonitorMakesTheActuatorRampOutBrakingAndRequestATakeove"
+        "S33_ALostMonitorMakesTheActuatorRampOutBrakingAndRequestATakeove"
       ],
       "text": "The AccMonitor shall send the AccMonitorStatus message every 20 ms with E2E protection.",
       "verification": [
@@ -1397,11 +1400,11 @@
       "example": [],
       "feature": "examples/acc_monitor/features/envelope.feature",
       "line": 119,
-      "name": "S19_AccelerationTowardACloseInLaneVehicleLatchesSAFESTATEAfter05",
+      "name": "S19_AccelerationStartingTowardACloseInLaneVehicleLatchesSAFESTAT",
       "requirements": [
         "REQ-ACCM-007"
       ],
-      "scenario": "Acceleration toward a close in-lane vehicle latches SAFE_STATE after 0.5 s",
+      "scenario": "Acceleration starting toward a close in-lane vehicle latches SAFE_STATE at once",
       "steps": [
         {
           "catalogue": "FN-S01",
@@ -1445,13 +1448,300 @@
         },
         {
           "catalogue": "MON-S04",
-          "cpp": "EXPECT_GE(sil_.actuator().metrics().monitor_safe_state_s, 0.68 - 1e-9); EXPECT_LE(sil_.actuator().metrics().monitor_safe_state_s, 0.72 + 1e-9);",
-          "text": "And the monitor entered SAFE_STATE between 0.68 s and 0.72 s"
+          "cpp": "EXPECT_GE(sil_.actuator().metrics().monitor_safe_state_s, 0.2 - 1e-9); EXPECT_LE(sil_.actuator().metrics().monitor_safe_state_s, 0.24 + 1e-9);",
+          "text": "And the monitor entered SAFE_STATE between 0.2 s and 0.24 s"
+        },
+        {
+          "catalogue": "MON-S11",
+          "cpp": "EXPECT_LE(sil_.actuator().metrics().max_applied_accel_mps2, 0.0 + 1e-9);",
+          "text": "And the applied acceleration never exceeded 0 m/s2"
         },
         {
           "catalogue": "MON-S09",
           "cpp": "EXPECT_EQ(sil_.actuator().takeover_request(), true);",
           "text": "And the actuator requests a driver takeover"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "j",
+          "5.0"
+        ],
+        [
+          "state",
+          "MONITORING"
+        ],
+        [
+          "reason",
+          "NONE"
+        ]
+      ],
+      "feature": "examples/acc_monitor/features/envelope.feature",
+      "line": 133,
+      "name": "S20_AfterACutInTheAccelerationMustDecayByAtLeast4MS3_Ex1",
+      "requirements": [
+        "REQ-ACCM-007"
+      ],
+      "scenario": "After a cut-in the acceleration must decay by at least 4 m/s3 #1",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(60.0);",
+          "text": "Given the ego vehicle drives at 60 km/h"
+        },
+        {
+          "catalogue": "FN-S19",
+          "cpp": "sil_.plant().set_lead(200.0, 0.0, 0.0);",
+          "text": "And a stationary vehicle stands 200 m ahead"
+        },
+        {
+          "catalogue": "ACCM-S01",
+          "cpp": "sil_.command(static_cast<double>(ea::plant::AccStatus::kActive), 0.0);",
+          "text": "And the controller is ACTIVE without request"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "When 0.2 s pass"
+        },
+        {
+          "catalogue": "ACCM-S02",
+          "cpp": "sil_.ramp_request(static_cast<double>(ea::plant::AccStatus::kActive), 1.0, 2.5);",
+          "text": "And the controller ramps the acceleration request to 1.0 m/s2 at 2.5 m/s3"
+        },
+        {
+          "catalogue": "FN-S14",
+          "cpp": "sil_.plant().cut_in(30.0, 20.0);",
+          "text": "And a vehicle cuts in 30 m ahead at 20 km/h"
+        },
+        {
+          "catalogue": "ACCM-S02",
+          "cpp": "sil_.ramp_request(static_cast<double>(ea::plant::AccStatus::kActive), 0.0, 5.0);",
+          "text": "And the controller ramps the acceleration request to 0.0 m/s2 at 5.0 m/s3"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "And 0.2 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kMonitoring);",
+          "text": "Then the monitor state is MONITORING"
+        },
+        {
+          "catalogue": "ACCM-S05",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AccMonitorReason::kNone));",
+          "text": "And the monitor reports the fault reason NONE"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "j",
+          "3.0"
+        ],
+        [
+          "state",
+          "SAFE_STATE"
+        ],
+        [
+          "reason",
+          "UNINTENDED_ACCEL"
+        ]
+      ],
+      "feature": "examples/acc_monitor/features/envelope.feature",
+      "line": 133,
+      "name": "S21_AfterACutInTheAccelerationMustDecayByAtLeast4MS3_Ex2",
+      "requirements": [
+        "REQ-ACCM-007"
+      ],
+      "scenario": "After a cut-in the acceleration must decay by at least 4 m/s3 #2",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(60.0);",
+          "text": "Given the ego vehicle drives at 60 km/h"
+        },
+        {
+          "catalogue": "FN-S19",
+          "cpp": "sil_.plant().set_lead(200.0, 0.0, 0.0);",
+          "text": "And a stationary vehicle stands 200 m ahead"
+        },
+        {
+          "catalogue": "ACCM-S01",
+          "cpp": "sil_.command(static_cast<double>(ea::plant::AccStatus::kActive), 0.0);",
+          "text": "And the controller is ACTIVE without request"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "When 0.2 s pass"
+        },
+        {
+          "catalogue": "ACCM-S02",
+          "cpp": "sil_.ramp_request(static_cast<double>(ea::plant::AccStatus::kActive), 1.0, 2.5);",
+          "text": "And the controller ramps the acceleration request to 1.0 m/s2 at 2.5 m/s3"
+        },
+        {
+          "catalogue": "FN-S14",
+          "cpp": "sil_.plant().cut_in(30.0, 20.0);",
+          "text": "And a vehicle cuts in 30 m ahead at 20 km/h"
+        },
+        {
+          "catalogue": "ACCM-S02",
+          "cpp": "sil_.ramp_request(static_cast<double>(ea::plant::AccStatus::kActive), 0.0, 3.0);",
+          "text": "And the controller ramps the acceleration request to 0.0 m/s2 at 3.0 m/s3"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "And 0.2 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kSafeState);",
+          "text": "Then the monitor state is SAFE_STATE"
+        },
+        {
+          "catalogue": "ACCM-S05",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AccMonitorReason::kUnintendedAccel));",
+          "text": "And the monitor reports the fault reason UNINTENDED_ACCEL"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "d",
+          "32"
+        ],
+        [
+          "state",
+          "SAFE_STATE"
+        ]
+      ],
+      "feature": "examples/acc_monitor/features/envelope.feature",
+      "line": 151,
+      "name": "S22_TheDecayIsRequiredFromTTC3SOn_Ex1",
+      "requirements": [
+        "REQ-ACCM-007"
+      ],
+      "scenario": "The decay is required from TTC 3 s on #1",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(60.0);",
+          "text": "Given the ego vehicle drives at 60 km/h"
+        },
+        {
+          "catalogue": "FN-S19",
+          "cpp": "sil_.plant().set_lead(200.0, 0.0, 0.0);",
+          "text": "And a stationary vehicle stands 200 m ahead"
+        },
+        {
+          "catalogue": "ACCM-S01",
+          "cpp": "sil_.command(static_cast<double>(ea::plant::AccStatus::kActive), 0.0);",
+          "text": "And the controller is ACTIVE without request"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "When 0.2 s pass"
+        },
+        {
+          "catalogue": "ACCM-S02",
+          "cpp": "sil_.ramp_request(static_cast<double>(ea::plant::AccStatus::kActive), 0.3, 2.5);",
+          "text": "And the controller ramps the acceleration request to 0.3 m/s2 at 2.5 m/s3"
+        },
+        {
+          "catalogue": "FN-S14",
+          "cpp": "sil_.plant().cut_in(32.0, 20.0);",
+          "text": "And a vehicle cuts in 32 m ahead at 20 km/h"
+        },
+        {
+          "catalogue": "ACCM-S02",
+          "cpp": "sil_.ramp_request(static_cast<double>(ea::plant::AccStatus::kActive), 0.0, 3.0);",
+          "text": "And the controller ramps the acceleration request to 0.0 m/s2 at 3.0 m/s3"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "And 0.2 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kSafeState);",
+          "text": "Then the monitor state is SAFE_STATE"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "d",
+          "36"
+        ],
+        [
+          "state",
+          "MONITORING"
+        ]
+      ],
+      "feature": "examples/acc_monitor/features/envelope.feature",
+      "line": 151,
+      "name": "S23_TheDecayIsRequiredFromTTC3SOn_Ex2",
+      "requirements": [
+        "REQ-ACCM-007"
+      ],
+      "scenario": "The decay is required from TTC 3 s on #2",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(60.0);",
+          "text": "Given the ego vehicle drives at 60 km/h"
+        },
+        {
+          "catalogue": "FN-S19",
+          "cpp": "sil_.plant().set_lead(200.0, 0.0, 0.0);",
+          "text": "And a stationary vehicle stands 200 m ahead"
+        },
+        {
+          "catalogue": "ACCM-S01",
+          "cpp": "sil_.command(static_cast<double>(ea::plant::AccStatus::kActive), 0.0);",
+          "text": "And the controller is ACTIVE without request"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "When 0.2 s pass"
+        },
+        {
+          "catalogue": "ACCM-S02",
+          "cpp": "sil_.ramp_request(static_cast<double>(ea::plant::AccStatus::kActive), 0.3, 2.5);",
+          "text": "And the controller ramps the acceleration request to 0.3 m/s2 at 2.5 m/s3"
+        },
+        {
+          "catalogue": "FN-S14",
+          "cpp": "sil_.plant().cut_in(36.0, 20.0);",
+          "text": "And a vehicle cuts in 36 m ahead at 20 km/h"
+        },
+        {
+          "catalogue": "ACCM-S02",
+          "cpp": "sil_.ramp_request(static_cast<double>(ea::plant::AccStatus::kActive), 0.0, 3.0);",
+          "text": "And the controller ramps the acceleration request to 0.0 m/s2 at 3.0 m/s3"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "And 0.2 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kMonitoring);",
+          "text": "Then the monitor state is MONITORING"
         }
       ]
     },
@@ -1467,12 +1757,12 @@
         ]
       ],
       "feature": "examples/acc_monitor/features/envelope.feature",
-      "line": 132,
-      "name": "S20_AccelerationIsAllowedWhenNoInLaneVehicleIsCloserThan2S_Ex1",
+      "line": 168,
+      "name": "S24_AccelerationIsAllowedWhenNoInLaneVehicleIsCloserThan3S_Ex1",
       "requirements": [
         "REQ-ACCM-007"
       ],
-      "scenario": "Acceleration is allowed when no in-lane vehicle is closer than 2 s #1",
+      "scenario": "Acceleration is allowed when no in-lane vehicle is closer than 3 s #1",
       "steps": [
         {
           "catalogue": "FN-S01",
@@ -1528,12 +1818,12 @@
         ]
       ],
       "feature": "examples/acc_monitor/features/envelope.feature",
-      "line": 132,
-      "name": "S21_AccelerationIsAllowedWhenNoInLaneVehicleIsCloserThan2S_Ex2",
+      "line": 168,
+      "name": "S25_AccelerationIsAllowedWhenNoInLaneVehicleIsCloserThan3S_Ex2",
       "requirements": [
         "REQ-ACCM-007"
       ],
-      "scenario": "Acceleration is allowed when no in-lane vehicle is closer than 2 s #2",
+      "scenario": "Acceleration is allowed when no in-lane vehicle is closer than 3 s #2",
       "steps": [
         {
           "catalogue": "FN-S01",
@@ -1589,12 +1879,12 @@
         ]
       ],
       "feature": "examples/acc_monitor/features/envelope.feature",
-      "line": 132,
-      "name": "S22_AccelerationIsAllowedWhenNoInLaneVehicleIsCloserThan2S_Ex3",
+      "line": 168,
+      "name": "S26_AccelerationIsAllowedWhenNoInLaneVehicleIsCloserThan3S_Ex3",
       "requirements": [
         "REQ-ACCM-007"
       ],
-      "scenario": "Acceleration is allowed when no in-lane vehicle is closer than 2 s #3",
+      "scenario": "Acceleration is allowed when no in-lane vehicle is closer than 3 s #3",
       "steps": [
         {
           "catalogue": "FN-S01",
@@ -1641,8 +1931,8 @@
     {
       "example": [],
       "feature": "examples/acc_monitor/features/envelope.feature",
-      "line": 149,
-      "name": "S23_AccelerationWithoutAValidRadarLatchesSAFESTATE",
+      "line": 185,
+      "name": "S27_AccelerationWithoutAValidRadarLatchesSAFESTATE",
       "requirements": [
         "REQ-ACCM-007"
       ],
@@ -1691,88 +1981,6 @@
       ]
     },
     {
-      "example": [],
-      "feature": "examples/acc_monitor/features/envelope.feature",
-      "line": 160,
-      "name": "S24_ShortAccelerationBurstsTowardACloseVehicleDoNotAddUp",
-      "requirements": [
-        "REQ-ACCM-007"
-      ],
-      "scenario": "Short acceleration bursts toward a close vehicle do not add up",
-      "steps": [
-        {
-          "catalogue": "FN-S01",
-          "cpp": "sil_.plant().set_ego_speed_kph(60.0);",
-          "text": "Given the ego vehicle drives at 60 km/h"
-        },
-        {
-          "catalogue": "FN-S19",
-          "cpp": "sil_.plant().set_lead(30.0, 0.0, 0.0);",
-          "text": "And a stationary vehicle stands 30 m ahead"
-        },
-        {
-          "catalogue": "ACCM-S01",
-          "cpp": "sil_.command(static_cast<double>(ea::plant::AccStatus::kActive), 0.0);",
-          "text": "And the controller is ACTIVE without request"
-        },
-        {
-          "catalogue": "FN-S10",
-          "cpp": "sil_.run(0.2);",
-          "text": "When 0.2 s pass"
-        },
-        {
-          "catalogue": "ACCM-S02",
-          "cpp": "sil_.ramp_request(static_cast<double>(ea::plant::AccStatus::kActive), 0.1, 2.5);",
-          "text": "And the controller ramps the acceleration request to 0.1 m/s2 at 2.5 m/s3"
-        },
-        {
-          "catalogue": "FN-S10",
-          "cpp": "sil_.run(0.3);",
-          "text": "And 0.3 s pass"
-        },
-        {
-          "catalogue": "ACCM-S02",
-          "cpp": "sil_.ramp_request(static_cast<double>(ea::plant::AccStatus::kActive), 0.0, 5.0);",
-          "text": "And the controller ramps the acceleration request to 0.0 m/s2 at 5.0 m/s3"
-        },
-        {
-          "catalogue": "FN-S10",
-          "cpp": "sil_.run(0.1);",
-          "text": "And 0.1 s pass"
-        },
-        {
-          "catalogue": "ACCM-S02",
-          "cpp": "sil_.ramp_request(static_cast<double>(ea::plant::AccStatus::kActive), 0.1, 2.5);",
-          "text": "And the controller ramps the acceleration request to 0.1 m/s2 at 2.5 m/s3"
-        },
-        {
-          "catalogue": "FN-S10",
-          "cpp": "sil_.run(0.3);",
-          "text": "And 0.3 s pass"
-        },
-        {
-          "catalogue": "ACCM-S02",
-          "cpp": "sil_.ramp_request(static_cast<double>(ea::plant::AccStatus::kActive), 0.0, 5.0);",
-          "text": "And the controller ramps the acceleration request to 0.0 m/s2 at 5.0 m/s3"
-        },
-        {
-          "catalogue": "FN-S10",
-          "cpp": "sil_.run(0.1);",
-          "text": "And 0.1 s pass"
-        },
-        {
-          "catalogue": "MON-S01",
-          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kMonitoring);",
-          "text": "Then the monitor state is MONITORING"
-        },
-        {
-          "catalogue": "MON-S05",
-          "cpp": "EXPECT_LT(sil_.actuator().metrics().monitor_safe_state_s, 0.0);",
-          "text": "And the monitor never entered SAFE_STATE"
-        }
-      ]
-    },
-    {
       "example": [
         [
           "f",
@@ -1781,7 +1989,7 @@
       ],
       "feature": "examples/acc_monitor/features/faults.feature",
       "line": 7,
-      "name": "S25_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex1",
+      "name": "S28_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex1",
       "requirements": [
         "REQ-ACCM-008",
         "REQ-ACCM-009"
@@ -1844,7 +2052,7 @@
       ],
       "feature": "examples/acc_monitor/features/faults.feature",
       "line": 7,
-      "name": "S26_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex2",
+      "name": "S29_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex2",
       "requirements": [
         "REQ-ACCM-008",
         "REQ-ACCM-009"
@@ -1907,7 +2115,7 @@
       ],
       "feature": "examples/acc_monitor/features/faults.feature",
       "line": 24,
-      "name": "S27_UpToTwoLostOrCorruptedCommandFramesAreTolerated_Ex1",
+      "name": "S30_UpToTwoLostOrCorruptedCommandFramesAreTolerated_Ex1",
       "requirements": [
         "REQ-ACCM-008"
       ],
@@ -1959,7 +2167,7 @@
       ],
       "feature": "examples/acc_monitor/features/faults.feature",
       "line": 24,
-      "name": "S28_UpToTwoLostOrCorruptedCommandFramesAreTolerated_Ex2",
+      "name": "S31_UpToTwoLostOrCorruptedCommandFramesAreTolerated_Ex2",
       "requirements": [
         "REQ-ACCM-008"
       ],
@@ -2006,7 +2214,7 @@
       "example": [],
       "feature": "examples/acc_monitor/features/faults.feature",
       "line": 39,
-      "name": "S29_WithoutAnyCommandTheMonitorStaysInINITAndGrantsNoPermit",
+      "name": "S32_WithoutAnyCommandTheMonitorStaysInINITAndGrantsNoPermit",
       "requirements": [
         "REQ-ACCM-001",
         "REQ-ACCM-008"
@@ -2054,7 +2262,7 @@
       "example": [],
       "feature": "examples/acc_monitor/features/faults.feature",
       "line": 49,
-      "name": "S30_ALostMonitorMakesTheActuatorRampOutBrakingAndRequestATakeove",
+      "name": "S33_ALostMonitorMakesTheActuatorRampOutBrakingAndRequestATakeove",
       "requirements": [
         "REQ-ACCM-010"
       ],
@@ -2102,8 +2310,8 @@
         },
         {
           "catalogue": "MON-S13",
-          "cpp": "ASSERT_GE(sil_.actuator().metrics().ramp_out_done_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().ramp_out_done_s - sil_.plant().metrics().first_fault_s) * 1000.0, 460 + 1e-6);",
-          "text": "And the request was ramped out within 460 ms of the first fault"
+          "cpp": "ASSERT_GE(sil_.actuator().metrics().ramp_out_done_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().ramp_out_done_s - sil_.plant().metrics().first_fault_s) * 1000.0, 160 + 1e-6);",
+          "text": "And the request was ramped out within 160 ms of the first fault"
         },
         {
           "catalogue": "MON-S08",

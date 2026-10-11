@@ -7,11 +7,12 @@
   },
   "generated_files": [
     "generated/aeb_system/CMakeLists.txt",
+    "generated/aeb_system/safety_analysis.md",
     "generated/aeb_system/sil/aeb_system_sil.hpp",
     "generated/aeb_system/sil/aeb_system_sil_test.cpp"
   ],
   "generator": "ea-gen 0.1.0",
-  "inputs_sha256": "32e090c28d3d514ed5a60fa7ce31d19eb981ea3a5a9d3b6fd2c098d99209902a",
+  "inputs_sha256": "3c38374823eec23e9813f37d7d20dee2e10abbfc8a620b8f99e7ed929b104323",
   "pattern": "can_system",
   "project": "aeb_system",
   "requirements": [
@@ -28,14 +29,14 @@
         "S03_FullBrakingRequestedDuringAWarningIsNeverApplied",
         "S04_BrakingAboveTheFullBrakingLevelIsNeverApplied"
       ],
-      "text": "If the AEB function requests braking that is not justified by an in-lane target, outside a braking state or above the braking levels, then the AebSystem shall prevent its application and reach the safe state within the FTTI of 200 ms.",
+      "text": "If the AEB function requests braking that is not justified by an in-lane target, outside a braking state or above the braking levels, then the AebSystem shall prevent its application and reach the safe state within the FTTI of 780 ms.",
       "verification": [
         "sil",
         "analysis"
       ]
     },
     {
-      "asil": "D",
+      "asil": "B",
       "ears": "unwanted",
       "id": "REQ-AEBS-002",
       "satisfied_by": [
@@ -45,7 +46,7 @@
         "S05_AStoppedOrFrozenControllerDuringFullBrakingIsRampedOut_Ex1",
         "S06_AStoppedOrFrozenControllerDuringFullBrakingIsRampedOut_Ex2"
       ],
-      "text": "If the AEB commands stop or freeze, then the AebSystem shall reach the safe state within the FTTI of 200 ms.",
+      "text": "If the AEB commands stop or freeze, then the AebSystem shall reach the safe state within the FTTI of 780 ms.",
       "verification": [
         "sil",
         "analysis"
@@ -63,7 +64,7 @@
         "S06_AStoppedOrFrozenControllerDuringFullBrakingIsRampedOut_Ex2",
         "S07_ALostMonitorDuringBrakingMakesTheActuatorRampOut"
       ],
-      "text": "The AebSystem shall apply an AEB command only if the AebMonitor grants the permit and echoes that command's E2E counter; on monitor SAFE_STATE or 60 ms without a valid monitor frame it shall ramp braking out at 10 m/s3 and request a driver takeover.",
+      "text": "The AebSystem shall apply an AEB command only if the AebMonitor grants the permit and echoes that command's E2E counter; on monitor SAFE_STATE or 60 ms without a valid monitor frame it shall ramp braking out at 20 m/s3 and request a driver takeover.",
       "verification": [
         "sil"
       ]
@@ -139,7 +140,7 @@
         },
         {
           "catalogue": "SYS-S02",
-          "cpp": "ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 100.0 + 1e-6);",
+          "cpp": "ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 680.0 + 1e-6);",
           "text": "And the actuator entered its safe state within the fault detection budget of REQ-AEBS-001"
         },
         {
@@ -206,7 +207,7 @@
         },
         {
           "catalogue": "SYS-S02",
-          "cpp": "ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 100.0 + 1e-6);",
+          "cpp": "ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 680.0 + 1e-6);",
           "text": "And the actuator entered its safe state within the fault detection budget of REQ-AEBS-001"
         },
         {
@@ -273,7 +274,7 @@
         },
         {
           "catalogue": "SYS-S02",
-          "cpp": "ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 100.0 + 1e-6);",
+          "cpp": "ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 680.0 + 1e-6);",
           "text": "And the actuator entered its safe state within the fault detection budget of REQ-AEBS-001"
         },
         {
@@ -335,7 +336,7 @@
         },
         {
           "catalogue": "SYS-S02",
-          "cpp": "ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 100.0 + 1e-6);",
+          "cpp": "ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 680.0 + 1e-6);",
           "text": "And the actuator entered its safe state within the fault detection budget of REQ-AEBS-001"
         },
         {
@@ -403,13 +404,13 @@
         },
         {
           "catalogue": "SYS-S02",
-          "cpp": "ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 100.0 + 1e-6);",
+          "cpp": "ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 680.0 + 1e-6);",
           "text": "And the actuator entered its safe state within the fault detection budget of REQ-AEBS-002"
         },
         {
           "catalogue": "MON-S13",
-          "cpp": "ASSERT_GE(sil_.actuator().metrics().ramp_out_done_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().ramp_out_done_s - sil_.plant().metrics().first_fault_s) * 1000.0, 900 + 1e-6);",
-          "text": "And the request was ramped out within 900 ms of the first fault"
+          "cpp": "ASSERT_GE(sil_.actuator().metrics().ramp_out_done_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().ramp_out_done_s - sil_.plant().metrics().first_fault_s) * 1000.0, 460 + 1e-6);",
+          "text": "And the request was ramped out within 460 ms of the first fault"
         },
         {
           "catalogue": "MON-S09",
@@ -476,13 +477,13 @@
         },
         {
           "catalogue": "SYS-S02",
-          "cpp": "ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 100.0 + 1e-6);",
+          "cpp": "ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 680.0 + 1e-6);",
           "text": "And the actuator entered its safe state within the fault detection budget of REQ-AEBS-002"
         },
         {
           "catalogue": "MON-S13",
-          "cpp": "ASSERT_GE(sil_.actuator().metrics().ramp_out_done_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().ramp_out_done_s - sil_.plant().metrics().first_fault_s) * 1000.0, 900 + 1e-6);",
-          "text": "And the request was ramped out within 900 ms of the first fault"
+          "cpp": "ASSERT_GE(sil_.actuator().metrics().ramp_out_done_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().ramp_out_done_s - sil_.plant().metrics().first_fault_s) * 1000.0, 460 + 1e-6);",
+          "text": "And the request was ramped out within 460 ms of the first fault"
         },
         {
           "catalogue": "MON-S09",

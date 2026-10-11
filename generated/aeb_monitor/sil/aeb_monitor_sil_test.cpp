@@ -1,7 +1,7 @@
 // GENERATED FILE - DO NOT EDIT. Changes are overwritten and rejected by CI.
 // Generator: ea-gen 0.1.0 (rule-based, deterministic; no AI in this path)
 // Project:   aeb_monitor (pattern: can_function)
-// Inputs:    sha256:31e2c7fbd93dd01fd60ce38fb1537e40edd8600b328b348b62317cb35b638c06
+// Inputs:    sha256:230536ebb5fd8cf2e5c6eff700cb3596edf001524e2100e20ccfddcdcbbad55e
 // Regenerate: python3 -m tools.gen
 
 #include <gtest/gtest.h>
@@ -696,8 +696,8 @@ TEST_F(AebMonitorSilTest, S27_AFrozenMonitorMakesTheActuatorRampOutBrakingAndReq
     EXPECT_EQ(sil_.actuator().takeover_request(), true);
     // And the actuator entered its safe state within 40 ms of the first fault  [MON-S10]
     ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 40 + 1e-6);
-    // And the request was ramped out within 460 ms of the first fault  [MON-S13]
-    ASSERT_GE(sil_.actuator().metrics().ramp_out_done_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().ramp_out_done_s - sil_.plant().metrics().first_fault_s) * 1000.0, 460 + 1e-6);
+    // And the request was ramped out within 260 ms of the first fault  [MON-S13]
+    ASSERT_GE(sil_.actuator().metrics().ramp_out_done_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().ramp_out_done_s - sil_.plant().metrics().first_fault_s) * 1000.0, 260 + 1e-6);
     // And the actuator applies no request  [MON-S08]
     EXPECT_FALSE(sil_.actuator().applying());
 }

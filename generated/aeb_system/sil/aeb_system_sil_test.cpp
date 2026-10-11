@@ -1,7 +1,7 @@
 // GENERATED FILE - DO NOT EDIT. Changes are overwritten and rejected by CI.
 // Generator: ea-gen 0.1.0 (rule-based, deterministic; no AI in this path)
 // Project:   aeb_system (pattern: can_system)
-// Inputs:    sha256:32e090c28d3d514ed5a60fa7ce31d19eb981ea3a5a9d3b6fd2c098d99209902a
+// Inputs:    sha256:3c38374823eec23e9813f37d7d20dee2e10abbfc8a620b8f99e7ed929b104323
 // Regenerate: python3 -m tools.gen
 
 #include <gtest/gtest.h>
@@ -40,7 +40,7 @@ TEST_F(AebSystemSilTest, S01_BrakingRequestedOnAFreeRoadIsNeverApplied_Ex1) {
     // And the monitor reports the fault reason REQUEST_OUTSIDE_BRAKING  [AEBM-S02]
     EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AebMonitorReason::kRequestOutsideBraking));
     // And the actuator entered its safe state within the fault detection budget of REQ-AEBS-001  [SYS-S02]
-    ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 100.0 + 1e-6);
+    ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 680.0 + 1e-6);
     // And the applied deceleration never exceeded 0 m/s2  [MON-S12]
     EXPECT_LE(sil_.actuator().metrics().max_applied_decel_mps2, 0.0 + 1e-9);
     // And the actual deceleration of the vehicle never exceeded 0.1 m/s2  [MON-S16]
@@ -67,7 +67,7 @@ TEST_F(AebSystemSilTest, S02_BrakingRequestedOnAFreeRoadIsNeverApplied_Ex2) {
     // And the monitor reports the fault reason REQUEST_OUTSIDE_BRAKING  [AEBM-S02]
     EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AebMonitorReason::kRequestOutsideBraking));
     // And the actuator entered its safe state within the fault detection budget of REQ-AEBS-001  [SYS-S02]
-    ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 100.0 + 1e-6);
+    ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 680.0 + 1e-6);
     // And the applied deceleration never exceeded 0 m/s2  [MON-S12]
     EXPECT_LE(sil_.actuator().metrics().max_applied_decel_mps2, 0.0 + 1e-9);
     // And the actual deceleration of the vehicle never exceeded 0.1 m/s2  [MON-S16]
@@ -95,7 +95,7 @@ TEST_F(AebSystemSilTest, S03_FullBrakingRequestedDuringAWarningIsNeverApplied) {
     // Then the monitor state is SAFE_STATE  [MON-S01]
     EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kSafeState);
     // And the actuator entered its safe state within the fault detection budget of REQ-AEBS-001  [SYS-S02]
-    ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 100.0 + 1e-6);
+    ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 680.0 + 1e-6);
     // And the applied deceleration never exceeded 0 m/s2  [MON-S12]
     EXPECT_LE(sil_.actuator().metrics().max_applied_decel_mps2, 0.0 + 1e-9);
 }
@@ -121,7 +121,7 @@ TEST_F(AebSystemSilTest, S04_BrakingAboveTheFullBrakingLevelIsNeverApplied) {
     // And the monitor reports the fault reason REQUEST_LIMIT  [AEBM-S02]
     EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AebMonitorReason::kRequestLimit));
     // And the actuator entered its safe state within the fault detection budget of REQ-AEBS-001  [SYS-S02]
-    ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 100.0 + 1e-6);
+    ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 680.0 + 1e-6);
     // And the applied deceleration never exceeded 8.1 m/s2  [MON-S12]
     EXPECT_LE(sil_.actuator().metrics().max_applied_decel_mps2, 8.1 + 1e-9);
 }
@@ -148,9 +148,9 @@ TEST_F(AebSystemSilTest, S05_AStoppedOrFrozenControllerDuringFullBrakingIsRamped
     // And the monitor reports the fault reason COMMAND_TIMEOUT  [AEBM-S02]
     EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AebMonitorReason::kCommandTimeout));
     // And the actuator entered its safe state within the fault detection budget of REQ-AEBS-002  [SYS-S02]
-    ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 100.0 + 1e-6);
-    // And the request was ramped out within 900 ms of the first fault  [MON-S13]
-    ASSERT_GE(sil_.actuator().metrics().ramp_out_done_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().ramp_out_done_s - sil_.plant().metrics().first_fault_s) * 1000.0, 900 + 1e-6);
+    ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 680.0 + 1e-6);
+    // And the request was ramped out within 460 ms of the first fault  [MON-S13]
+    ASSERT_GE(sil_.actuator().metrics().ramp_out_done_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().ramp_out_done_s - sil_.plant().metrics().first_fault_s) * 1000.0, 460 + 1e-6);
     // And the actuator requests a driver takeover  [MON-S09]
     EXPECT_EQ(sil_.actuator().takeover_request(), true);
 }
@@ -177,9 +177,9 @@ TEST_F(AebSystemSilTest, S06_AStoppedOrFrozenControllerDuringFullBrakingIsRamped
     // And the monitor reports the fault reason COMMAND_TIMEOUT  [AEBM-S02]
     EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AebMonitorReason::kCommandTimeout));
     // And the actuator entered its safe state within the fault detection budget of REQ-AEBS-002  [SYS-S02]
-    ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 100.0 + 1e-6);
-    // And the request was ramped out within 900 ms of the first fault  [MON-S13]
-    ASSERT_GE(sil_.actuator().metrics().ramp_out_done_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().ramp_out_done_s - sil_.plant().metrics().first_fault_s) * 1000.0, 900 + 1e-6);
+    ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 680.0 + 1e-6);
+    // And the request was ramped out within 460 ms of the first fault  [MON-S13]
+    ASSERT_GE(sil_.actuator().metrics().ramp_out_done_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().ramp_out_done_s - sil_.plant().metrics().first_fault_s) * 1000.0, 460 + 1e-6);
     // And the actuator requests a driver takeover  [MON-S09]
     EXPECT_EQ(sil_.actuator().takeover_request(), true);
 }

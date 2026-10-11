@@ -1,12 +1,14 @@
 // GENERATED FILE - DO NOT EDIT. Changes are overwritten and rejected by CI.
 // Generator: ea-gen 0.1.0 (rule-based, deterministic; no AI in this path)
 // Project:   acc_monitor (pattern: can_function)
-// Inputs:    sha256:870db9709bc2042a12245115be83e147f59dcb471925f63ce067348e3f85098c
+// Inputs:    sha256:7aee4feecefbc18e2ad7476e4d93efffab091cab221dd8b1b9699ac5d31b6524
 // Regenerate: python3 -m tools.gen
 
 #include "acc_monitor/acc_monitor_logic.hpp"
 
 #include <cmath>
+
+#include "ea/core/saturating.hpp"
 
 namespace adas::acc_monitor {
 
@@ -32,6 +34,8 @@ void AccMonitorLogic::check_command(const Inputs& in) noexcept {
         violation(Reason::kRequestOutsideActive);
     } else if (accel_step > kAccelRatePerCycle * cycles + kEps || brake_step > kBrakeRatePerCycle * cycles + kEps) {
         violation(Reason::kRequestRate);
+    } else if (in.cmd_accel > 0.0 && endangered(in) && accel_step > -kAccelDecayPerCycle * cycles + kEps) {
+        violation(Reason::kUnintendedAccel);  // acceleration toward a close target must decay at once
     } else {
         last_counter_ = in.cmd_counter;
     }
@@ -40,21 +44,12 @@ void AccMonitorLogic::check_command(const Inputs& in) noexcept {
     cycles_since_command_ = 0U;
 }
 
-void AccMonitorLogic::check_unintended_accel(const Inputs& in) noexcept {
-    // Acceleration is unintended while an in-lane target is closer than kMinTtcForAccelS, or
-    // while the radar cannot show that the path is free.
+bool AccMonitorLogic::endangered(const Inputs& in) const noexcept {
+    // An in-lane target closer than kMinTtcForAccelS, or a radar that cannot show a free path.
     const double closing = -in.target_range_rate;
     const bool in_path = in.target_valid > 0.5 && in.target_range <= kMaxTargetRangeM &&
                          std::fabs(in.target_lateral) <= kLaneHalfWidthM;
-    const bool endangered = !in.target_valid_ok || (in_path && closing > 0.0 && in.target_range < kMinTtcForAccelS * closing);
-    if (in.cmd_accel > 0.0 && endangered) {
-        ++accel_toward_target_cycles_;
-        if (accel_toward_target_cycles_ >= kDebounceCycles) {
-            violation(Reason::kUnintendedAccel);
-        }
-    } else {
-        accel_toward_target_cycles_ = 0U;
-    }
+    return !in.target_valid_ok || (in_path && closing > 0.0 && in.target_range < kMinTtcForAccelS * closing);
 }
 
 void AccMonitorLogic::step(const Inputs& in, Outputs& out) noexcept {
@@ -63,7 +58,7 @@ void AccMonitorLogic::step(const Inputs& in, Outputs& out) noexcept {
         state_ = State::kMonitoring;  // the first command is checked like every other
     }
     if (state_ == State::kMonitoring) {
-        cycles_since_command_ = (cycles_since_command_ < 1000U) ? cycles_since_command_ + 1U : cycles_since_command_;
+        cycles_since_command_ = ea::sat_inc(cycles_since_command_);  // CPU-010
         if (!in.cmd_status_ok) {
             violation(Reason::kCommandTimeout);
         } else if (command_new) {
@@ -71,9 +66,6 @@ void AccMonitorLogic::step(const Inputs& in, Outputs& out) noexcept {
         } else {
             // a lost frame within the timeout: nothing new to approve
         }
-    }
-    if (state_ == State::kMonitoring) {
-        check_unintended_accel(in);
     }
     const bool monitoring = state_ == State::kMonitoring;
     out.status = static_cast<double>(static_cast<std::uint8_t>(state_));

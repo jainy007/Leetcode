@@ -87,13 +87,13 @@ private:
     ActuatorMetrics m_{};
 };
 
-// ACC: AccCommand (accel - brake while ACTIVE) gated by AccMonitor; brake ramp-out 5 m/s3.
+// ACC: AccCommand (accel - brake while ACTIVE) gated by AccMonitor; brake ramp-out 20 m/s3.
 class AccActuator final : public MonitoredActuator {
 public:
     AccActuator() noexcept;
 };
 
-// AEB: AebCommand (brake request) gated by AebMonitor; brake ramp-out 10 m/s3.
+// AEB: AebCommand (brake request) gated by AebMonitor; brake ramp-out 20 m/s3.
 class AebActuator final : public MonitoredActuator {
 public:
     AebActuator() noexcept;

@@ -144,10 +144,10 @@ bool MonitoredActuator::longitudinal_request(double& accel_mps2) const noexcept 
 
 AccActuator::AccActuator() noexcept
     : MonitoredActuator(ActuatorConfig{can::kAccCommandId, can::kAccCommandE2e, can::kAccMonitorId, can::kAccMonitorE2e,
-                                       &decode_acc, 3U, 5.0}) {}
+                                       &decode_acc, 3U, 20.0}) {}
 
 AebActuator::AebActuator() noexcept
     : MonitoredActuator(ActuatorConfig{can::kAebCommandId, can::kAebCommandE2e, can::kAebMonitorId, can::kAebMonitorE2e,
-                                       &decode_aeb, 3U, 10.0}) {}
+                                       &decode_aeb, 3U, 20.0}) {}
 
 }  // namespace ea::plant

@@ -20,7 +20,7 @@
     "generated/aeb/src/aeb_controller_logic.cpp"
   ],
   "generator": "ea-gen 0.1.0",
-  "inputs_sha256": "b615ac7a70c66498145a1cce61803118d779529b0bce381de5d78fc6a4940003",
+  "inputs_sha256": "e2c276a23aa546cd2244f6d98d18ebe94c32ea6672f5f82001d56e55370b3be5",
   "pattern": "can_function",
   "project": "aeb",
   "requirements": [

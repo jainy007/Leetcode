@@ -27,7 +27,7 @@ public:
     static constexpr double kMinTtcForAccelS = {{ cal.min_ttc_for_accel_s | cpp_double }};
     static constexpr double kMaxTargetRangeM = {{ cal.max_target_range_m | cpp_double }};
     static constexpr double kLaneHalfWidthM = {{ cal.lane_half_width_m | cpp_double }};
-    static constexpr std::uint32_t kDebounceCycles = {{ debounce_cycles }}U;
+    static constexpr double kAccelDecayPerCycle = {{ accel_decay_per_cycle | cpp_double }};  // minimum decay while endangered
 
     void step(const Inputs& in, Outputs& out) noexcept;
     State state() const noexcept { return state_; }
@@ -35,7 +35,7 @@ public:
 
 private:
     void check_command(const Inputs& in) noexcept;
-    void check_unintended_accel(const Inputs& in) noexcept;
+    bool endangered(const Inputs& in) const noexcept;
     void violation(Reason r) noexcept;
 
     State state_ = State::kInit;
@@ -44,7 +44,6 @@ private:
     double prev_accel_ = 0.0;
     double prev_brake_ = 0.0;
     std::uint32_t cycles_since_command_ = 1U;
-    std::uint32_t accel_toward_target_cycles_ = 0U;
 };
 
 }  // namespace {{ ns }}

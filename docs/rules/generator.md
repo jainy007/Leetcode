@@ -96,6 +96,9 @@ and the file it applies to.
 |---|---|
 | GEN-065 | Every diagnostic mechanism of a safety goal must detect within the FTTI minus the actuator's reaction time |
 | GEN-066 | System nodes must be valid can_function projects with one cycle, identical message definitions and matching E2E on the command |
+| GEN-067 | Each hazardous event is rated S/E/C; its ASIL follows ISO 26262-3 table 4 and its safety goal carries the highest ASIL |
+| GEN-068 | No minimal cut set of a safety goal's fault tree may lie in elements not rated for the goal's ASIL |
+| GEN-069 | A safety goal's FTTI must not exceed the FTTI derived from its hazardous events' situations |
 
 ## Notes on selected rules
 
@@ -118,5 +121,13 @@ and the file it applies to.
   monitor timeout or debounce therefore re-checks every safety goal that relies on it.
 - **GEN-066** exists because each node has its own DBC extract of the vehicle bus. Two extracts that
   disagree on a shared message would each pass on their own and fail only in the vehicle.
+- **GEN-067 to GEN-069** move the safety analysis into the rule-based chain. S, E and C stay
+  engineering judgement, written down with a rationale in `safety/hara.yaml`. The ASIL, the
+  safety goal ASIL, the FTTI and the single-point check are computed, not typed in. GEN-069 found
+  two real problems when it was introduced:
+  - acceleration toward a slower vehicle tolerates only about 0.37 s, too short for the ACC
+    monitor's former 0.5 s debounce;
+  - a 5 m/s3 brake ramp-out in the safe state could not prevent a rear-end collision by a close
+    follower.
 - **GEN-055** requires the `finite` check to come first, because NaN compares false and would
   pass any range check.

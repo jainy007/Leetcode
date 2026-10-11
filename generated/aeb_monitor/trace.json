@@ -20,7 +20,7 @@
     "generated/aeb_monitor/src/aeb_monitor_logic.cpp"
   ],
   "generator": "ea-gen 0.1.0",
-  "inputs_sha256": "31e2c7fbd93dd01fd60ce38fb1537e40edd8600b328b348b62317cb35b638c06",
+  "inputs_sha256": "230536ebb5fd8cf2e5c6eff700cb3596edf001524e2100e20ccfddcdcbbad55e",
   "pattern": "can_function",
   "project": "aeb_monitor",
   "requirements": [
@@ -2010,8 +2010,8 @@
         },
         {
           "catalogue": "MON-S13",
-          "cpp": "ASSERT_GE(sil_.actuator().metrics().ramp_out_done_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().ramp_out_done_s - sil_.plant().metrics().first_fault_s) * 1000.0, 460 + 1e-6);",
-          "text": "And the request was ramped out within 460 ms of the first fault"
+          "cpp": "ASSERT_GE(sil_.actuator().metrics().ramp_out_done_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().ramp_out_done_s - sil_.plant().metrics().first_fault_s) * 1000.0, 260 + 1e-6);",
+          "text": "And the request was ramped out within 260 ms of the first fault"
         },
         {
           "catalogue": "MON-S08",

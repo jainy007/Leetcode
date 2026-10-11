@@ -94,6 +94,8 @@ def stamp(path: str, body: str, header: list[str]) -> str:
         prefix = "".join(f"// {line}\n" for line in header)
     elif path.endswith((".txt", ".cmake")):
         prefix = "".join(f"# {line}\n" for line in header)
+    elif path.endswith(".md"):
+        prefix = "<!--\n" + "".join(f"{line}\n" for line in header) + "-->"
     else:
         return body
     return prefix + "\n" + body

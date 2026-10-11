@@ -1,0 +1,66 @@
+# Safety analysis of {{ component.name }} (generated)
+
+Inputs: `{{ repo_relative_project_dir }}/{{ inputs_hara }}` (HARA), `{{ repo_relative_project_dir }}/{{ inputs_fta }}`
+(fault trees) and `{{ repo_relative_project_dir }}/model.yaml` (safety goals, FTTI, actuator). S, E and C are
+engineering judgement with the rationale given in the HARA. Everything else on this page is computed
+by the generator: ASIL (ISO 26262-3 table 4, GEN-067), FTTI (kinematic models, GEN-069), minimal
+cut sets and the single-point check (GEN-068), and the FDTI budget (GEN-065).
+
+## Assumptions
+| ID | Assumption | Source |
+|---|---|---|
+{% for a in safety.hara.assumptions %}
+| {{ a.id }} | {{ a.text }} | {{ a.source | default("") }} |
+{% endfor %}
+
+## Hazards (HAZOP guide words)
+| ID | Guide word | Function | Malfunction |
+|---|---|---|---|
+{% for h in safety.hara.hazards %}
+| {{ h.id }} | {{ h.guide_word }} | {{ h.function }} | {{ h.malfunction }} |
+{% endfor %}
+
+## Hazardous events and ASIL
+| ID | Hazard | Situation | S | E | C | ASIL | Safety goal |
+|---|---|---|---|---|---|---|---|
+{% for e in safety.events %}
+| {{ e.he.id }} | {{ e.he.hazard }} | {{ e.he.situation }} | {{ e.he.severity.class }} | {{ e.he.exposure.class }} | {{ e.he.controllability.class }} | **{{ e.asil }}** | {{ e.he.safety_goal | default("—") }} |
+{% endfor %}
+
+### Rationale
+{% for e in safety.events %}
+- **{{ e.he.id }}**: {{ e.he.severity.class }}: {{ e.he.severity.rationale }} {{ e.he.exposure.class }}: {{ e.he.exposure.rationale }} {{ e.he.controllability.class }}: {{ e.he.controllability.rationale }}
+{% endfor %}
+
+## Safety goals, FTTI and detection budget
+FTTI derived = the longest fault duration (fault → actuator safe state) for which every reference
+situation still avoids the collision; the model FTTI may be smaller (conservative). Budget check:
+FDTI of every mechanism + actuator reaction ({{ reaction_ms }} ms) ≤ model FTTI.
+
+| Safety goal | ASIL | Derived FTTI | Model FTTI | Mechanisms | Worst FDTI | FDTI + reaction |
+|---|---|---|---|---|---|---|
+{% for g in goals %}
+| {{ g.id }} | {{ safety.goal_asil[g.id] }} | {{ safety.derived[g.id] }} ms{% if safety.derived[g.id] >= 10000 %} (no collision within 10 s){% endif %} | {{ g.ftti_ms }} ms | {{ g.mechanisms | join(", ") }} | {{ g.worst_fdti_ms | int }} ms | {{ (g.worst_fdti_ms + reaction_ms) | int }} ms |
+{% endfor %}
+
+### FTTI derivation per reference situation
+{% for e in safety.events if e.ftti %}
+**{{ e.he.id }}** ({{ e.he.ftti.model }}):
+
+| Situation | Derived FTTI |
+|---|---|
+{% for f in e.ftti %}
+| {% for k in f.params | sort %}{{ k }}={{ f.params[k] }}{% if not loop.last %}, {% endif %}{% endfor %} | {{ f.ms }} ms |
+{% endfor %}
+
+{% endfor %}
+## Fault trees: minimal cut sets
+{% for t in safety.trees %}
+### {{ t.goal }} (ASIL {{ t.asil }}): {{ t.top }}
+| Cut set | Elements | Ratings | Basis |
+|---|---|---|---|
+{% for c in t.cuts %}
+| {{ c.events | join(" AND ") }} | {{ c.elements | join(", ") }} | {{ c.ratings | join(", ") }} | {{ c.basis }} |
+{% endfor %}
+
+{% endfor %}

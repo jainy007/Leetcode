@@ -1,7 +1,7 @@
 // GENERATED FILE - DO NOT EDIT. Changes are overwritten and rejected by CI.
 // Generator: ea-gen 0.1.0 (rule-based, deterministic; no AI in this path)
 // Project:   acc_system (pattern: can_system)
-// Inputs:    sha256:bcf75ddb317884072eb7fb43b43c3450882edb36edd84b7a99e749e56ad81f26
+// Inputs:    sha256:23346b03d4046c6dcd8a3513aba427631a7d11a306ae3f61a7a6d60428b173b5
 // Regenerate: python3 -m tools.gen
 
 #include <gtest/gtest.h>
@@ -41,7 +41,7 @@ TEST_F(AccSystemSilTest, S01_AnAccelerationRequestAboveTheLimitIsNeverApplied) {
     // And the monitor reports the fault reason REQUEST_LIMIT  [ACCM-S05]
     EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AccMonitorReason::kRequestLimit));
     // And the actuator entered its safe state within the fault detection budget of REQ-ACCS-001  [SYS-S02]
-    ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 100.0 + 1e-6);
+    ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 2100.0 + 1e-6);
     // And the applied acceleration never exceeded 2.1 m/s2  [MON-S11]
     EXPECT_LE(sil_.actuator().metrics().max_applied_accel_mps2, 2.1 + 1e-9);
     // And the actual acceleration of the vehicle never exceeded 2.1 m/s2  [MON-S16]
@@ -69,7 +69,7 @@ TEST_F(AccSystemSilTest, S02_AnAccelerationStepWithinTheLimitButAboveTheJerkEnve
     // And the monitor reports the fault reason REQUEST_RATE  [ACCM-S05]
     EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AccMonitorReason::kRequestRate));
     // And the actuator entered its safe state within the fault detection budget of REQ-ACCS-001  [SYS-S02]
-    ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 100.0 + 1e-6);
+    ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 2100.0 + 1e-6);
     // And the applied acceleration never exceeded 0.1 m/s2  [MON-S11]
     EXPECT_LE(sil_.actuator().metrics().max_applied_accel_mps2, 0.1 + 1e-9);
 }
@@ -93,7 +93,7 @@ TEST_F(AccSystemSilTest, S03_ADecelerationRequestAboveTheLimitIsNeverApplied) {
     // And the monitor reports the fault reason REQUEST_LIMIT  [ACCM-S05]
     EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AccMonitorReason::kRequestLimit));
     // And the actuator entered its safe state within the fault detection budget of REQ-ACCS-002  [SYS-S02]
-    ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 100.0 + 1e-6);
+    ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 390.0 + 1e-6);
     // And the applied deceleration never exceeded 3.6 m/s2  [MON-S12]
     EXPECT_LE(sil_.actuator().metrics().max_applied_decel_mps2, 3.6 + 1e-9);
     // And the actual deceleration of the vehicle never exceeded 3.6 m/s2  [MON-S16]
@@ -119,7 +119,7 @@ TEST_F(AccSystemSilTest, S04_AccelerationKeptUpWhileTheControllerBrakesForACutIn
     // Then the monitor state is SAFE_STATE  [MON-S01]
     EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kSafeState);
     // And the actuator entered its safe state within the fault detection budget of REQ-ACCS-003  [SYS-S02]
-    ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 900.0 + 1e-6);
+    ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 270.0 + 1e-6);
     // And the applied acceleration never exceeded 0.06 m/s2  [MON-S11]
     EXPECT_LE(sil_.actuator().metrics().max_applied_accel_mps2, 0.06 + 1e-9);
     // And the actuator requests a driver takeover  [MON-S09]
@@ -128,7 +128,7 @@ TEST_F(AccSystemSilTest, S04_AccelerationKeptUpWhileTheControllerBrakesForACutIn
 
 // Scenario: A stopped or frozen controller while braking behind a slower vehicle #1
 // Source:   examples/acc_system/features/safety_goals.feature:60
-// Verifies: REQ-ACCS-004, REQ-ACCS-005
+// Verifies: REQ-ACCS-004, REQ-ACCS-005, REQ-ACCS-007
 // Example:  f=stops
 TEST_F(AccSystemSilTest, S05_AStoppedOrFrozenControllerWhileBrakingBehindASlowerVehicle_Ex1) {
     // Given the ego vehicle drives at 100 km/h  [FN-S01]
@@ -154,16 +154,16 @@ TEST_F(AccSystemSilTest, S05_AStoppedOrFrozenControllerWhileBrakingBehindASlower
     // And the monitor reports the fault reason COMMAND_TIMEOUT  [ACCM-S05]
     EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AccMonitorReason::kCommandTimeout));
     // And the actuator entered its safe state within the fault detection budget of REQ-ACCS-004  [SYS-S02]
-    ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 100.0 + 1e-6);
-    // And the request was ramped out within 800 ms of the first fault  [MON-S13]
-    ASSERT_GE(sil_.actuator().metrics().ramp_out_done_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().ramp_out_done_s - sil_.plant().metrics().first_fault_s) * 1000.0, 800 + 1e-6);
+    ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 280.0 + 1e-6);
+    // And the request was ramped out within 240 ms of the first fault  [MON-S13]
+    ASSERT_GE(sil_.actuator().metrics().ramp_out_done_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().ramp_out_done_s - sil_.plant().metrics().first_fault_s) * 1000.0, 240 + 1e-6);
     // And the actuator requests a driver takeover  [MON-S09]
     EXPECT_EQ(sil_.actuator().takeover_request(), true);
 }
 
 // Scenario: A stopped or frozen controller while braking behind a slower vehicle #2
 // Source:   examples/acc_system/features/safety_goals.feature:60
-// Verifies: REQ-ACCS-004, REQ-ACCS-005
+// Verifies: REQ-ACCS-004, REQ-ACCS-005, REQ-ACCS-007
 // Example:  f=freezes
 TEST_F(AccSystemSilTest, S06_AStoppedOrFrozenControllerWhileBrakingBehindASlowerVehicle_Ex2) {
     // Given the ego vehicle drives at 100 km/h  [FN-S01]
@@ -189,9 +189,9 @@ TEST_F(AccSystemSilTest, S06_AStoppedOrFrozenControllerWhileBrakingBehindASlower
     // And the monitor reports the fault reason COMMAND_TIMEOUT  [ACCM-S05]
     EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AccMonitorReason::kCommandTimeout));
     // And the actuator entered its safe state within the fault detection budget of REQ-ACCS-004  [SYS-S02]
-    ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 100.0 + 1e-6);
-    // And the request was ramped out within 800 ms of the first fault  [MON-S13]
-    ASSERT_GE(sil_.actuator().metrics().ramp_out_done_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().ramp_out_done_s - sil_.plant().metrics().first_fault_s) * 1000.0, 800 + 1e-6);
+    ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 280.0 + 1e-6);
+    // And the request was ramped out within 240 ms of the first fault  [MON-S13]
+    ASSERT_GE(sil_.actuator().metrics().ramp_out_done_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().ramp_out_done_s - sil_.plant().metrics().first_fault_s) * 1000.0, 240 + 1e-6);
     // And the actuator requests a driver takeover  [MON-S09]
     EXPECT_EQ(sil_.actuator().takeover_request(), true);
 }
@@ -221,7 +221,7 @@ TEST_F(AccSystemSilTest, S07_AControllerReportingSTANDBYWhileRequestingBrakingIs
     // And the monitor reports the fault reason REQUEST_OUTSIDE_ACTIVE  [ACCM-S05]
     EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AccMonitorReason::kRequestOutsideActive));
     // And the actuator entered its safe state within the fault detection budget of REQ-ACCS-004  [SYS-S02]
-    ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 100.0 + 1e-6);
+    ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 280.0 + 1e-6);
 }
 
 // Scenario: A lost monitor makes the actuator ramp out and request a takeover
