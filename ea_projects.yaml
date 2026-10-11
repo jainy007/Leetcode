@@ -5,3 +5,5 @@ projects:
   - {name: gpu_inference_stage, model: examples/gpu_inference_stage/model.yaml, output: generated/gpu_inference_stage}
   - {name: acc, model: examples/acc/model.yaml, output: generated/acc}
   - {name: aeb, model: examples/aeb/model.yaml, output: generated/aeb}
+  - {name: acc_monitor, model: examples/acc_monitor/model.yaml, output: generated/acc_monitor}
+  - {name: aeb_monitor, model: examples/aeb_monitor/model.yaml, output: generated/aeb_monitor}

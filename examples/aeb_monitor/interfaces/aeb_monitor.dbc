@@ -1,0 +1,34 @@
+VERSION ""
+
+NS_ :
+
+BS_:
+
+BU_: RADAR VEHICLE AEB AEBM
+
+BO_ 512 RadarObject: 8 RADAR
+ SG_ Crc : 0|8@1+ (1,0) [0|255] "" AEB
+ SG_ Counter : 8|4@1+ (1,0) [0|15] "" AEB
+ SG_ ObjValid : 12|1@1+ (1,0) [0|1] "" AEB
+ SG_ ObjRange : 16|12@1+ (0.1,0) [0|409.5] "m" AEB
+ SG_ ObjRangeRate : 28|12@1- (0.05,0) [-102.4|102.35] "m/s" AEB
+ SG_ ObjLateralPos : 40|10@1- (0.02,0) [-10.24|10.22] "m" AEB
+
+BO_ 784 AebCommand: 8 AEB
+ SG_ Crc : 0|8@1+ (1,0) [0|255] "" VEHICLE
+ SG_ Counter : 8|4@1+ (1,0) [0|15] "" VEHICLE
+ SG_ AebStatus : 12|3@1+ (1,0) [0|4] "" VEHICLE
+ SG_ FcwWarning : 15|1@1+ (1,0) [0|1] "" VEHICLE
+ SG_ AebBrakeRequest : 16|10@1+ (0.01,0) [0|10] "m/s2" VEHICLE
+
+BO_ 785 AebMonitorStatus: 4 AEBM
+ SG_ Crc : 0|8@1+ (1,0) [0|255] "" VEHICLE
+ SG_ Counter : 8|4@1+ (1,0) [0|15] "" VEHICLE
+ SG_ MonStatus : 12|2@1+ (1,0) [0|2] "" VEHICLE
+ SG_ Permit : 14|1@1+ (1,0) [0|1] "" VEHICLE
+ SG_ ApprovedCounter : 16|4@1+ (1,0) [0|15] "" VEHICLE
+ SG_ FaultReason : 20|4@1+ (1,0) [0|15] "" VEHICLE
+
+CM_ SG_ 784 AebStatus "0=STANDBY 1=WARNING 2=PARTIAL_BRAKE 3=FULL_BRAKE 4=FAULT";
+CM_ SG_ 785 MonStatus "0=INIT 1=MONITORING 2=SAFE_STATE";
+CM_ SG_ 785 FaultReason "0=NONE 1=COMMAND_TIMEOUT 2=REQUEST_LIMIT 3=REQUEST_OUTSIDE_BRAKING 4=UNJUSTIFIED_BRAKING 5=UNJUSTIFIED_FULL_BRAKING";

@@ -14,6 +14,8 @@ EXAMPLES = {
     "gpu": REPO_ROOT / "examples" / "gpu_inference_stage",
     "acc": REPO_ROOT / "examples" / "acc",
     "aeb": REPO_ROOT / "examples" / "aeb",
+    "acc_monitor": REPO_ROOT / "examples" / "acc_monitor",
+    "aeb_monitor": REPO_ROOT / "examples" / "aeb_monitor",
 }
 
 

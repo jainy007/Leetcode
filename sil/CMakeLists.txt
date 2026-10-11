@@ -13,7 +13,9 @@ add_library(ea_plant STATIC
     plant/src/signals.cpp
     plant/src/plant.cpp
     plant/src/acc_observer.cpp
-    plant/src/aeb_observer.cpp)
+    plant/src/aeb_observer.cpp
+    plant/src/command_stub.cpp
+    plant/src/monitored_actuator.cpp)
 target_include_directories(ea_plant PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/plant/include)
 target_link_libraries(ea_plant PUBLIC ea::runtime PRIVATE ea::profile_qm)
 add_library(ea::plant ALIAS ea_plant)

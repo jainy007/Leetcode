@@ -197,6 +197,10 @@ private:
     static constexpr std::size_t kMaxNodeFaults = 4U;
     std::array<NodeFaultSpec, kMaxNodeFaults> node_faults_{};
     std::array<BusFrame, 16> tick_frames_{};
+    std::array<BusFrame, 8> last_frames_{};  // last frame delivered per node tx id (for kFreeze)
+    std::size_t last_frame_count_ = 0U;
+    void remember(const BusFrame& f) noexcept;
+    const BusFrame* last_frame(std::uint32_t can_id) const noexcept;
     std::size_t tick_frame_count_ = 0U;
     double prev_ego_v_ = 0.0;
     VehicleMetrics m_{};

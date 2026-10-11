@@ -3,6 +3,8 @@ from __future__ import annotations
 
 NAME = "acc"
 STATES = ["OFF", "STANDBY", "ACTIVE", "OVERRIDE", "FAULT"]
+# Hand-written plant layout of the output message: (header, signal namespace, id, E2E config).
+PLANT_TABLES = ("ea/plant/acc_can.hpp", "ea::plant::can::acc_command", "ea::plant::can::kAccCommandId", "ea::plant::can::kAccCommandE2e")
 OBSERVER = ("ea/plant/acc_observer.hpp", "ea::plant::AccObserver")
 
 CALIBRATION = {

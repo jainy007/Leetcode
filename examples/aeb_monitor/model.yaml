@@ -1,0 +1,57 @@
+# Model for the AEB safety monitor (pattern can_function, feature aeb_monitor).
+schema_version: 1
+pattern: can_function
+feature: aeb_monitor
+
+component:
+  name: AebMonitor
+  namespace: adas::aeb_monitor
+  asil: B(D)
+  profile: asil
+
+inputs:
+  requirements: requirements.yaml
+  features: [features/justification.feature, features/faults.feature]
+  dbc: [interfaces/aeb_monitor.dbc]
+
+cycle_ms: 20
+
+rx:
+  - {message: RadarObject, period_ms: 40, timeout_ms: 120, satisfies: [REQ-AEBM-005],
+     e2e: {data_id: 0x0200, crc: Crc, counter: Counter, max_delta_counter: 3}}
+  - {message: AebCommand, period_ms: 20, timeout_ms: 60, satisfies: [REQ-AEBM-008],
+     e2e: {data_id: 0x0310, crc: Crc, counter: Counter, max_delta_counter: 3}}
+
+tx:
+  - {message: AebMonitorStatus, satisfies: [REQ-AEBM-010],
+     e2e: {data_id: 0x0311, crc: Crc, counter: Counter, max_delta_counter: 2}}
+
+bindings:
+  target_valid: RadarObject.ObjValid
+  target_range: RadarObject.ObjRange
+  target_range_rate: RadarObject.ObjRangeRate
+  target_lateral: RadarObject.ObjLateralPos
+  cmd_status: AebCommand.AebStatus
+  cmd_brake: AebCommand.AebBrakeRequest
+  cmd_counter: AebCommand.Counter
+  status: AebMonitorStatus.MonStatus
+  permit: AebMonitorStatus.Permit
+  approved_counter: AebMonitorStatus.ApprovedCounter
+  fault_reason: AebMonitorStatus.FaultReason
+
+logic:
+  satisfies: [REQ-AEBM-001, REQ-AEBM-002, REQ-AEBM-003, REQ-AEBM-004, REQ-AEBM-005, REQ-AEBM-006,
+              REQ-AEBM-007, REQ-AEBM-008, REQ-AEBM-009]
+
+calibration:
+  partial_status_code: {value: 2, satisfies: [REQ-AEBM-003, REQ-AEBM-004]}
+  full_status_code: {value: 3, satisfies: [REQ-AEBM-004]}
+  partial_decel_mps2: {value: 4.0, satisfies: [REQ-AEBM-003, REQ-AEBM-006]}
+  full_decel_mps2: {value: 8.0, satisfies: [REQ-AEBM-003]}
+  request_tolerance_mps2: {value: 0.1, satisfies: [REQ-AEBM-003, REQ-AEBM-006]}
+  partial_brake_ttc_s: {value: 1.8, satisfies: [REQ-AEBM-005]}
+  full_brake_ttc_s: {value: 1.2, satisfies: [REQ-AEBM-006]}
+  ttc_margin_s: {value: 0.3, satisfies: [REQ-AEBM-005, REQ-AEBM-006]}
+  max_target_range_m: {value: 150, satisfies: [REQ-AEBM-005, REQ-AEBM-007]}
+  lane_half_width_m: {value: 1.8, satisfies: [REQ-AEBM-005, REQ-AEBM-007]}
+  lane_margin_m: {value: 0.3, satisfies: [REQ-AEBM-005, REQ-AEBM-007]}

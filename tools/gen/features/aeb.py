@@ -3,6 +3,8 @@ from __future__ import annotations
 
 NAME = "aeb"
 STATES = ["STANDBY", "WARNING", "PARTIAL_BRAKE", "FULL_BRAKE", "FAULT"]
+# Hand-written plant layout of the output message: (header, signal namespace, id, E2E config).
+PLANT_TABLES = ("ea/plant/aeb_can.hpp", "ea::plant::can::aeb_command", "ea::plant::can::kAebCommandId", "ea::plant::can::kAebCommandE2e")
 OBSERVER = ("ea/plant/aeb_observer.hpp", "ea::plant::AebObserver")
 
 CALIBRATION = {

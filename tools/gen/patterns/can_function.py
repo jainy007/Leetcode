@@ -76,6 +76,10 @@ def build(inputs, diags: Diagnostics):
             if msg is not None:
                 messages[msg.name] = msg
 
+    # Generated C++ declares one struct per message next to the component class.
+    if comp["name"] in messages:
+        diags.error("GEN-060", display, f"component name '{comp['name']}' collides with a DBC message name")
+
     # Calibration (GEN-063)
     raw_cal = model["calibration"]
     cal: dict = {}
@@ -155,7 +159,10 @@ def build(inputs, diags: Diagnostics):
             diags.error("GEN-060", display, f"'{name}' must bind to a signal of a {direction} message, not {msg_name}.{sig_name}")
             continue
         e2e = side[msg_name]["e2e"]
-        if e2e is not None and sig.name in (e2e["crc_name"], e2e["counter_name"]):
+        # A function may read the counter of a received message (e.g. a monitor approving one
+        # specific command), but never the CRC, and it never writes either.
+        protected = () if e2e is None else ((e2e["crc_name"],) if direction == "rx" else (e2e["crc_name"], e2e["counter_name"]))
+        if sig.name in protected:
             diags.error("GEN-062", display, f"'{name}' is bound to an E2E protection signal")
             continue
         lo, hi = needed(cal)
@@ -189,6 +196,7 @@ def build(inputs, diags: Diagnostics):
     variables = {
         "component": comp, "snake": snake, "ns": comp["namespace"], "inc": inputs.name,
         "feature": feature.NAME, "observer_header": feature.OBSERVER[0], "observer_type": feature.OBSERVER[1],
+        "stimulus": getattr(feature, "STIMULUS", None),
         "states": feature.STATES, "messages": [messages[k] for k in sorted(messages)],
         "rx": rx_list, "tx": tx_list, "inputs": sorted(rx_inputs, key=lambda b: b["name"]),
         "outputs": sorted(tx_outputs, key=lambda b: b["name"]), "b": bindings, "cal": cal, "cycle_ms": cycle,
@@ -208,6 +216,8 @@ def build(inputs, diags: Diagnostics):
     ]
     feature_files = sorted((TEMPLATE_DIR / "features" / feature.NAME).rglob("*.j2"))
     feature_files.append(REPO_ROOT / "sil" / "steps" / "features" / f"{feature.NAME}.yaml")
+    extra_steps = list(getattr(feature, "EXTRA_STEPS", []))
+    feature_files.extend(REPO_ROOT / rel for rel in extra_steps)
     return Context(
         systems=[comp["name"]],
         satisfies=satisfies,
@@ -215,6 +225,6 @@ def build(inputs, diags: Diagnostics):
         variables=variables,
         outputs=outputs,
         sil_suite=f"{comp['name']}SilTest",
-        step_catalogues=["sil/steps/can_function.yaml", f"sil/steps/features/{feature.NAME}.yaml"],
+        step_catalogues=["sil/steps/can_function.yaml", *extra_steps, f"sil/steps/features/{feature.NAME}.yaml"],
         extra_tool_files=feature_files,
     )

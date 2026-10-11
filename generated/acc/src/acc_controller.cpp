@@ -1,7 +1,7 @@
 // GENERATED FILE - DO NOT EDIT. Changes are overwritten and rejected by CI.
 // Generator: ea-gen 0.1.0 (rule-based, deterministic; no AI in this path)
 // Project:   acc (pattern: can_function)
-// Inputs:    sha256:fbfce52a7d6bd218de02fbc84f6ae65f4d57f340161623b43290af8f8ea21a6d
+// Inputs:    sha256:6a5ccedef5c819b3983b9921989e0f2931536fb8d0b7f04299ea068c2c7eb440
 // Regenerate: python3 -m tools.gen
 
 #include "acc/acc_controller.hpp"

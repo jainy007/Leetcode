@@ -110,13 +110,31 @@ void Plant::mark_fault() noexcept {
     }
 }
 
+void Plant::remember(const BusFrame& f) noexcept {
+    for (std::size_t i = 0U; i < last_frame_count_; ++i) {
+        if (last_frames_[i].can_id == f.can_id) {
+            last_frames_[i] = f;
+            return;
+        }
+    }
+    EA_ASSERT(last_frame_count_ < last_frames_.size());
+    last_frames_[last_frame_count_++] = f;
+}
+
+const BusFrame* Plant::last_frame(std::uint32_t can_id) const noexcept {
+    for (std::size_t i = 0U; i < last_frame_count_; ++i) {
+        if (last_frames_[i].can_id == can_id) {
+            return &last_frames_[i];
+        }
+    }
+    return nullptr;
+}
+
 void Plant::inject_node_fault(std::uint32_t can_id, NodeFault kind, std::uint32_t n, const e2e::P11Config& e2e,
                               std::uint32_t sig_start, std::uint32_t sig_length, bool sig_signed, double sig_factor,
                               double value) noexcept {
     for (NodeFaultSpec& f : node_faults_) {
         if (f.remaining == 0U || f.can_id == can_id) {
-            const bool keep_last = f.can_id == can_id && f.have_last;
-            const BusFrame last = f.last;
             f = NodeFaultSpec{};
             f.can_id = can_id;
             f.kind = kind;
@@ -127,8 +145,11 @@ void Plant::inject_node_fault(std::uint32_t can_id, NodeFault kind, std::uint32_
             f.sig_signed = sig_signed;
             f.sig_factor = sig_factor;
             f.value = value;
-            f.have_last = keep_last;
-            f.last = last;
+            const BusFrame* last = last_frame(can_id);
+            f.have_last = last != nullptr;
+            if (last != nullptr) {
+                f.last = *last;
+            }
             return;
         }
     }
@@ -141,9 +162,7 @@ bool Plant::apply_node_fault(BusFrame& f) noexcept {
             continue;
         }
         if (nf.remaining == 0U) {
-            nf.last = f;  // remember the last good frame for a later freeze
-            nf.have_last = true;
-            return true;
+            continue;  // expired
         }
         --nf.remaining;
         mark_fault();
@@ -255,6 +274,7 @@ void Plant::tick(Span<ControllerPort* const> nodes, Span<FeatureObserver* const>
             if (!apply_node_fault(bf)) {
                 continue;
             }
+            remember(bf);
             EA_ASSERT(tick_frame_count_ < tick_frames_.size());
             tick_frames_[tick_frame_count_++] = bf;
             for (std::size_t j = 0U; j < nodes.size(); ++j) {

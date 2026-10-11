@@ -2,6 +2,9 @@
 
 #include "ea/plant/plant.hpp"
 #include "{{ observer_header }}"
+{% if stimulus %}
+#include "{{ stimulus[0] }}"
+{% endif %}
 #include "{{ inc }}/{{ snake }}.hpp"
 
 namespace {{ ns }} {
@@ -18,7 +21,18 @@ public:
     std::uint32_t tx_can_id(std::size_t i) const noexcept override { return ctrl_.tx_can_id(i); }
     ea::ConstByteSpan tx_frame(std::size_t i) const noexcept override { return ctrl_.tx_frame(i); }
 
+{% if stimulus %}
+    // The stimulus node stands in for the function's command source and steps first.
+    void run(double seconds) noexcept {
+        ea::plant::ControllerPort* const nodes[] = {&stim_, this};
+        ea::plant::FeatureObserver* const observers[] = {&observer_};
+        plant_.run(ea::Span<ea::plant::ControllerPort* const>(nodes), ea::Span<ea::plant::FeatureObserver* const>(observers),
+                   0U, seconds);
+    }
+    {{ stimulus[1] }}& stimulus() noexcept { return stim_; }
+{% else %}
     void run(double seconds) noexcept { plant_.run(*this, observer_, seconds); }
+{% endif %}
     ea::plant::Plant& plant() noexcept { return plant_; }
     {{ observer_type }}& feature() noexcept { return observer_; }
     const {{ component.name }}& controller() const noexcept { return ctrl_; }
@@ -48,6 +62,9 @@ private:
     {{ component.name }} ctrl_;
     ea::plant::Plant plant_;
     {{ observer_type }} observer_;
+{% if stimulus %}
+    {{ stimulus[1] }} stim_;
+{% endif %}
 };
 
 }  // namespace {{ ns }}

@@ -1,0 +1,2052 @@
+{
+  "component": {
+    "asil": "B(D)",
+    "name": "AccMonitor",
+    "namespace": "adas::acc_monitor",
+    "profile": "asil"
+  },
+  "generated_files": [
+    "generated/acc_monitor/CMakeLists.txt",
+    "generated/acc_monitor/include/acc_monitor/acc_monitor.hpp",
+    "generated/acc_monitor/include/acc_monitor/acc_monitor_codec.hpp",
+    "generated/acc_monitor/include/acc_monitor/acc_monitor_logic.hpp",
+    "generated/acc_monitor/include/acc_monitor/acc_monitor_types.hpp",
+    "generated/acc_monitor/sil/acc_monitor_sil.hpp",
+    "generated/acc_monitor/sil/acc_monitor_sil_test.cpp",
+    "generated/acc_monitor/src/acc_monitor.cpp",
+    "generated/acc_monitor/src/acc_monitor_codec.cpp",
+    "generated/acc_monitor/src/acc_monitor_logic.cpp"
+  ],
+  "generator": "ea-gen 0.1.0",
+  "inputs_sha256": "aaed2b82deaf8ac2890ea08cf061dfa671e7be14789da61b08e9a29f91792b3a",
+  "pattern": "can_function",
+  "project": "acc_monitor",
+  "requirements": [
+    {
+      "asil": "B(D)",
+      "ears": "event",
+      "id": "REQ-ACCM-001",
+      "satisfied_by": [
+        "logic"
+      ],
+      "tests": [
+        "S01_CommandsInsideTheEnvelopeAreApprovedAndApplied",
+        "S28_WithoutAnyCommandTheMonitorStaysInINITAndGrantsNoPermit"
+      ],
+      "text": "When the first valid AccCommand frame is received, the AccMonitor shall enter MONITORING and check that command.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "B(D)",
+      "ears": "state",
+      "id": "REQ-ACCM-002",
+      "satisfied_by": [
+        "logic"
+      ],
+      "tests": [
+        "S01_CommandsInsideTheEnvelopeAreApprovedAndApplied"
+      ],
+      "text": "While in MONITORING, the AccMonitor shall grant the permit and report the E2E counter of the last AccCommand that passed every check as the approved counter.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "B(D)",
+      "ears": "unwanted",
+      "id": "REQ-ACCM-003",
+      "satisfied_by": [
+        "calibration:accel_max_mps2",
+        "calibration:decel_max_mps2",
+        "calibration:request_tolerance_mps2",
+        "logic"
+      ],
+      "tests": [
+        "S02_RequestsBeyondTheLimitsPlusToleranceLatchSAFESTATE_Ex1",
+        "S03_RequestsBeyondTheLimitsPlusToleranceLatchSAFESTATE_Ex2",
+        "S04_RequestsBeyondTheLimitsPlusToleranceLatchSAFESTATE_Ex3",
+        "S05_RequestsBeyondTheLimitsPlusToleranceLatchSAFESTATE_Ex4",
+        "S06_ARequestAboveTheLimitIsNeverAppliedAndSAFESTATEStaysLatched"
+      ],
+      "text": "If an AccCommand requests more than 2.1 m/s2 acceleration or more than 3.6 m/s2 deceleration, then the AccMonitor shall enter SAFE_STATE with reason REQUEST_LIMIT.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "B(D)",
+      "ears": "unwanted",
+      "id": "REQ-ACCM-004",
+      "satisfied_by": [
+        "logic"
+      ],
+      "tests": [
+        "S07_AccelerationAndDecelerationRequestedTogether"
+      ],
+      "text": "If an AccCommand requests acceleration and deceleration at the same time, then the AccMonitor shall enter SAFE_STATE with reason ACCEL_AND_BRAKE.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "B(D)",
+      "ears": "unwanted",
+      "id": "REQ-ACCM-005",
+      "satisfied_by": [
+        "calibration:active_status_code",
+        "logic"
+      ],
+      "tests": [
+        "S08_RequestsAreAllowedOnlyWhileTheControllerIsACTIVE_Ex1",
+        "S09_RequestsAreAllowedOnlyWhileTheControllerIsACTIVE_Ex2",
+        "S10_RequestsAreAllowedOnlyWhileTheControllerIsACTIVE_Ex3",
+        "S11_RequestsAreAllowedOnlyWhileTheControllerIsACTIVE_Ex4",
+        "S12_RequestsAreAllowedOnlyWhileTheControllerIsACTIVE_Ex5",
+        "S13_RequestsAreAllowedOnlyWhileTheControllerIsACTIVE_Ex6"
+      ],
+      "text": "If an AccCommand requests acceleration or deceleration while its status is not ACTIVE, then the AccMonitor shall enter SAFE_STATE with reason REQUEST_OUTSIDE_ACTIVE.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "B(D)",
+      "ears": "unwanted",
+      "id": "REQ-ACCM-006",
+      "satisfied_by": [
+        "calibration:jerk_decrease_max_mps3",
+        "calibration:jerk_increase_max_mps3",
+        "calibration:jerk_tolerance_mps3",
+        "logic"
+      ],
+      "tests": [
+        "S14_RequestRateLimits_Ex1",
+        "S15_RequestRateLimits_Ex2",
+        "S16_RequestRateLimits_Ex3",
+        "S17_RequestRateLimits_Ex4",
+        "S18_TheRateLimitScalesWithTheTimeSinceTheLastValidCommand"
+      ],
+      "text": "If the acceleration request rises faster than 3.5 m/s3 or the deceleration request rises faster than 6 m/s3 between two consecutive valid AccCommands, then the AccMonitor shall enter SAFE_STATE with reason REQUEST_RATE.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "B(D)",
+      "ears": "unwanted",
+      "id": "REQ-ACCM-007",
+      "satisfied_by": [
+        "calibration:lane_half_width_m",
+        "calibration:max_target_range_m",
+        "calibration:min_ttc_for_accel_s",
+        "calibration:unintended_accel_debounce_s",
+        "logic",
+        "rx:RadarObject"
+      ],
+      "tests": [
+        "S19_AccelerationTowardACloseInLaneVehicleLatchesSAFESTATEAfter05",
+        "S20_AccelerationIsAllowedWhenNoInLaneVehicleIsCloserThan2S_Ex1",
+        "S21_AccelerationIsAllowedWhenNoInLaneVehicleIsCloserThan2S_Ex2",
+        "S22_AccelerationWithoutAValidRadarLatchesSAFESTATE",
+        "S23_ShortAccelerationBurstsTowardACloseVehicleDoNotAddUp"
+      ],
+      "text": "If acceleration is requested for 0.5 s while a valid radar target at most 200 m ahead and at most 1.8 m from the lane centre has a time to collision below 2 s, or while no valid RadarObject frame was received for 120 ms, then the AccMonitor shall enter SAFE_STATE with reason UNINTENDED_ACCEL.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "B(D)",
+      "ears": "unwanted",
+      "id": "REQ-ACCM-008",
+      "satisfied_by": [
+        "logic",
+        "rx:AccCommand"
+      ],
+      "tests": [
+        "S24_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex1",
+        "S25_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex2",
+        "S26_UpToTwoLostOrCorruptedCommandFramesAreTolerated_Ex1",
+        "S27_UpToTwoLostOrCorruptedCommandFramesAreTolerated_Ex2",
+        "S28_WithoutAnyCommandTheMonitorStaysInINITAndGrantsNoPermit"
+      ],
+      "text": "If in MONITORING no valid AccCommand frame is received for 60 ms, then the AccMonitor shall enter SAFE_STATE with reason COMMAND_TIMEOUT.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "B(D)",
+      "ears": "state",
+      "id": "REQ-ACCM-009",
+      "satisfied_by": [
+        "logic"
+      ],
+      "tests": [
+        "S06_ARequestAboveTheLimitIsNeverAppliedAndSAFESTATEStaysLatched",
+        "S24_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex1",
+        "S25_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex2"
+      ],
+      "text": "While in SAFE_STATE, the AccMonitor shall withdraw the permit and report the reason of the first violation until the next power cycle.",
+      "verification": [
+        "sil"
+      ]
+    },
+    {
+      "asil": "B(D)",
+      "ears": "ubiquitous",
+      "id": "REQ-ACCM-010",
+      "satisfied_by": [
+        "tx:AccMonitorStatus"
+      ],
+      "tests": [
+        "S01_CommandsInsideTheEnvelopeAreApprovedAndApplied",
+        "S29_ALostMonitorMakesTheActuatorRampOutBrakingAndRequestATakeove"
+      ],
+      "text": "The AccMonitor shall send the AccMonitorStatus message every 20 ms with E2E protection.",
+      "verification": [
+        "sil"
+      ]
+    }
+  ],
+  "sil_suite": "AccMonitorSilTest",
+  "tests": [
+    {
+      "example": [],
+      "feature": "examples/acc_monitor/features/envelope.feature",
+      "line": 8,
+      "name": "S01_CommandsInsideTheEnvelopeAreApprovedAndApplied",
+      "requirements": [
+        "REQ-ACCM-001",
+        "REQ-ACCM-002",
+        "REQ-ACCM-010"
+      ],
+      "scenario": "Commands inside the envelope are approved and applied",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACCM-S01",
+          "cpp": "sil_.command(static_cast<double>(ea::plant::AccStatus::kActive), 0.0);",
+          "text": "And the controller is ACTIVE without request"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "When 0.2 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kMonitoring);",
+          "text": "Then the monitor state is MONITORING"
+        },
+        {
+          "catalogue": "MON-S02",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().permit, true);",
+          "text": "And the permit is granted"
+        },
+        {
+          "catalogue": "ACCM-S02",
+          "cpp": "sil_.ramp_request(static_cast<double>(ea::plant::AccStatus::kActive), 2.0, 2.5);",
+          "text": "When the controller ramps the acceleration request to 2.0 m/s2 at 2.5 m/s3"
+        },
+        {
+          "catalogue": "ACCM-S02",
+          "cpp": "sil_.ramp_request(static_cast<double>(ea::plant::AccStatus::kActive), -3.5, 5.0);",
+          "text": "And the controller ramps the deceleration request to 3.5 m/s2 at 5.0 m/s3"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(1.0);",
+          "text": "And 1 s pass"
+        },
+        {
+          "catalogue": "MON-S05",
+          "cpp": "EXPECT_LT(sil_.actuator().metrics().monitor_safe_state_s, 0.0);",
+          "text": "Then the monitor never entered SAFE_STATE"
+        },
+        {
+          "catalogue": "MON-S06",
+          "cpp": "EXPECT_GT(sil_.actuator().metrics().applied_commands, 0U); EXPECT_EQ(sil_.actuator().metrics().rejected_commands, 0U);",
+          "text": "And the actuator applied every command"
+        },
+        {
+          "catalogue": "MON-S07",
+          "cpp": "ASSERT_TRUE(sil_.actuator().applying()); EXPECT_NEAR(sil_.actuator().applied_mps2(), -3.5, 1e-6);",
+          "text": "And the actuator applies -3.5 m/s2"
+        },
+        {
+          "catalogue": "MON-S09",
+          "cpp": "EXPECT_EQ(sil_.actuator().takeover_request(), false);",
+          "text": "And the actuator does not request a driver takeover"
+        },
+        {
+          "catalogue": "MON-S14",
+          "cpp": "EXPECT_GT(sil_.actuator().metrics().monitor_frames, 0U); EXPECT_EQ(sil_.actuator().metrics().monitor_e2e_errors, 0U);",
+          "text": "And every monitor frame passed the E2E check"
+        },
+        {
+          "catalogue": "MON-S15",
+          "cpp": "EXPECT_EQ(sil_.actuator().metrics().monitor_frames, sil_.plant().metrics().ticks);",
+          "text": "And one monitor frame was sent per 20 ms"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "dir",
+          "acceleration"
+        ],
+        [
+          "a",
+          "2.1"
+        ],
+        [
+          "state",
+          "MONITORING"
+        ],
+        [
+          "reason",
+          "NONE"
+        ]
+      ],
+      "feature": "examples/acc_monitor/features/envelope.feature",
+      "line": 25,
+      "name": "S02_RequestsBeyondTheLimitsPlusToleranceLatchSAFESTATE_Ex1",
+      "requirements": [
+        "REQ-ACCM-003"
+      ],
+      "scenario": "Requests beyond the limits plus tolerance latch SAFE_STATE #1",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACCM-S01",
+          "cpp": "sil_.command(static_cast<double>(ea::plant::AccStatus::kActive), 0.0);",
+          "text": "And the controller is ACTIVE without request"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "When 0.2 s pass"
+        },
+        {
+          "catalogue": "ACCM-S02",
+          "cpp": "sil_.ramp_request(static_cast<double>(ea::plant::AccStatus::kActive), 2.1, 2.5);",
+          "text": "And the controller ramps the acceleration request to 2.1 m/s2 at 2.5 m/s3"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "And 0.2 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kMonitoring);",
+          "text": "Then the monitor state is MONITORING"
+        },
+        {
+          "catalogue": "ACCM-S05",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AccMonitorReason::kNone));",
+          "text": "And the monitor reports the fault reason NONE"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "dir",
+          "acceleration"
+        ],
+        [
+          "a",
+          "2.2"
+        ],
+        [
+          "state",
+          "SAFE_STATE"
+        ],
+        [
+          "reason",
+          "REQUEST_LIMIT"
+        ]
+      ],
+      "feature": "examples/acc_monitor/features/envelope.feature",
+      "line": 25,
+      "name": "S03_RequestsBeyondTheLimitsPlusToleranceLatchSAFESTATE_Ex2",
+      "requirements": [
+        "REQ-ACCM-003"
+      ],
+      "scenario": "Requests beyond the limits plus tolerance latch SAFE_STATE #2",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACCM-S01",
+          "cpp": "sil_.command(static_cast<double>(ea::plant::AccStatus::kActive), 0.0);",
+          "text": "And the controller is ACTIVE without request"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "When 0.2 s pass"
+        },
+        {
+          "catalogue": "ACCM-S02",
+          "cpp": "sil_.ramp_request(static_cast<double>(ea::plant::AccStatus::kActive), 2.2, 2.5);",
+          "text": "And the controller ramps the acceleration request to 2.2 m/s2 at 2.5 m/s3"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "And 0.2 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kSafeState);",
+          "text": "Then the monitor state is SAFE_STATE"
+        },
+        {
+          "catalogue": "ACCM-S05",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AccMonitorReason::kRequestLimit));",
+          "text": "And the monitor reports the fault reason REQUEST_LIMIT"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "dir",
+          "deceleration"
+        ],
+        [
+          "a",
+          "3.6"
+        ],
+        [
+          "state",
+          "MONITORING"
+        ],
+        [
+          "reason",
+          "NONE"
+        ]
+      ],
+      "feature": "examples/acc_monitor/features/envelope.feature",
+      "line": 25,
+      "name": "S04_RequestsBeyondTheLimitsPlusToleranceLatchSAFESTATE_Ex3",
+      "requirements": [
+        "REQ-ACCM-003"
+      ],
+      "scenario": "Requests beyond the limits plus tolerance latch SAFE_STATE #3",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACCM-S01",
+          "cpp": "sil_.command(static_cast<double>(ea::plant::AccStatus::kActive), 0.0);",
+          "text": "And the controller is ACTIVE without request"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "When 0.2 s pass"
+        },
+        {
+          "catalogue": "ACCM-S02",
+          "cpp": "sil_.ramp_request(static_cast<double>(ea::plant::AccStatus::kActive), -3.6, 2.5);",
+          "text": "And the controller ramps the deceleration request to 3.6 m/s2 at 2.5 m/s3"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "And 0.2 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kMonitoring);",
+          "text": "Then the monitor state is MONITORING"
+        },
+        {
+          "catalogue": "ACCM-S05",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AccMonitorReason::kNone));",
+          "text": "And the monitor reports the fault reason NONE"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "dir",
+          "deceleration"
+        ],
+        [
+          "a",
+          "3.7"
+        ],
+        [
+          "state",
+          "SAFE_STATE"
+        ],
+        [
+          "reason",
+          "REQUEST_LIMIT"
+        ]
+      ],
+      "feature": "examples/acc_monitor/features/envelope.feature",
+      "line": 25,
+      "name": "S05_RequestsBeyondTheLimitsPlusToleranceLatchSAFESTATE_Ex4",
+      "requirements": [
+        "REQ-ACCM-003"
+      ],
+      "scenario": "Requests beyond the limits plus tolerance latch SAFE_STATE #4",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACCM-S01",
+          "cpp": "sil_.command(static_cast<double>(ea::plant::AccStatus::kActive), 0.0);",
+          "text": "And the controller is ACTIVE without request"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "When 0.2 s pass"
+        },
+        {
+          "catalogue": "ACCM-S02",
+          "cpp": "sil_.ramp_request(static_cast<double>(ea::plant::AccStatus::kActive), -3.7, 2.5);",
+          "text": "And the controller ramps the deceleration request to 3.7 m/s2 at 2.5 m/s3"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "And 0.2 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kSafeState);",
+          "text": "Then the monitor state is SAFE_STATE"
+        },
+        {
+          "catalogue": "ACCM-S05",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AccMonitorReason::kRequestLimit));",
+          "text": "And the monitor reports the fault reason REQUEST_LIMIT"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/acc_monitor/features/envelope.feature",
+      "line": 42,
+      "name": "S06_ARequestAboveTheLimitIsNeverAppliedAndSAFESTATEStaysLatched",
+      "requirements": [
+        "REQ-ACCM-003",
+        "REQ-ACCM-009"
+      ],
+      "scenario": "A request above the limit is never applied and SAFE_STATE stays latched",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACCM-S01",
+          "cpp": "sil_.command(static_cast<double>(ea::plant::AccStatus::kActive), 0.0);",
+          "text": "And the controller is ACTIVE without request"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "When 0.2 s pass"
+        },
+        {
+          "catalogue": "ACCM-S02",
+          "cpp": "sil_.ramp_request(static_cast<double>(ea::plant::AccStatus::kActive), 2.5, 2.5);",
+          "text": "And the controller ramps the acceleration request to 2.5 m/s2 at 2.5 m/s3"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "And 0.2 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kSafeState);",
+          "text": "Then the monitor state is SAFE_STATE"
+        },
+        {
+          "catalogue": "MON-S02",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().permit, false);",
+          "text": "And the permit is withdrawn"
+        },
+        {
+          "catalogue": "MON-S11",
+          "cpp": "EXPECT_LE(sil_.actuator().metrics().max_applied_accel_mps2, 2.1 + 1e-9);",
+          "text": "And the applied acceleration never exceeded 2.1 m/s2"
+        },
+        {
+          "catalogue": "MON-S08",
+          "cpp": "EXPECT_FALSE(sil_.actuator().applying());",
+          "text": "And the actuator applies no request"
+        },
+        {
+          "catalogue": "MON-S09",
+          "cpp": "EXPECT_EQ(sil_.actuator().takeover_request(), true);",
+          "text": "And the actuator requests a driver takeover"
+        },
+        {
+          "catalogue": "ACCM-S01",
+          "cpp": "sil_.command(static_cast<double>(ea::plant::AccStatus::kActive), 0.0);",
+          "text": "When the controller is ACTIVE without request"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(2.0);",
+          "text": "And 2 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kSafeState);",
+          "text": "Then the monitor state is SAFE_STATE"
+        },
+        {
+          "catalogue": "ACCM-S05",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AccMonitorReason::kRequestLimit));",
+          "text": "And the monitor reports the fault reason REQUEST_LIMIT"
+        },
+        {
+          "catalogue": "MON-S02",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().permit, false);",
+          "text": "And the permit is withdrawn"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/acc_monitor/features/envelope.feature",
+      "line": 60,
+      "name": "S07_AccelerationAndDecelerationRequestedTogether",
+      "requirements": [
+        "REQ-ACCM-004"
+      ],
+      "scenario": "Acceleration and deceleration requested together",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACCM-S01",
+          "cpp": "sil_.command(static_cast<double>(ea::plant::AccStatus::kActive), 0.0);",
+          "text": "And the controller is ACTIVE without request"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "When 0.2 s pass"
+        },
+        {
+          "catalogue": "ACCM-S04",
+          "cpp": "sil_.command_both(0.05, 0.05);",
+          "text": "And the controller requests 0.05 m/s2 acceleration and 0.05 m/s2 deceleration"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.1);",
+          "text": "And 0.1 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kSafeState);",
+          "text": "Then the monitor state is SAFE_STATE"
+        },
+        {
+          "catalogue": "ACCM-S05",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AccMonitorReason::kAccelAndBrake));",
+          "text": "And the monitor reports the fault reason ACCEL_AND_BRAKE"
+        },
+        {
+          "catalogue": "MON-S11",
+          "cpp": "EXPECT_LE(sil_.actuator().metrics().max_applied_accel_mps2, 0.0 + 1e-9);",
+          "text": "And the applied acceleration never exceeded 0 m/s2"
+        },
+        {
+          "catalogue": "MON-S12",
+          "cpp": "EXPECT_LE(sil_.actuator().metrics().max_applied_decel_mps2, 0.0 + 1e-9);",
+          "text": "And the applied deceleration never exceeded 0 m/s2"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "s",
+          "ACTIVE"
+        ],
+        [
+          "dir",
+          "acceleration"
+        ],
+        [
+          "state",
+          "MONITORING"
+        ],
+        [
+          "reason",
+          "NONE"
+        ]
+      ],
+      "feature": "examples/acc_monitor/features/envelope.feature",
+      "line": 72,
+      "name": "S08_RequestsAreAllowedOnlyWhileTheControllerIsACTIVE_Ex1",
+      "requirements": [
+        "REQ-ACCM-005"
+      ],
+      "scenario": "Requests are allowed only while the controller is ACTIVE #1",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACCM-S01",
+          "cpp": "sil_.command(static_cast<double>(ea::plant::AccStatus::kActive), 0.0);",
+          "text": "And the controller is ACTIVE without request"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "When 0.2 s pass"
+        },
+        {
+          "catalogue": "ACCM-S03",
+          "cpp": "sil_.command(static_cast<double>(ea::plant::AccStatus::kActive), 0.05);",
+          "text": "And the controller requests 0.05 m/s2 acceleration in state ACTIVE"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.1);",
+          "text": "And 0.1 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kMonitoring);",
+          "text": "Then the monitor state is MONITORING"
+        },
+        {
+          "catalogue": "ACCM-S05",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AccMonitorReason::kNone));",
+          "text": "And the monitor reports the fault reason NONE"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "s",
+          "ACTIVE"
+        ],
+        [
+          "dir",
+          "deceleration"
+        ],
+        [
+          "state",
+          "MONITORING"
+        ],
+        [
+          "reason",
+          "NONE"
+        ]
+      ],
+      "feature": "examples/acc_monitor/features/envelope.feature",
+      "line": 72,
+      "name": "S09_RequestsAreAllowedOnlyWhileTheControllerIsACTIVE_Ex2",
+      "requirements": [
+        "REQ-ACCM-005"
+      ],
+      "scenario": "Requests are allowed only while the controller is ACTIVE #2",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACCM-S01",
+          "cpp": "sil_.command(static_cast<double>(ea::plant::AccStatus::kActive), 0.0);",
+          "text": "And the controller is ACTIVE without request"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "When 0.2 s pass"
+        },
+        {
+          "catalogue": "ACCM-S03",
+          "cpp": "sil_.command(static_cast<double>(ea::plant::AccStatus::kActive), -0.05);",
+          "text": "And the controller requests 0.05 m/s2 deceleration in state ACTIVE"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.1);",
+          "text": "And 0.1 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kMonitoring);",
+          "text": "Then the monitor state is MONITORING"
+        },
+        {
+          "catalogue": "ACCM-S05",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AccMonitorReason::kNone));",
+          "text": "And the monitor reports the fault reason NONE"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "s",
+          "STANDBY"
+        ],
+        [
+          "dir",
+          "acceleration"
+        ],
+        [
+          "state",
+          "SAFE_STATE"
+        ],
+        [
+          "reason",
+          "REQUEST_OUTSIDE_ACTIVE"
+        ]
+      ],
+      "feature": "examples/acc_monitor/features/envelope.feature",
+      "line": 72,
+      "name": "S10_RequestsAreAllowedOnlyWhileTheControllerIsACTIVE_Ex3",
+      "requirements": [
+        "REQ-ACCM-005"
+      ],
+      "scenario": "Requests are allowed only while the controller is ACTIVE #3",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACCM-S01",
+          "cpp": "sil_.command(static_cast<double>(ea::plant::AccStatus::kStandby), 0.0);",
+          "text": "And the controller is STANDBY without request"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "When 0.2 s pass"
+        },
+        {
+          "catalogue": "ACCM-S03",
+          "cpp": "sil_.command(static_cast<double>(ea::plant::AccStatus::kStandby), 0.05);",
+          "text": "And the controller requests 0.05 m/s2 acceleration in state STANDBY"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.1);",
+          "text": "And 0.1 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kSafeState);",
+          "text": "Then the monitor state is SAFE_STATE"
+        },
+        {
+          "catalogue": "ACCM-S05",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AccMonitorReason::kRequestOutsideActive));",
+          "text": "And the monitor reports the fault reason REQUEST_OUTSIDE_ACTIVE"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "s",
+          "OVERRIDE"
+        ],
+        [
+          "dir",
+          "deceleration"
+        ],
+        [
+          "state",
+          "SAFE_STATE"
+        ],
+        [
+          "reason",
+          "REQUEST_OUTSIDE_ACTIVE"
+        ]
+      ],
+      "feature": "examples/acc_monitor/features/envelope.feature",
+      "line": 72,
+      "name": "S11_RequestsAreAllowedOnlyWhileTheControllerIsACTIVE_Ex4",
+      "requirements": [
+        "REQ-ACCM-005"
+      ],
+      "scenario": "Requests are allowed only while the controller is ACTIVE #4",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACCM-S01",
+          "cpp": "sil_.command(static_cast<double>(ea::plant::AccStatus::kOverride), 0.0);",
+          "text": "And the controller is OVERRIDE without request"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "When 0.2 s pass"
+        },
+        {
+          "catalogue": "ACCM-S03",
+          "cpp": "sil_.command(static_cast<double>(ea::plant::AccStatus::kOverride), -0.05);",
+          "text": "And the controller requests 0.05 m/s2 deceleration in state OVERRIDE"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.1);",
+          "text": "And 0.1 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kSafeState);",
+          "text": "Then the monitor state is SAFE_STATE"
+        },
+        {
+          "catalogue": "ACCM-S05",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AccMonitorReason::kRequestOutsideActive));",
+          "text": "And the monitor reports the fault reason REQUEST_OUTSIDE_ACTIVE"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "s",
+          "FAULT"
+        ],
+        [
+          "dir",
+          "deceleration"
+        ],
+        [
+          "state",
+          "SAFE_STATE"
+        ],
+        [
+          "reason",
+          "REQUEST_OUTSIDE_ACTIVE"
+        ]
+      ],
+      "feature": "examples/acc_monitor/features/envelope.feature",
+      "line": 72,
+      "name": "S12_RequestsAreAllowedOnlyWhileTheControllerIsACTIVE_Ex5",
+      "requirements": [
+        "REQ-ACCM-005"
+      ],
+      "scenario": "Requests are allowed only while the controller is ACTIVE #5",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACCM-S01",
+          "cpp": "sil_.command(static_cast<double>(ea::plant::AccStatus::kFault), 0.0);",
+          "text": "And the controller is FAULT without request"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "When 0.2 s pass"
+        },
+        {
+          "catalogue": "ACCM-S03",
+          "cpp": "sil_.command(static_cast<double>(ea::plant::AccStatus::kFault), -0.05);",
+          "text": "And the controller requests 0.05 m/s2 deceleration in state FAULT"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.1);",
+          "text": "And 0.1 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kSafeState);",
+          "text": "Then the monitor state is SAFE_STATE"
+        },
+        {
+          "catalogue": "ACCM-S05",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AccMonitorReason::kRequestOutsideActive));",
+          "text": "And the monitor reports the fault reason REQUEST_OUTSIDE_ACTIVE"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "s",
+          "OFF"
+        ],
+        [
+          "dir",
+          "acceleration"
+        ],
+        [
+          "state",
+          "SAFE_STATE"
+        ],
+        [
+          "reason",
+          "REQUEST_OUTSIDE_ACTIVE"
+        ]
+      ],
+      "feature": "examples/acc_monitor/features/envelope.feature",
+      "line": 72,
+      "name": "S13_RequestsAreAllowedOnlyWhileTheControllerIsACTIVE_Ex6",
+      "requirements": [
+        "REQ-ACCM-005"
+      ],
+      "scenario": "Requests are allowed only while the controller is ACTIVE #6",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACCM-S01",
+          "cpp": "sil_.command(static_cast<double>(ea::plant::AccStatus::kOff), 0.0);",
+          "text": "And the controller is OFF without request"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "When 0.2 s pass"
+        },
+        {
+          "catalogue": "ACCM-S03",
+          "cpp": "sil_.command(static_cast<double>(ea::plant::AccStatus::kOff), 0.05);",
+          "text": "And the controller requests 0.05 m/s2 acceleration in state OFF"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.1);",
+          "text": "And 0.1 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kSafeState);",
+          "text": "Then the monitor state is SAFE_STATE"
+        },
+        {
+          "catalogue": "ACCM-S05",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AccMonitorReason::kRequestOutsideActive));",
+          "text": "And the monitor reports the fault reason REQUEST_OUTSIDE_ACTIVE"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "dir",
+          "acceleration"
+        ],
+        [
+          "j",
+          "3.5"
+        ],
+        [
+          "state",
+          "MONITORING"
+        ],
+        [
+          "reason",
+          "NONE"
+        ]
+      ],
+      "feature": "examples/acc_monitor/features/envelope.feature",
+      "line": 91,
+      "name": "S14_RequestRateLimits_Ex1",
+      "requirements": [
+        "REQ-ACCM-006"
+      ],
+      "scenario": "Request rate limits #1",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACCM-S01",
+          "cpp": "sil_.command(static_cast<double>(ea::plant::AccStatus::kActive), 0.0);",
+          "text": "And the controller is ACTIVE without request"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "When 0.2 s pass"
+        },
+        {
+          "catalogue": "ACCM-S02",
+          "cpp": "sil_.ramp_request(static_cast<double>(ea::plant::AccStatus::kActive), 1.0, 3.5);",
+          "text": "And the controller ramps the acceleration request to 1.0 m/s2 at 3.5 m/s3"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "And 0.2 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kMonitoring);",
+          "text": "Then the monitor state is MONITORING"
+        },
+        {
+          "catalogue": "ACCM-S05",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AccMonitorReason::kNone));",
+          "text": "And the monitor reports the fault reason NONE"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "dir",
+          "acceleration"
+        ],
+        [
+          "j",
+          "4.0"
+        ],
+        [
+          "state",
+          "SAFE_STATE"
+        ],
+        [
+          "reason",
+          "REQUEST_RATE"
+        ]
+      ],
+      "feature": "examples/acc_monitor/features/envelope.feature",
+      "line": 91,
+      "name": "S15_RequestRateLimits_Ex2",
+      "requirements": [
+        "REQ-ACCM-006"
+      ],
+      "scenario": "Request rate limits #2",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACCM-S01",
+          "cpp": "sil_.command(static_cast<double>(ea::plant::AccStatus::kActive), 0.0);",
+          "text": "And the controller is ACTIVE without request"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "When 0.2 s pass"
+        },
+        {
+          "catalogue": "ACCM-S02",
+          "cpp": "sil_.ramp_request(static_cast<double>(ea::plant::AccStatus::kActive), 1.0, 4.0);",
+          "text": "And the controller ramps the acceleration request to 1.0 m/s2 at 4.0 m/s3"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "And 0.2 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kSafeState);",
+          "text": "Then the monitor state is SAFE_STATE"
+        },
+        {
+          "catalogue": "ACCM-S05",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AccMonitorReason::kRequestRate));",
+          "text": "And the monitor reports the fault reason REQUEST_RATE"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "dir",
+          "deceleration"
+        ],
+        [
+          "j",
+          "6.0"
+        ],
+        [
+          "state",
+          "MONITORING"
+        ],
+        [
+          "reason",
+          "NONE"
+        ]
+      ],
+      "feature": "examples/acc_monitor/features/envelope.feature",
+      "line": 91,
+      "name": "S16_RequestRateLimits_Ex3",
+      "requirements": [
+        "REQ-ACCM-006"
+      ],
+      "scenario": "Request rate limits #3",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACCM-S01",
+          "cpp": "sil_.command(static_cast<double>(ea::plant::AccStatus::kActive), 0.0);",
+          "text": "And the controller is ACTIVE without request"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "When 0.2 s pass"
+        },
+        {
+          "catalogue": "ACCM-S02",
+          "cpp": "sil_.ramp_request(static_cast<double>(ea::plant::AccStatus::kActive), -1.0, 6.0);",
+          "text": "And the controller ramps the deceleration request to 1.0 m/s2 at 6.0 m/s3"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "And 0.2 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kMonitoring);",
+          "text": "Then the monitor state is MONITORING"
+        },
+        {
+          "catalogue": "ACCM-S05",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AccMonitorReason::kNone));",
+          "text": "And the monitor reports the fault reason NONE"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "dir",
+          "deceleration"
+        ],
+        [
+          "j",
+          "6.5"
+        ],
+        [
+          "state",
+          "SAFE_STATE"
+        ],
+        [
+          "reason",
+          "REQUEST_RATE"
+        ]
+      ],
+      "feature": "examples/acc_monitor/features/envelope.feature",
+      "line": 91,
+      "name": "S17_RequestRateLimits_Ex4",
+      "requirements": [
+        "REQ-ACCM-006"
+      ],
+      "scenario": "Request rate limits #4",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACCM-S01",
+          "cpp": "sil_.command(static_cast<double>(ea::plant::AccStatus::kActive), 0.0);",
+          "text": "And the controller is ACTIVE without request"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "When 0.2 s pass"
+        },
+        {
+          "catalogue": "ACCM-S02",
+          "cpp": "sil_.ramp_request(static_cast<double>(ea::plant::AccStatus::kActive), -1.0, 6.5);",
+          "text": "And the controller ramps the deceleration request to 1.0 m/s2 at 6.5 m/s3"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "And 0.2 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kSafeState);",
+          "text": "Then the monitor state is SAFE_STATE"
+        },
+        {
+          "catalogue": "ACCM-S05",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AccMonitorReason::kRequestRate));",
+          "text": "And the monitor reports the fault reason REQUEST_RATE"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/acc_monitor/features/envelope.feature",
+      "line": 108,
+      "name": "S18_TheRateLimitScalesWithTheTimeSinceTheLastValidCommand",
+      "requirements": [
+        "REQ-ACCM-006"
+      ],
+      "scenario": "The rate limit scales with the time since the last valid command",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACCM-S01",
+          "cpp": "sil_.command(static_cast<double>(ea::plant::AccStatus::kActive), 0.0);",
+          "text": "And the controller is ACTIVE without request"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "When 0.2 s pass"
+        },
+        {
+          "catalogue": "MON-S21",
+          "cpp": "sil_.command_fault(ea::plant::NodeFault::kLose, 2U);",
+          "text": "And the next 2 command frames are lost"
+        },
+        {
+          "catalogue": "ACCM-S02",
+          "cpp": "sil_.ramp_request(static_cast<double>(ea::plant::AccStatus::kActive), 1.0, 3.5);",
+          "text": "And the controller ramps the acceleration request to 1.0 m/s2 at 3.5 m/s3"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "And 0.2 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kMonitoring);",
+          "text": "Then the monitor state is MONITORING"
+        },
+        {
+          "catalogue": "MON-S05",
+          "cpp": "EXPECT_LT(sil_.actuator().metrics().monitor_safe_state_s, 0.0);",
+          "text": "And the monitor never entered SAFE_STATE"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/acc_monitor/features/envelope.feature",
+      "line": 119,
+      "name": "S19_AccelerationTowardACloseInLaneVehicleLatchesSAFESTATEAfter05",
+      "requirements": [
+        "REQ-ACCM-007"
+      ],
+      "scenario": "Acceleration toward a close in-lane vehicle latches SAFE_STATE after 0.5 s",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(60.0);",
+          "text": "Given the ego vehicle drives at 60 km/h"
+        },
+        {
+          "catalogue": "FN-S19",
+          "cpp": "sil_.plant().set_lead(30.0, 0.0, 0.0);",
+          "text": "And a stationary vehicle stands 30 m ahead"
+        },
+        {
+          "catalogue": "ACCM-S01",
+          "cpp": "sil_.command(static_cast<double>(ea::plant::AccStatus::kActive), 0.0);",
+          "text": "And the controller is ACTIVE without request"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "When 0.2 s pass"
+        },
+        {
+          "catalogue": "ACCM-S02",
+          "cpp": "sil_.ramp_request(static_cast<double>(ea::plant::AccStatus::kActive), 0.5, 2.5);",
+          "text": "And the controller ramps the acceleration request to 0.5 m/s2 at 2.5 m/s3"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(1.0);",
+          "text": "And 1 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kSafeState);",
+          "text": "Then the monitor state is SAFE_STATE"
+        },
+        {
+          "catalogue": "ACCM-S05",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AccMonitorReason::kUnintendedAccel));",
+          "text": "And the monitor reports the fault reason UNINTENDED_ACCEL"
+        },
+        {
+          "catalogue": "MON-S04",
+          "cpp": "EXPECT_GE(sil_.actuator().metrics().monitor_safe_state_s, 0.68 - 1e-9); EXPECT_LE(sil_.actuator().metrics().monitor_safe_state_s, 0.72 + 1e-9);",
+          "text": "And the monitor entered SAFE_STATE between 0.68 s and 0.72 s"
+        },
+        {
+          "catalogue": "MON-S09",
+          "cpp": "EXPECT_EQ(sil_.actuator().takeover_request(), true);",
+          "text": "And the actuator requests a driver takeover"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "d",
+          "80"
+        ],
+        [
+          "lat",
+          "0.0"
+        ]
+      ],
+      "feature": "examples/acc_monitor/features/envelope.feature",
+      "line": 132,
+      "name": "S20_AccelerationIsAllowedWhenNoInLaneVehicleIsCloserThan2S_Ex1",
+      "requirements": [
+        "REQ-ACCM-007"
+      ],
+      "scenario": "Acceleration is allowed when no in-lane vehicle is closer than 2 s #1",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(60.0);",
+          "text": "Given the ego vehicle drives at 60 km/h"
+        },
+        {
+          "catalogue": "FN-S12",
+          "cpp": "sil_.plant().set_lead(80.0, 0.0, 0.0);",
+          "text": "And a vehicle drives 80 m ahead at 0 km/h with 0.0 m lateral offset"
+        },
+        {
+          "catalogue": "ACCM-S01",
+          "cpp": "sil_.command(static_cast<double>(ea::plant::AccStatus::kActive), 0.0);",
+          "text": "And the controller is ACTIVE without request"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "When 0.2 s pass"
+        },
+        {
+          "catalogue": "ACCM-S02",
+          "cpp": "sil_.ramp_request(static_cast<double>(ea::plant::AccStatus::kActive), 0.5, 2.5);",
+          "text": "And the controller ramps the acceleration request to 0.5 m/s2 at 2.5 m/s3"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(1.0);",
+          "text": "And 1 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kMonitoring);",
+          "text": "Then the monitor state is MONITORING"
+        },
+        {
+          "catalogue": "MON-S05",
+          "cpp": "EXPECT_LT(sil_.actuator().metrics().monitor_safe_state_s, 0.0);",
+          "text": "And the monitor never entered SAFE_STATE"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "d",
+          "30"
+        ],
+        [
+          "lat",
+          "2.0"
+        ]
+      ],
+      "feature": "examples/acc_monitor/features/envelope.feature",
+      "line": 132,
+      "name": "S21_AccelerationIsAllowedWhenNoInLaneVehicleIsCloserThan2S_Ex2",
+      "requirements": [
+        "REQ-ACCM-007"
+      ],
+      "scenario": "Acceleration is allowed when no in-lane vehicle is closer than 2 s #2",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(60.0);",
+          "text": "Given the ego vehicle drives at 60 km/h"
+        },
+        {
+          "catalogue": "FN-S12",
+          "cpp": "sil_.plant().set_lead(30.0, 0.0, 2.0);",
+          "text": "And a vehicle drives 30 m ahead at 0 km/h with 2.0 m lateral offset"
+        },
+        {
+          "catalogue": "ACCM-S01",
+          "cpp": "sil_.command(static_cast<double>(ea::plant::AccStatus::kActive), 0.0);",
+          "text": "And the controller is ACTIVE without request"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "When 0.2 s pass"
+        },
+        {
+          "catalogue": "ACCM-S02",
+          "cpp": "sil_.ramp_request(static_cast<double>(ea::plant::AccStatus::kActive), 0.5, 2.5);",
+          "text": "And the controller ramps the acceleration request to 0.5 m/s2 at 2.5 m/s3"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(1.0);",
+          "text": "And 1 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kMonitoring);",
+          "text": "Then the monitor state is MONITORING"
+        },
+        {
+          "catalogue": "MON-S05",
+          "cpp": "EXPECT_LT(sil_.actuator().metrics().monitor_safe_state_s, 0.0);",
+          "text": "And the monitor never entered SAFE_STATE"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/acc_monitor/features/envelope.feature",
+      "line": 148,
+      "name": "S22_AccelerationWithoutAValidRadarLatchesSAFESTATE",
+      "requirements": [
+        "REQ-ACCM-007"
+      ],
+      "scenario": "Acceleration without a valid radar latches SAFE_STATE",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(60.0);",
+          "text": "Given the ego vehicle drives at 60 km/h"
+        },
+        {
+          "catalogue": "ACCM-S01",
+          "cpp": "sil_.command(static_cast<double>(ea::plant::AccStatus::kActive), 0.0);",
+          "text": "And the controller is ACTIVE without request"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "When 0.2 s pass"
+        },
+        {
+          "catalogue": "FN-S18",
+          "cpp": "sil_.plant().skip_frames(ea::plant::Stream::kRadar, 50U);",
+          "text": "And the radar sender pauses for 50 frames"
+        },
+        {
+          "catalogue": "ACCM-S02",
+          "cpp": "sil_.ramp_request(static_cast<double>(ea::plant::AccStatus::kActive), 0.5, 2.5);",
+          "text": "And the controller ramps the acceleration request to 0.5 m/s2 at 2.5 m/s3"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(1.0);",
+          "text": "And 1 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kSafeState);",
+          "text": "Then the monitor state is SAFE_STATE"
+        },
+        {
+          "catalogue": "ACCM-S05",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AccMonitorReason::kUnintendedAccel));",
+          "text": "And the monitor reports the fault reason UNINTENDED_ACCEL"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/acc_monitor/features/envelope.feature",
+      "line": 159,
+      "name": "S23_ShortAccelerationBurstsTowardACloseVehicleDoNotAddUp",
+      "requirements": [
+        "REQ-ACCM-007"
+      ],
+      "scenario": "Short acceleration bursts toward a close vehicle do not add up",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(60.0);",
+          "text": "Given the ego vehicle drives at 60 km/h"
+        },
+        {
+          "catalogue": "FN-S19",
+          "cpp": "sil_.plant().set_lead(30.0, 0.0, 0.0);",
+          "text": "And a stationary vehicle stands 30 m ahead"
+        },
+        {
+          "catalogue": "ACCM-S01",
+          "cpp": "sil_.command(static_cast<double>(ea::plant::AccStatus::kActive), 0.0);",
+          "text": "And the controller is ACTIVE without request"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "When 0.2 s pass"
+        },
+        {
+          "catalogue": "ACCM-S02",
+          "cpp": "sil_.ramp_request(static_cast<double>(ea::plant::AccStatus::kActive), 0.1, 2.5);",
+          "text": "And the controller ramps the acceleration request to 0.1 m/s2 at 2.5 m/s3"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.3);",
+          "text": "And 0.3 s pass"
+        },
+        {
+          "catalogue": "ACCM-S02",
+          "cpp": "sil_.ramp_request(static_cast<double>(ea::plant::AccStatus::kActive), 0.0, 5.0);",
+          "text": "And the controller ramps the acceleration request to 0.0 m/s2 at 5.0 m/s3"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.1);",
+          "text": "And 0.1 s pass"
+        },
+        {
+          "catalogue": "ACCM-S02",
+          "cpp": "sil_.ramp_request(static_cast<double>(ea::plant::AccStatus::kActive), 0.1, 2.5);",
+          "text": "And the controller ramps the acceleration request to 0.1 m/s2 at 2.5 m/s3"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.3);",
+          "text": "And 0.3 s pass"
+        },
+        {
+          "catalogue": "ACCM-S02",
+          "cpp": "sil_.ramp_request(static_cast<double>(ea::plant::AccStatus::kActive), 0.0, 5.0);",
+          "text": "And the controller ramps the acceleration request to 0.0 m/s2 at 5.0 m/s3"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.1);",
+          "text": "And 0.1 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kMonitoring);",
+          "text": "Then the monitor state is MONITORING"
+        },
+        {
+          "catalogue": "MON-S05",
+          "cpp": "EXPECT_LT(sil_.actuator().metrics().monitor_safe_state_s, 0.0);",
+          "text": "And the monitor never entered SAFE_STATE"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "f",
+          "stops"
+        ]
+      ],
+      "feature": "examples/acc_monitor/features/faults.feature",
+      "line": 7,
+      "name": "S24_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex1",
+      "requirements": [
+        "REQ-ACCM-008",
+        "REQ-ACCM-009"
+      ],
+      "scenario": "A stopped or frozen command sender latches SAFE_STATE within the timeout #1",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACCM-S01",
+          "cpp": "sil_.command(static_cast<double>(ea::plant::AccStatus::kActive), 0.0);",
+          "text": "And the controller is ACTIVE without request"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "When 0.2 s pass"
+        },
+        {
+          "catalogue": "MON-S20",
+          "cpp": "sil_.command_fault(ea::plant::NodeFault::kLose, 1000000U);",
+          "text": "And the command sender stops"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.5);",
+          "text": "And 0.5 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kSafeState);",
+          "text": "Then the monitor state is SAFE_STATE"
+        },
+        {
+          "catalogue": "ACCM-S05",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AccMonitorReason::kCommandTimeout));",
+          "text": "And the monitor reports the fault reason COMMAND_TIMEOUT"
+        },
+        {
+          "catalogue": "MON-S03",
+          "cpp": "ASSERT_GE(sil_.actuator().metrics().monitor_safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().monitor_safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 40 + 1e-6);",
+          "text": "And the monitor entered SAFE_STATE within 40 ms of the first fault"
+        },
+        {
+          "catalogue": "MON-S02",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().permit, false);",
+          "text": "And the permit is withdrawn"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "f",
+          "freezes"
+        ]
+      ],
+      "feature": "examples/acc_monitor/features/faults.feature",
+      "line": 7,
+      "name": "S25_AStoppedOrFrozenCommandSenderLatchesSAFESTATEWithinTheTimeou_Ex2",
+      "requirements": [
+        "REQ-ACCM-008",
+        "REQ-ACCM-009"
+      ],
+      "scenario": "A stopped or frozen command sender latches SAFE_STATE within the timeout #2",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACCM-S01",
+          "cpp": "sil_.command(static_cast<double>(ea::plant::AccStatus::kActive), 0.0);",
+          "text": "And the controller is ACTIVE without request"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "When 0.2 s pass"
+        },
+        {
+          "catalogue": "MON-S20",
+          "cpp": "sil_.command_fault(ea::plant::NodeFault::kFreeze, 1000000U);",
+          "text": "And the command sender freezes"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.5);",
+          "text": "And 0.5 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kSafeState);",
+          "text": "Then the monitor state is SAFE_STATE"
+        },
+        {
+          "catalogue": "ACCM-S05",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AccMonitorReason::kCommandTimeout));",
+          "text": "And the monitor reports the fault reason COMMAND_TIMEOUT"
+        },
+        {
+          "catalogue": "MON-S03",
+          "cpp": "ASSERT_GE(sil_.actuator().metrics().monitor_safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().monitor_safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 40 + 1e-6);",
+          "text": "And the monitor entered SAFE_STATE within 40 ms of the first fault"
+        },
+        {
+          "catalogue": "MON-S02",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().permit, false);",
+          "text": "And the permit is withdrawn"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "f",
+          "lost"
+        ]
+      ],
+      "feature": "examples/acc_monitor/features/faults.feature",
+      "line": 24,
+      "name": "S26_UpToTwoLostOrCorruptedCommandFramesAreTolerated_Ex1",
+      "requirements": [
+        "REQ-ACCM-008"
+      ],
+      "scenario": "Up to two lost or corrupted command frames are tolerated #1",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACCM-S01",
+          "cpp": "sil_.command(static_cast<double>(ea::plant::AccStatus::kActive), 0.0);",
+          "text": "And the controller is ACTIVE without request"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "When 0.2 s pass"
+        },
+        {
+          "catalogue": "MON-S21",
+          "cpp": "sil_.command_fault(ea::plant::NodeFault::kLose, 2U);",
+          "text": "And the next 2 command frames are lost"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.5);",
+          "text": "And 0.5 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kMonitoring);",
+          "text": "Then the monitor state is MONITORING"
+        },
+        {
+          "catalogue": "MON-S05",
+          "cpp": "EXPECT_LT(sil_.actuator().metrics().monitor_safe_state_s, 0.0);",
+          "text": "And the monitor never entered SAFE_STATE"
+        }
+      ]
+    },
+    {
+      "example": [
+        [
+          "f",
+          "corrupted"
+        ]
+      ],
+      "feature": "examples/acc_monitor/features/faults.feature",
+      "line": 24,
+      "name": "S27_UpToTwoLostOrCorruptedCommandFramesAreTolerated_Ex2",
+      "requirements": [
+        "REQ-ACCM-008"
+      ],
+      "scenario": "Up to two lost or corrupted command frames are tolerated #2",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACCM-S01",
+          "cpp": "sil_.command(static_cast<double>(ea::plant::AccStatus::kActive), 0.0);",
+          "text": "And the controller is ACTIVE without request"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "When 0.2 s pass"
+        },
+        {
+          "catalogue": "MON-S21",
+          "cpp": "sil_.command_fault(ea::plant::NodeFault::kCorrupt, 2U);",
+          "text": "And the next 2 command frames are corrupted"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.5);",
+          "text": "And 0.5 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kMonitoring);",
+          "text": "Then the monitor state is MONITORING"
+        },
+        {
+          "catalogue": "MON-S05",
+          "cpp": "EXPECT_LT(sil_.actuator().metrics().monitor_safe_state_s, 0.0);",
+          "text": "And the monitor never entered SAFE_STATE"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/acc_monitor/features/faults.feature",
+      "line": 39,
+      "name": "S28_WithoutAnyCommandTheMonitorStaysInINITAndGrantsNoPermit",
+      "requirements": [
+        "REQ-ACCM-001",
+        "REQ-ACCM-008"
+      ],
+      "scenario": "Without any command the monitor stays in INIT and grants no permit",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "MON-S20",
+          "cpp": "sil_.command_fault(ea::plant::NodeFault::kLose, 1000000U);",
+          "text": "When the command sender stops"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(1.0);",
+          "text": "And 1 s pass"
+        },
+        {
+          "catalogue": "MON-S01",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().status, ea::plant::MonitorStatus::kInit);",
+          "text": "Then the monitor state is INIT"
+        },
+        {
+          "catalogue": "MON-S02",
+          "cpp": "EXPECT_EQ(sil_.actuator().monitor().permit, false);",
+          "text": "And the permit is withdrawn"
+        },
+        {
+          "catalogue": "MON-S05",
+          "cpp": "EXPECT_LT(sil_.actuator().metrics().monitor_safe_state_s, 0.0);",
+          "text": "And the monitor never entered SAFE_STATE"
+        },
+        {
+          "catalogue": "MON-S08",
+          "cpp": "EXPECT_FALSE(sil_.actuator().applying());",
+          "text": "And the actuator applies no request"
+        }
+      ]
+    },
+    {
+      "example": [],
+      "feature": "examples/acc_monitor/features/faults.feature",
+      "line": 49,
+      "name": "S29_ALostMonitorMakesTheActuatorRampOutBrakingAndRequestATakeove",
+      "requirements": [
+        "REQ-ACCM-010"
+      ],
+      "scenario": "A lost monitor makes the actuator ramp out braking and request a takeover",
+      "steps": [
+        {
+          "catalogue": "FN-S01",
+          "cpp": "sil_.plant().set_ego_speed_kph(100.0);",
+          "text": "Given the ego vehicle drives at 100 km/h"
+        },
+        {
+          "catalogue": "ACCM-S01",
+          "cpp": "sil_.command(static_cast<double>(ea::plant::AccStatus::kActive), 0.0);",
+          "text": "And the controller is ACTIVE without request"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(0.2);",
+          "text": "When 0.2 s pass"
+        },
+        {
+          "catalogue": "ACCM-S02",
+          "cpp": "sil_.ramp_request(static_cast<double>(ea::plant::AccStatus::kActive), -2.0, 5.0);",
+          "text": "And the controller ramps the deceleration request to 2.0 m/s2 at 5.0 m/s3"
+        },
+        {
+          "catalogue": "MON-S22",
+          "cpp": "sil_.monitor_fault(ea::plant::NodeFault::kLose, 1000000U);",
+          "text": "And the monitor sender stops"
+        },
+        {
+          "catalogue": "FN-S10",
+          "cpp": "sil_.run(1.0);",
+          "text": "And 1 s pass"
+        },
+        {
+          "catalogue": "MON-S09",
+          "cpp": "EXPECT_EQ(sil_.actuator().takeover_request(), true);",
+          "text": "Then the actuator requests a driver takeover"
+        },
+        {
+          "catalogue": "MON-S10",
+          "cpp": "ASSERT_GE(sil_.actuator().metrics().safe_state_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().safe_state_s - sil_.plant().metrics().first_fault_s) * 1000.0, 40 + 1e-6);",
+          "text": "And the actuator entered its safe state within 40 ms of the first fault"
+        },
+        {
+          "catalogue": "MON-S13",
+          "cpp": "ASSERT_GE(sil_.actuator().metrics().ramp_out_done_s, 0.0); ASSERT_GE(sil_.plant().metrics().first_fault_s, 0.0); EXPECT_LE((sil_.actuator().metrics().ramp_out_done_s - sil_.plant().metrics().first_fault_s) * 1000.0, 460 + 1e-6);",
+          "text": "And the request was ramped out within 460 ms of the first fault"
+        },
+        {
+          "catalogue": "MON-S08",
+          "cpp": "EXPECT_FALSE(sil_.actuator().applying());",
+          "text": "And the actuator applies no request"
+        }
+      ]
+    }
+  ]
+}

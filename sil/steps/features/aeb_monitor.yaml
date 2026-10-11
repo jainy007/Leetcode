@@ -1,0 +1,16 @@
+# Step vocabulary of feature 'aeb_monitor': the stimulus node stands in for the AEB controller
+# (sil_.command()); state codes from the plant's own AebStatus table.
+# Combined with sil/steps/can_function.yaml and sil/steps/monitored_actuator.yaml.
+schema_version: 1
+pattern: aeb_monitor
+steps:
+  - id: AEBM-S01
+    keywords: [given, when]
+    pattern: '^the AEB controller is in (?P<s>STANDBY|WARNING|PARTIAL_BRAKE|FULL_BRAKE|FAULT) with (?P<a>[0-9]+(?:\.[0-9]+)?) m/s2 braking$'
+    types: {s: 'enum:[STANDBY, WARNING, PARTIAL_BRAKE, FULL_BRAKE, FAULT]', a: number}
+    cpp: 'sil_.command(static_cast<double>(ea::plant::AebStatus::k{{ s | camel }}), {{ a }});'
+  - id: AEBM-S02
+    keywords: [then]
+    pattern: '^the monitor reports the fault reason (?P<r>NONE|COMMAND_TIMEOUT|REQUEST_LIMIT|REQUEST_OUTSIDE_BRAKING|UNJUSTIFIED_BRAKING|UNJUSTIFIED_FULL_BRAKING)$'
+    types: {r: 'enum:[NONE, COMMAND_TIMEOUT, REQUEST_LIMIT, REQUEST_OUTSIDE_BRAKING, UNJUSTIFIED_BRAKING, UNJUSTIFIED_FULL_BRAKING]'}
+    cpp: 'EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AebMonitorReason::k{{ r | camel }}));'

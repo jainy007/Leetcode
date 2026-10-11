@@ -1,0 +1,50 @@
+#pragma once
+
+#include <cstdint>
+
+#include "{{ inc }}/{{ snake }}_types.hpp"
+
+namespace {{ ns }} {
+
+// Feature 'acc_monitor' logic: safety envelope of the ACC controller's longitudinal command.
+// Every new command (new E2E counter) is checked; a violation latches SAFE_STATE. In
+// MONITORING the permit is granted and the counter of the last checked command is echoed, so
+// the actuator ECU applies exactly the commands this monitor has checked.
+class {{ component.name }}Logic {
+public:
+    enum class Reason : std::uint8_t {
+{% for r in reasons %}
+        k{{ r | camel }} = {{ loop.index0 }}U,
+{% endfor %}
+    };
+
+    static constexpr double kActiveStatusCode = {{ cal.active_status_code | cpp_double }};
+    static constexpr double kAccelMaxMps2 = {{ cal.accel_max_mps2 | cpp_double }};
+    static constexpr double kDecelMaxMps2 = {{ cal.decel_max_mps2 | cpp_double }};
+    static constexpr double kRequestToleranceMps2 = {{ cal.request_tolerance_mps2 | cpp_double }};
+    static constexpr double kAccelRatePerCycle = {{ accel_rate_per_cycle | cpp_double }};  // (jerk + tolerance) * cycle
+    static constexpr double kBrakeRatePerCycle = {{ brake_rate_per_cycle | cpp_double }};
+    static constexpr double kMinTtcForAccelS = {{ cal.min_ttc_for_accel_s | cpp_double }};
+    static constexpr double kMaxTargetRangeM = {{ cal.max_target_range_m | cpp_double }};
+    static constexpr double kLaneHalfWidthM = {{ cal.lane_half_width_m | cpp_double }};
+    static constexpr std::uint32_t kDebounceCycles = {{ debounce_cycles }}U;
+
+    void step(const Inputs& in, Outputs& out) noexcept;
+    State state() const noexcept { return state_; }
+    Reason reason() const noexcept { return reason_; }
+
+private:
+    void check_command(const Inputs& in) noexcept;
+    void check_unintended_accel(const Inputs& in) noexcept;
+    void violation(Reason r) noexcept;
+
+    State state_ = State::kInit;
+    Reason reason_ = Reason::kNone;
+    double last_counter_ = -1.0;  // counter of the last checked command
+    double prev_accel_ = 0.0;
+    double prev_brake_ = 0.0;
+    std::uint32_t cycles_since_command_ = 1U;
+    std::uint32_t accel_toward_target_cycles_ = 0U;
+};
+
+}  // namespace {{ ns }}

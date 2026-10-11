@@ -1,0 +1,38 @@
+    // ---- feature 'acc_monitor' command sequences (the stimulus stands in for the controller) ----
+    ea::plant::MonitoredActuator& actuator() noexcept { return observer_; }
+    // Faults on the next n frames of the stimulus (controller) or of the monitor under test.
+    void command_fault(ea::plant::NodeFault kind, std::uint32_t n) noexcept {
+        plant_.inject_node_fault(ea::plant::can::kAccCommandId, kind, n, ea::plant::can::kAccCommandE2e);
+    }
+    void monitor_fault(ea::plant::NodeFault kind, std::uint32_t n) noexcept {
+        plant_.inject_node_fault(ea::plant::can::kAccMonitorId, kind, n, ea::plant::can::kAccMonitorE2e);
+    }
+    // Sets the stimulus' state code and net longitudinal request (> 0 accelerates, < 0 brakes).
+    void command(double status_code, double request_mps2) noexcept {
+        request_mps2_ = request_mps2;
+        stim_.set(ea::plant::can::acc_command::kAccStatus, status_code);
+        stim_.set(ea::plant::can::acc_command::kAccelRequest, request_mps2 > 0.0 ? request_mps2 : 0.0);
+        stim_.set(ea::plant::can::acc_command::kBrakeRequest, request_mps2 < 0.0 ? -request_mps2 : 0.0);
+    }
+    void command_both(double accel_mps2, double brake_mps2) noexcept {
+        stim_.set(ea::plant::can::acc_command::kAccStatus, static_cast<double>(ea::plant::AccStatus::kActive));
+        stim_.set(ea::plant::can::acc_command::kAccelRequest, accel_mps2);
+        stim_.set(ea::plant::can::acc_command::kBrakeRequest, brake_mps2);
+    }
+    // Moves the net request to `target_mps2` in 0.01 m/s2 steps of at most jerk * 20 ms per cycle.
+    void ramp_request(double status_code, double target_mps2, double jerk_mps3) noexcept {
+        const std::int32_t step = ea::plant::Plant::jerk_step_raw(jerk_mps3);
+        std::int32_t raw = ea::plant::Plant::accel_raw(request_mps2_);
+        const std::int32_t goal = ea::plant::Plant::accel_raw(target_mps2);
+        while (raw != goal) {
+            const std::int32_t d = goal - raw;
+            raw += (d > step) ? step : ((d < -step) ? -step : d);
+            command(status_code, static_cast<double>(raw) * 0.01);
+            run(ea::plant::Plant::kTickS);
+        }
+    }
+
+private:
+    double request_mps2_ = 0.0;
+
+public:

@@ -1,0 +1,59 @@
+# Model for the ACC safety monitor (pattern can_function, feature acc_monitor). It runs on its
+# own node after the controller: it receives the controller's AccCommand and the radar.
+schema_version: 1
+pattern: can_function
+feature: acc_monitor
+
+component:
+  name: AccMonitor
+  namespace: adas::acc_monitor
+  asil: B(D)
+  profile: asil
+
+inputs:
+  requirements: requirements.yaml
+  features: [features/envelope.feature, features/faults.feature]
+  dbc: [interfaces/acc_monitor.dbc]
+
+cycle_ms: 20
+
+rx:
+  - {message: RadarObject, period_ms: 40, timeout_ms: 120, satisfies: [REQ-ACCM-007],
+     e2e: {data_id: 0x0200, crc: Crc, counter: Counter, max_delta_counter: 3}}
+  - {message: AccCommand, period_ms: 20, timeout_ms: 60, satisfies: [REQ-ACCM-008],
+     e2e: {data_id: 0x0300, crc: Crc, counter: Counter, max_delta_counter: 3}}
+
+tx:
+  - {message: AccMonitorStatus, satisfies: [REQ-ACCM-010],
+     e2e: {data_id: 0x0301, crc: Crc, counter: Counter, max_delta_counter: 2}}
+
+bindings:
+  target_valid: RadarObject.ObjValid
+  target_range: RadarObject.ObjRange
+  target_range_rate: RadarObject.ObjRangeRate
+  target_lateral: RadarObject.ObjLateralPos
+  cmd_status: AccCommand.AccStatus
+  cmd_accel: AccCommand.AccelRequest
+  cmd_brake: AccCommand.BrakeRequest
+  cmd_counter: AccCommand.Counter
+  status: AccMonitorStatus.MonStatus
+  permit: AccMonitorStatus.Permit
+  approved_counter: AccMonitorStatus.ApprovedCounter
+  fault_reason: AccMonitorStatus.FaultReason
+
+logic:
+  satisfies: [REQ-ACCM-001, REQ-ACCM-002, REQ-ACCM-003, REQ-ACCM-004, REQ-ACCM-005, REQ-ACCM-006,
+              REQ-ACCM-007, REQ-ACCM-008, REQ-ACCM-009]
+
+calibration:
+  active_status_code: {value: 2, satisfies: [REQ-ACCM-005]}
+  accel_max_mps2: {value: 2.0, satisfies: [REQ-ACCM-003]}
+  decel_max_mps2: {value: 3.5, satisfies: [REQ-ACCM-003]}
+  request_tolerance_mps2: {value: 0.1, satisfies: [REQ-ACCM-003]}
+  jerk_increase_max_mps3: {value: 2.5, satisfies: [REQ-ACCM-006]}
+  jerk_decrease_max_mps3: {value: 5.0, satisfies: [REQ-ACCM-006]}
+  jerk_tolerance_mps3: {value: 1.0, satisfies: [REQ-ACCM-006]}
+  min_ttc_for_accel_s: {value: 2.0, satisfies: [REQ-ACCM-007]}
+  max_target_range_m: {value: 200, satisfies: [REQ-ACCM-007]}
+  lane_half_width_m: {value: 1.8, satisfies: [REQ-ACCM-007]}
+  unintended_accel_debounce_s: {value: 0.5, satisfies: [REQ-ACCM-007]}

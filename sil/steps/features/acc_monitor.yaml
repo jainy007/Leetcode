@@ -1,0 +1,31 @@
+# Step vocabulary of feature 'acc_monitor': the stimulus node stands in for the ACC controller
+# (sil_.command(), sil_.ramp_request()); state codes from the plant's own AccStatus table.
+# Combined with sil/steps/can_function.yaml and sil/steps/monitored_actuator.yaml.
+schema_version: 1
+pattern: acc_monitor
+steps:
+  - id: ACCM-S01
+    keywords: [given, when]
+    pattern: '^the controller is (?P<s>OFF|STANDBY|ACTIVE|OVERRIDE|FAULT) without request$'
+    types: {s: 'enum:[OFF, STANDBY, ACTIVE, OVERRIDE, FAULT]'}
+    cpp: 'sil_.command(static_cast<double>(ea::plant::AccStatus::k{{ s | camel }}), 0.0);'
+  - id: ACCM-S02
+    keywords: [given, when]
+    pattern: '^the controller ramps the (?P<dir>acceleration|deceleration) request to (?P<a>[0-9]+(?:\.[0-9]+)?) m/s2 at (?P<j>[0-9]+(?:\.[0-9]+)?) m/s3$'
+    types: {dir: 'enum:[acceleration, deceleration]', a: number, j: number}
+    cpp: 'sil_.ramp_request(static_cast<double>(ea::plant::AccStatus::kActive), {{ "" if dir == "acceleration" else "-" }}{{ a }}, {{ j }});'
+  - id: ACCM-S03
+    keywords: [when]
+    pattern: '^the controller requests (?P<a>[0-9]+(?:\.[0-9]+)?) m/s2 (?P<dir>acceleration|deceleration) in state (?P<s>OFF|STANDBY|ACTIVE|OVERRIDE|FAULT)$'
+    types: {a: number, dir: 'enum:[acceleration, deceleration]', s: 'enum:[OFF, STANDBY, ACTIVE, OVERRIDE, FAULT]'}
+    cpp: 'sil_.command(static_cast<double>(ea::plant::AccStatus::k{{ s | camel }}), {{ "" if dir == "acceleration" else "-" }}{{ a }});'
+  - id: ACCM-S04
+    keywords: [when]
+    pattern: '^the controller requests (?P<a>[0-9]+(?:\.[0-9]+)?) m/s2 acceleration and (?P<b>[0-9]+(?:\.[0-9]+)?) m/s2 deceleration$'
+    types: {a: number, b: number}
+    cpp: 'sil_.command_both({{ a }}, {{ b }});'
+  - id: ACCM-S05
+    keywords: [then]
+    pattern: '^the monitor reports the fault reason (?P<r>NONE|COMMAND_TIMEOUT|REQUEST_LIMIT|ACCEL_AND_BRAKE|REQUEST_OUTSIDE_ACTIVE|REQUEST_RATE|UNINTENDED_ACCEL)$'
+    types: {r: 'enum:[NONE, COMMAND_TIMEOUT, REQUEST_LIMIT, ACCEL_AND_BRAKE, REQUEST_OUTSIDE_ACTIVE, REQUEST_RATE, UNINTENDED_ACCEL]'}
+    cpp: 'EXPECT_EQ(sil_.actuator().monitor().reason, static_cast<std::uint32_t>(ea::plant::can::AccMonitorReason::k{{ r | camel }}));'

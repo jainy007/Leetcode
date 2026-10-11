@@ -1,0 +1,13 @@
+    // ---- feature 'aeb_monitor' command sequences (the stimulus stands in for the controller) ----
+    ea::plant::MonitoredActuator& actuator() noexcept { return observer_; }
+    // Faults on the next n frames of the stimulus (controller) or of the monitor under test.
+    void command_fault(ea::plant::NodeFault kind, std::uint32_t n) noexcept {
+        plant_.inject_node_fault(ea::plant::can::kAebCommandId, kind, n, ea::plant::can::kAebCommandE2e);
+    }
+    void monitor_fault(ea::plant::NodeFault kind, std::uint32_t n) noexcept {
+        plant_.inject_node_fault(ea::plant::can::kAebMonitorId, kind, n, ea::plant::can::kAebMonitorE2e);
+    }
+    void command(double status_code, double brake_mps2) noexcept {
+        stim_.set(ea::plant::can::aeb_command::kAebStatus, status_code);
+        stim_.set(ea::plant::can::aeb_command::kAebBrakeRequest, brake_mps2);
+    }
