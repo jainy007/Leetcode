@@ -35,6 +35,7 @@ write generated code, the generator, or its templates. See [CLAUDE.md](CLAUDE.md
 | `generated/` | Generator output (committed, never edited by hand) |
 | `docs/rules/` | CPU, GPU, multiprocess/IPC, domain and generator rule sets with IDs |
 | `docs/safety/` | Tool classification, qualification plan, safety manual for the runtime |
+| `bench/`, `docs/performance.md` | Micro-benchmarks and optimization results (gate cycle 500 ns → 48 ns, all outputs bit-identical) |
 | `legacy/` | Archived LeetCode practice code (Bazel); not built |
 
 ## Quick start

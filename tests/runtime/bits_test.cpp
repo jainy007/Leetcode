@@ -59,3 +59,100 @@ TEST(Bits, SignHandling) {
 }
 
 }  // namespace
+
+// ---- Equivalence of the byte-chunk implementation with a bit-by-bit reference -------------
+namespace {
+
+std::uint32_t ref_next(std::uint32_t pos) {
+    return ((pos % 8U) == 0U) ? (pos + 15U) : (pos - 1U);
+}
+
+bool ref_fits(ByteOrder order, std::uint32_t start, std::uint32_t len, std::size_t bytes) {
+    if (len == 0U || len > 64U || start >= bytes * 8U) {
+        return false;
+    }
+    if (order == ByteOrder::kLittleEndian) {
+        return start + len <= bytes * 8U;
+    }
+    std::uint32_t pos = start;
+    for (std::uint32_t i = 1U; i < len; ++i) {
+        pos = ref_next(pos);
+        if (pos >= bytes * 8U) {
+            return false;
+        }
+    }
+    return true;
+}
+
+std::uint64_t ref_extract(const std::uint8_t* d, ByteOrder order, std::uint32_t start, std::uint32_t len) {
+    std::uint64_t raw = 0U;
+    std::uint32_t pos = start;
+    for (std::uint32_t i = 0U; i < len; ++i) {
+        const std::uint64_t bit = (static_cast<std::uint32_t>(d[pos / 8U]) >> (pos % 8U)) & 1U;
+        if (order == ByteOrder::kLittleEndian) {
+            raw |= bit << i;
+            pos = start + i + 1U;
+        } else {
+            raw = (raw << 1U) | bit;
+            pos = ref_next(pos);
+        }
+    }
+    return raw;
+}
+
+void ref_insert(std::uint8_t* d, ByteOrder order, std::uint32_t start, std::uint32_t len, std::uint64_t raw) {
+    std::uint32_t pos = start;
+    for (std::uint32_t i = 0U; i < len; ++i) {
+        const std::uint64_t bit = (order == ByteOrder::kLittleEndian) ? ((raw >> i) & 1U) : ((raw >> (len - 1U - i)) & 1U);
+        const auto mask = static_cast<std::uint8_t>(1U << (pos % 8U));
+        d[pos / 8U] = static_cast<std::uint8_t>(bit != 0U ? (d[pos / 8U] | mask) : (d[pos / 8U] & ~mask));
+        pos = (order == ByteOrder::kLittleEndian) ? (start + i + 1U) : ref_next(pos);
+    }
+}
+
+TEST(Bits, ExhaustiveEquivalenceWithReference) {
+    constexpr std::size_t kBytes = 10U;
+    std::uint64_t seed = 0x9E3779B97F4A7C15ULL;
+    const auto next = [&seed] {
+        seed ^= seed << 13U;
+        seed ^= seed >> 7U;
+        seed ^= seed << 17U;
+        return seed;
+    };
+    for (const ByteOrder order : {ByteOrder::kLittleEndian, ByteOrder::kBigEndian}) {
+        for (std::uint32_t start = 0U; start < kBytes * 8U + 2U; ++start) {
+            for (std::uint32_t len = 0U; len <= 65U; ++len) {
+                const bool fits = ref_fits(order, start, len, kBytes);
+                ASSERT_EQ(ea::codec::signal_fits(order, start, len, kBytes), fits) << start << "/" << len;
+                if (!fits) {
+                    continue;
+                }
+                std::array<std::uint8_t, kBytes> a{};
+                for (auto& b : a) {
+                    b = static_cast<std::uint8_t>(next());
+                }
+                ASSERT_EQ(*ea::codec::extract(a, order, start, len), ref_extract(a.data(), order, start, len));
+                const std::uint64_t raw = (len == 64U) ? next() : (next() & ((std::uint64_t{1} << len) - 1U));
+                std::array<std::uint8_t, kBytes> b = a;
+                std::array<std::uint8_t, kBytes> r = a;
+                ASSERT_TRUE(ea::codec::insert(b, order, start, len, raw).ok());
+                ref_insert(r.data(), order, start, len, raw);
+                ASSERT_EQ(b, r) << start << "/" << len;  // also proves neighbouring bits are untouched
+            }
+        }
+    }
+}
+
+TEST(Bits, FixedVariantsMatch) {
+    std::array<std::uint8_t, 8> d{0x12U, 0x34U, 0x56U, 0x78U, 0x9AU, 0xBCU, 0xDEU, 0xF0U};
+    static_assert(ea::codec::signal_fits(ByteOrder::kBigEndian, 3U, 20U, 8U), "compile-time proof");
+    EXPECT_EQ((ea::codec::extract_fixed<ByteOrder::kBigEndian, 3U, 20U>(d.data())),
+              *ea::codec::extract(d, ByteOrder::kBigEndian, 3U, 20U));
+    EXPECT_EQ((ea::codec::extract_fixed<ByteOrder::kLittleEndian, 5U, 33U>(d.data())),
+              *ea::codec::extract(d, ByteOrder::kLittleEndian, 5U, 33U));
+    ea::codec::insert_fixed<ByteOrder::kBigEndian, 15U, 16U>(d.data(), 0xBEEFU);
+    EXPECT_EQ(d[1], 0xBEU);
+    EXPECT_EQ(d[2], 0xEFU);
+}
+
+}  // namespace

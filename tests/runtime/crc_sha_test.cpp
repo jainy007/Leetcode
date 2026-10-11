@@ -54,3 +54,34 @@ TEST(Sha256, ParseHex) {
 }
 
 }  // namespace
+
+namespace {
+
+std::uint32_t crc32_bitwise(const std::uint8_t* d, std::size_t n, std::uint32_t reflected_poly) {
+    std::uint32_t c = 0xFFFFFFFFU;
+    for (std::size_t i = 0; i < n; ++i) {
+        c ^= d[i];
+        for (int b = 0; b < 8; ++b) {
+            c = ((c & 1U) != 0U) ? ((c >> 1U) ^ reflected_poly) : (c >> 1U);
+        }
+    }
+    return c ^ 0xFFFFFFFFU;
+}
+
+TEST(Crc, SlicingBy8MatchesBitwiseForAllLengthsAndSplits) {
+    std::array<std::uint8_t, 300> d{};
+    for (std::size_t i = 0; i < d.size(); ++i) {
+        d[i] = static_cast<std::uint8_t>(i * 131U + 7U);
+    }
+    for (std::size_t n = 0; n <= d.size(); ++n) {
+        ASSERT_EQ(ea::crc::crc32_p4(ea::ConstByteSpan(d.data(), n)), crc32_bitwise(d.data(), n, 0xC8DF352FU)) << n;
+        ASSERT_EQ(ea::crc::crc32_ieee(ea::ConstByteSpan(d.data(), n)), crc32_bitwise(d.data(), n, 0xEDB88320U)) << n;
+        // Streaming in two arbitrary pieces gives the same result.
+        ea::crc::Crc32P4 c;
+        c.update(ea::ConstByteSpan(d.data(), n / 3U));
+        c.update(ea::ConstByteSpan(d.data() + n / 3U, n - n / 3U));
+        ASSERT_EQ(c.final(), crc32_bitwise(d.data(), n, 0xC8DF352FU)) << n;
+    }
+}
+
+}  // namespace

@@ -16,6 +16,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Options
 # ---------------------------------------------------------------------------
 option(EA_BUILD_TESTS "Build unit and SIL tests" ON)
+option(EA_BUILD_BENCHMARKS "Build micro-benchmarks of runtime and generated code" OFF)
 option(EA_GPU_CUDA "Build the CUDA backend (needs CUDA toolkit, e.g. NVIDIA DRIVE OS)" OFF)
 option(EA_GPU_QNN "Build the Qualcomm QNN backend (needs QNN SDK, e.g. Snapdragon Ride)" OFF)
 option(EA_COVERAGE "Instrument for statement/branch/MC-DC coverage (clang only)" OFF)
@@ -48,4 +49,9 @@ add_subdirectory(generated)
 if(EA_BUILD_TESTS)
     add_subdirectory(tests)
     add_subdirectory(examples/gpu_inference_stage/deploy)
+endif()
+
+if(EA_BUILD_BENCHMARKS)
+    include(EaBenchmark)
+    add_subdirectory(bench)
 endif()

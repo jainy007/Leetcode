@@ -8,6 +8,7 @@
 #include "ea/codec/bits.hpp"
 #include "ea/codec/someip.hpp"
 #include "ea/core/assert.hpp"
+#include "ea/core/rounding.hpp"
 #include "ea/e2e/p4.hpp"
 #include "{{ inc }}/{{ snake }}.hpp"
 
@@ -20,7 +21,7 @@ inline ea::Result<void> encode_{{ input.snake }}_unchecked(const {{ input.name }
         return ea::ErrorCode::kLengthMismatch;
     }
 {% for s in input.signals %}
-{{ m.encode_signal(s, 'in', s.raw_type_min, s.raw_type_max) }}
+{{ m.encode_signal(s, 'in', s.raw_type_min, s.raw_type_max, 'k' ~ input.name ~ 'PayloadLength') }}
 {%- endfor %}
     return ea::ok_result();
 }

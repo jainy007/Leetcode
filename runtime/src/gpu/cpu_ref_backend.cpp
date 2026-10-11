@@ -105,12 +105,18 @@ Result<void> CpuRefBackend::execute() noexcept {
                 const float* in = f32(op.input);
                 const float* w = f32(op.weights);
                 const float* b = f32(op.bias);
+                // Loop order i-outer / j-inner: rows of W are read contiguously (vectorizable).
+                // Every out[j] still accumulates b[j] + in[0]*W[0][j] + in[1]*W[1][j] + ... in that
+                // order, so results are bit-identical to the textbook j-outer loop (GPU-007).
                 for (std::uint32_t j = 0U; j < op.out_features; ++j) {
-                    float acc = b[j];
-                    for (std::uint32_t i = 0U; i < op.in_features; ++i) {
-                        acc += in[i] * w[i * op.out_features + j];
+                    out[j] = b[j];
+                }
+                for (std::uint32_t i = 0U; i < op.in_features; ++i) {
+                    const float x = in[i];
+                    const float* row = w + static_cast<std::size_t>(i) * op.out_features;
+                    for (std::uint32_t j = 0U; j < op.out_features; ++j) {
+                        out[j] += x * row[j];
                     }
-                    out[j] = acc;
                 }
                 break;
             }

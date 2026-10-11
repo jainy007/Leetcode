@@ -6,17 +6,23 @@
       "displayName": "Linux host (SIL, CI)",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/${presetName}",
-      "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" }
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
     },
     {
       "name": "linux-host-asan",
       "inherits": "linux-host",
-      "cacheVariables": { "EA_SANITIZER": "address;undefined" }
+      "cacheVariables": {
+        "EA_SANITIZER": "address;undefined"
+      }
     },
     {
       "name": "linux-host-tsan",
       "inherits": "linux-host",
-      "cacheVariables": { "EA_SANITIZER": "thread" }
+      "cacheVariables": {
+        "EA_SANITIZER": "thread"
+      }
     },
     {
       "name": "linux-host-coverage",
@@ -31,30 +37,91 @@
       "name": "linux-aarch64-rt",
       "inherits": "linux-host",
       "toolchainFile": "${sourceDir}/cmake/toolchains/linux-aarch64-rt.cmake",
-      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release", "EA_BUILD_TESTS": "OFF" }
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "EA_BUILD_TESTS": "OFF"
+      }
     },
     {
       "name": "driveos",
       "inherits": "linux-aarch64-rt",
       "toolchainFile": "${sourceDir}/cmake/toolchains/driveos-aarch64.cmake",
-      "cacheVariables": { "EA_GPU_CUDA": "ON" }
+      "cacheVariables": {
+        "EA_GPU_CUDA": "ON"
+      }
     },
     {
       "name": "qnx-aarch64",
       "inherits": "linux-aarch64-rt",
       "toolchainFile": "${sourceDir}/cmake/toolchains/qnx-aarch64.cmake"
+    },
+    {
+      "name": "linux-host-bench",
+      "displayName": "Linux host, Release + benchmarks",
+      "inherits": "linux-host",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "EA_BUILD_BENCHMARKS": "ON"
+      }
     }
   ],
   "buildPresets": [
-    { "name": "linux-host", "configurePreset": "linux-host" },
-    { "name": "linux-host-asan", "configurePreset": "linux-host-asan" },
-    { "name": "linux-host-tsan", "configurePreset": "linux-host-tsan" },
-    { "name": "linux-host-coverage", "configurePreset": "linux-host-coverage" }
+    {
+      "name": "linux-host",
+      "configurePreset": "linux-host"
+    },
+    {
+      "name": "linux-host-asan",
+      "configurePreset": "linux-host-asan"
+    },
+    {
+      "name": "linux-host-tsan",
+      "configurePreset": "linux-host-tsan"
+    },
+    {
+      "name": "linux-host-coverage",
+      "configurePreset": "linux-host-coverage"
+    },
+    {
+      "name": "linux-host-bench",
+      "configurePreset": "linux-host-bench"
+    }
   ],
   "testPresets": [
-    { "name": "linux-host", "configurePreset": "linux-host", "output": { "outputOnFailure": true } },
-    { "name": "linux-host-asan", "configurePreset": "linux-host-asan", "output": { "outputOnFailure": true } },
-    { "name": "linux-host-tsan", "configurePreset": "linux-host-tsan", "output": { "outputOnFailure": true } },
-    { "name": "linux-host-coverage", "configurePreset": "linux-host-coverage", "output": { "outputOnFailure": true } }
+    {
+      "name": "linux-host",
+      "configurePreset": "linux-host",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "linux-host-asan",
+      "configurePreset": "linux-host-asan",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "linux-host-tsan",
+      "configurePreset": "linux-host-tsan",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "linux-host-coverage",
+      "configurePreset": "linux-host-coverage",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "linux-host-bench",
+      "configurePreset": "linux-host-bench",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
   ]
 }

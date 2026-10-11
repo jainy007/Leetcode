@@ -93,6 +93,24 @@ jobs:
           name: coverage
           path: coverage.txt
 
+  # Keeps the benchmarks compiling and gives a (noisy, informational) number per commit.
+  benchmarks:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r tools/requirements.txt
+      - run: sudo apt-get update && sudo apt-get install -y ninja-build
+      - run: cmake --preset linux-host-bench
+      - run: cmake --build --preset linux-host-bench --target ea_bench
+      - run: ./build/linux-host-bench/bench/ea_bench --benchmark_min_time=0.1s --benchmark_out=bench.json --benchmark_out_format=json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: benchmarks
+          path: bench.json
+
   clang-tidy:
     runs-on: ubuntu-24.04
     steps:

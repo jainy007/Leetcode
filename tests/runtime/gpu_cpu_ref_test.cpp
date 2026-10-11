@@ -81,3 +81,57 @@ TEST(CpuRefArena, TooSmall) {
 }
 
 }  // namespace
+
+namespace {
+
+// The optimized dense loop must be bit-identical to the textbook formulation.
+TEST(CpuRefDense, BitIdenticalToReferenceOrder) {
+    using ea::gpu::DType;
+    using ea::gpu::OpKind;
+    constexpr std::uint32_t kIn = 96U;
+    constexpr std::uint32_t kOut = 40U;
+    const ea::gpu::TensorDesc tensors[] = {
+        {"in", DType::kU8, kIn, false}, {"norm", DType::kF32, kIn, false}, {"w", DType::kF32, kIn * kOut, true},
+        {"b", DType::kF32, kOut, true}, {"out", DType::kF32, kOut, false},
+    };
+    const ea::gpu::OpDesc ops[] = {
+        {OpKind::kNormalize, 0U, 1U, ea::gpu::kNoTensor, ea::gpu::kNoTensor, 0U, 0U, 0.0123F, -0.7F},
+        {OpKind::kDense, 1U, 4U, 2U, 3U, kIn, kOut, 0.0F, 0.0F},
+    };
+    std::array<float, kIn * kOut> w{};
+    std::array<float, kOut> b{};
+    std::array<std::uint8_t, kIn> in{};
+    for (std::uint32_t k = 0U; k < w.size(); ++k) {
+        w[k] = static_cast<float>(static_cast<int>((k * 7919U) % 2001U) - 1000) / 777.0F;
+    }
+    for (std::uint32_t k = 0U; k < kOut; ++k) {
+        b[k] = static_cast<float>(k) * 0.37F - 3.0F;
+    }
+    for (std::uint32_t k = 0U; k < kIn; ++k) {
+        in[k] = static_cast<std::uint8_t>(k * 13U);
+    }
+    alignas(64) static std::array<std::uint8_t, 32768> arena{};
+    ea::gpu::CpuRefBackend be(arena);
+    ASSERT_TRUE(be.configure(tensors, ops).ok());
+    ASSERT_TRUE(be.upload(2U, ea::ConstByteSpan(reinterpret_cast<const std::uint8_t*>(w.data()), sizeof(w))).ok());
+    ASSERT_TRUE(be.upload(3U, ea::ConstByteSpan(reinterpret_cast<const std::uint8_t*>(b.data()), sizeof(b))).ok());
+    ASSERT_TRUE(be.seal().ok());
+    ASSERT_TRUE(be.upload(0U, ea::ConstByteSpan(in.data(), in.size())).ok());
+    ASSERT_TRUE(be.execute().ok());
+    std::array<float, kOut> got{};
+    ASSERT_TRUE(be.download(4U, ea::ByteSpan(reinterpret_cast<std::uint8_t*>(got.data()), sizeof(got))).ok());
+
+    volatile float scale = 0.0123F;  // volatile: keep the reference free of compile-time folding/contraction
+    volatile float shift = -0.7F;
+    for (std::uint32_t j = 0U; j < kOut; ++j) {
+        float acc = b[j];
+        for (std::uint32_t i = 0U; i < kIn; ++i) {
+            const float x = static_cast<float>(in[i]) * scale + shift;
+            const float prod = x * w[i * kOut + j];
+            acc = acc + prod;
+        }
+        EXPECT_EQ(got[j], acc) << j;  // exact, not NEAR
+    }
+}
+
+}  // namespace

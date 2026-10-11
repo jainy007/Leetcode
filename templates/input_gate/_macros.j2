@@ -2,17 +2,15 @@
 
 {% macro describe(s) %}{{ s.name }}: start bit {{ s.start_bit }}, {{ s.length }} bit, {{ 'big' if s.big_endian else 'little' }} endian, {{ 'signed' if s.signed else 'unsigned' }}, factor {{ s.factor }}, offset {{ s.offset }}, range [{{ s.min }}, {{ s.max }}] {{ s.unit }}{% endmacro %}
 
-{% macro decode_signal(s, dst) %}
+{% macro decode_signal(s, dst, payload_len) %}
     {
         // {{ describe(s) }}
-        const ea::Result<std::uint64_t> raw = ea::codec::extract(payload, {{ order(s) }}, {{ s.start_bit }}U, {{ s.length }}U);
-        if (!raw.ok()) {
-            return raw.error();
-        }
+        static_assert(ea::codec::signal_fits({{ order(s) }}, {{ s.start_bit }}U, {{ s.length }}U, {{ payload_len }}), "GEN-031");
+        const std::uint64_t raw = ea::codec::extract_fixed<{{ order(s) }}, {{ s.start_bit }}U, {{ s.length }}U>(payload.data());
 {% if s.signed %}
-        const std::int64_t value = ea::codec::sign_extend(*raw, {{ s.length }}U);
+        const std::int64_t value = ea::codec::sign_extend(raw, {{ s.length }}U);
 {% else %}
-        const std::int64_t value = static_cast<std::int64_t>(*raw);
+        const std::int64_t value = static_cast<std::int64_t>(raw);
 {% endif %}
         // IPC-002: physical range, checked exactly in the raw domain.
         if (value < {{ s.raw_lo }}LL || value > {{ s.raw_hi }}LL) {
@@ -22,25 +20,23 @@
     }
 {% endmacro %}
 
-{% macro encode_signal(s, src, lo, hi) %}
+{% macro encode_signal(s, src, lo, hi, payload_len) %}
     {
         // {{ describe(s) }}
+        static_assert(ea::codec::signal_fits({{ order(s) }}, {{ s.start_bit }}U, {{ s.length }}U, {{ payload_len }}), "GEN-031");
         const double scaled = ({{ src }}.{{ s.name }} - {{ s.offset | cpp_double }}) / {{ s.factor | cpp_double }};
         if (!(scaled >= {{ (lo - 0.5) | cpp_double }} && scaled <= {{ (hi + 0.5) | cpp_double }})) {  // also rejects NaN
             return ea::ErrorCode::kOutOfRange;
         }
-        const std::int64_t value = static_cast<std::int64_t>(std::llround(scaled));  // IPC-005
+        const std::int64_t value = ea::round_half_away(scaled);  // IPC-005, equals std::llround here
         if (value < {{ lo }}LL || value > {{ hi }}LL) {
             return ea::ErrorCode::kOutOfRange;
         }
+        // [{{ lo }}, {{ hi }}] lies inside the {{ s.length }}-bit {{ 'signed' if s.signed else 'unsigned' }} range (GEN-033), so the raw value fits.
 {% if s.signed %}
-        const ea::Result<std::uint64_t> raw = ea::codec::to_twos_complement(value, {{ s.length }}U);
-        if (!raw.ok()) {
-            return raw.error();
-        }
-        EA_TRY(ea::codec::insert(payload, {{ order(s) }}, {{ s.start_bit }}U, {{ s.length }}U, *raw));
+        ea::codec::insert_fixed<{{ order(s) }}, {{ s.start_bit }}U, {{ s.length }}U>(payload.data(), static_cast<std::uint64_t>(value) & 0x{{ '%X' % (2 ** s.length - 1) }}ULL);
 {% else %}
-        EA_TRY(ea::codec::insert(payload, {{ order(s) }}, {{ s.start_bit }}U, {{ s.length }}U, static_cast<std::uint64_t>(value)));
+        ea::codec::insert_fixed<{{ order(s) }}, {{ s.start_bit }}U, {{ s.length }}U>(payload.data(), static_cast<std::uint64_t>(value));
 {% endif %}
     }
 {% endmacro %}

@@ -64,3 +64,31 @@ TEST(StaticVector, CapacityIsEnforced) {
 }
 
 }  // namespace
+
+#include <cmath>
+#include <limits>
+
+#include "ea/core/rounding.hpp"
+
+namespace {
+
+TEST(Rounding, MatchesLlroundIncludingTies) {
+    const double specials[] = {0.0, -0.0, 0.5, -0.5, 1.5, -1.5, 2.5, -2.5, 0.49999999999999994, -0.49999999999999994,
+                               4503599627370495.5, -4503599627370495.5, 1e15 + 0.5, 25000.000000000004,
+                               -8000.000000000001, std::nextafter(0.5, 0.0), std::nextafter(0.5, 1.0)};
+    for (const double x : specials) {
+        EXPECT_EQ(ea::round_half_away(x), std::llround(x)) << x;
+    }
+    std::uint64_t s = 88172645463325252ULL;
+    for (int i = 0; i < 2000000; ++i) {
+        s ^= s << 13U;
+        s ^= s >> 7U;
+        s ^= s << 17U;
+        // Mix of small values with fractional parts near .5 and large magnitudes.
+        const double base = static_cast<double>(static_cast<std::int64_t>(s % 2000001U) - 1000000) / 2.0;
+        const double x = (i % 2 == 0) ? base : base + static_cast<double>(s >> 40U) * 1e-9;
+        ASSERT_EQ(ea::round_half_away(x), std::llround(x)) << x;
+    }
+}
+
+}  // namespace
